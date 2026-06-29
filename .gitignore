@@ -1,0 +1,13 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Fichiers sources JPG (on garde uniquement les PNG détourés)
+*.jpg
+
+# Logs
+*.log
+
+# Editeurs
+.vscode/
+.idea/
