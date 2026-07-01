@@ -23,8 +23,9 @@
  */
 
 // ── CONFIG ─────────────────────────────────────────────────────
-const SHEET_ID     = '1PpFhlTHgpcILyDazvL1rRSzNwIEKgK-vG14e2QyGfkk';
-const SECRET_TOKEN = ''; // laisser vide = pas de vérif, ou mettre ex: 'taco2026secret'
+const SHEET_ID      = '1PpFhlTHgpcILyDazvL1rRSzNwIEKgK-vG14e2QyGfkk';
+const SECRET_TOKEN  = ''; // laisser vide = pas de vérif
+const NOTIF_EMAIL   = 'tomathieuia@gmail.com'; // ton email de notification
 // ───────────────────────────────────────────────────────────────
 
 
@@ -135,6 +136,30 @@ function handleSubscription(emailRaw, source, timestamp, ip) {
     const { date, time } = nowFR();
     mainSheet.appendRow([email, date, time, source || 'landing', ip]);
     addLog(logSheet, email, 'ok', ip);
+
+    // ── Notification email ─────────────────────────────────────
+    try {
+      const total = mainSheet.getLastRow() - 1; // -1 pour l'en-tête
+      MailApp.sendEmail({
+        to: NOTIF_EMAIL,
+        subject: '🦊 Nouveau inscrit Tacotac !',
+        htmlBody:
+          '<div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#1A1A1A;color:#fff;border-radius:12px;padding:28px;">' +
+          '<h2 style="color:#FF5C00;margin-top:0;">🦊 Nouvel inscrit sur la liste d\'attente</h2>' +
+          '<table style="width:100%;border-collapse:collapse;">' +
+          '<tr><td style="padding:8px 0;color:#9A9A9A;width:80px;">Email</td><td style="padding:8px 0;font-weight:700;">' + email + '</td></tr>' +
+          '<tr><td style="padding:8px 0;color:#9A9A9A;">Date</td><td style="padding:8px 0;">' + date + ' à ' + time + '</td></tr>' +
+          '<tr><td style="padding:8px 0;color:#9A9A9A;">Source</td><td style="padding:8px 0;">' + (source || 'landing') + '</td></tr>' +
+          '<tr><td style="padding:8px 0;color:#9A9A9A;">Total</td><td style="padding:8px 0;color:#FF5C00;font-weight:700;">' + total + ' inscrits 🚀</td></tr>' +
+          '</table>' +
+          '<a href="https://docs.google.com/spreadsheets/d/' + SHEET_ID + '" style="display:inline-block;margin-top:20px;padding:12px 24px;background:#FF5C00;color:#fff;text-decoration:none;border-radius:100px;font-weight:700;">Voir le Sheet →</a>' +
+          '</div>',
+      });
+    } catch(mailErr) {
+      // L'email a quand même été enregistré, l'erreur mail ne bloque pas
+      addLog(logSheet, email, 'mail_error: ' + mailErr.message, ip);
+    }
+
     return jsonResponse({ status: 'ok', message: 'Email enregistré' });
 
   } catch(err) {
