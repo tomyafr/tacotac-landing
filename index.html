@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- ════════════════════ SEO / META ════════════════════ -->
-  <title>Tacotac — Coach dating IA français</title>
-  <meta name="description" content="Upload ton screenshot de conv dating. Tacotac génère 3 réponses parfaites : classe, drôle ou spicy. Gratuit pour commencer.">
+  <title>Tacotac — Coach dating IA français | 3 réponses parfaites en 3 sec</title>
+  <meta name="description" content="Envoie ton screenshot de conv dating, Tacotac te sort 3 réponses parfaites : classe, drôle ou spicy. Rejoins la liste d'attente — accès prioritaire + 2 analyses offertes.">
   <meta name="theme-color" content="#0E0E0E">
 
   <meta property="og:type" content="website">
   <meta property="og:title" content="Tacotac — Coach dating IA français">
-  <meta property="og:description" content="Upload ton screenshot de conv dating. Tacotac génère 3 réponses parfaites : classe, drôle ou spicy.">
+  <meta property="og:description" content="1 screenshot → 3 réponses qui claquent. Classe, drôle ou spicy — en 3 secondes. Rejoins la liste d'attente.">
   <meta property="og:image" content="og-image.png">
   <meta property="og:locale" content="fr_FR">
   <meta name="twitter:card" content="summary_large_image">
@@ -19,8 +19,8 @@
   <meta name="twitter:description" content="1 screenshot → 3 réponses qui claquent. Classe, drôle ou spicy.">
   <meta name="twitter:image" content="og-image.png">
 
-  <!-- Favicon emoji 🌮 -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌮</text></svg>">
+  <!-- Favicon emoji 🦊 -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦊</text></svg>">
 
   <!-- ════════════════════ FONTS ════════════════════ -->
   <!-- Bricolage Grotesque = titres expressifs · Space Grotesk = body/UI -->
@@ -28,8 +28,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- ════════════════════ TAILWIND ════════════════════ -->
-  <!-- Google Analytics -->
+  <!-- ════════════════════ GOOGLE ANALYTICS ════════════════════ -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-14KLWFZXYY"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -38,6 +37,7 @@
     gtag('config', 'G-14KLWFZXYY');
   </script>
 
+  <!-- ════════════════════ TAILWIND ════════════════════ -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -51,6 +51,7 @@
             orange: '#FF5C00',
             'orange-soft': '#FF7A33',
             charcoal: '#0E0E0E',
+            ink: '#080808',
             card: '#1A1A1A',
             soft: '#8A8A8A',
             cream: '#F2EDE6',
@@ -63,37 +64,39 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
-    body { font-family: 'Space Grotesk', sans-serif; background: #0E0E0E; overflow-x: hidden; }
+    body { font-family: 'Space Grotesk', sans-serif; background: #080808; overflow-x: hidden; }
     ::selection { background: rgba(255,92,0,0.85); color: #fff; }
+
+    /* grain filmique global (texture premium très subtile) */
+    body::after {
+      content:''; position:fixed; inset:0; z-index:3; pointer-events:none; opacity:.035;
+      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 220 220' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size:200px 200px;
+    }
 
     /* ════════ TYPOGRAPHIE DISPLAY ════════ */
     .display    { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; letter-spacing: -0.035em; line-height: 0.9; }
     .display-sm { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: -0.025em; line-height: 0.95; }
+    .kicker { font-size:.72rem; font-weight:700; letter-spacing:.18em; color:#FF7A33; text-transform:uppercase; }
 
-    /* ════════ GRILLE DE FOND (comme les screens V1) ════════ */
+    /* ════════ GRILLE DE FOND ════════ */
     .grid-bg::before {
-      content: '';
-      position: absolute; inset: 0;
+      content: ''; position: absolute; inset: 0;
       background-image:
         linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
       background-size: 44px 44px;
-      -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 30%, transparent 80%);
-              mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 30%, transparent 80%);
+      -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 38%, #000 30%, transparent 80%);
+              mask-image: radial-gradient(ellipse 80% 60% at 50% 38%, #000 30%, transparent 80%);
       pointer-events: none; z-index: 0;
     }
 
     /* ════════ AURORA GLOW MOUVANT (hero) ════════ */
-    .aurora {
-      position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0;
-    }
-    .aurora span {
-      position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.55;
-    }
-    .aurora .a1 { width: 320px; height: 320px; background: #FF5C00; top: 12%;  left: -20%; animation: drift1 14s ease-in-out infinite; }
-    .aurora .a2 { width: 260px; height: 260px; background: #FF7A33; top: 45%;  right: -25%; animation: drift2 18s ease-in-out infinite; }
+    .aurora { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+    .aurora span { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.5; }
+    .aurora .a1 { width: 320px; height: 320px; background: #FF5C00; top: 8%;  left: -20%; animation: drift1 14s ease-in-out infinite; }
+    .aurora .a2 { width: 260px; height: 260px; background: #FF7A33; top: 40%; right: -25%; animation: drift2 18s ease-in-out infinite; }
     .aurora .a3 { width: 280px; height: 280px; background: #B83E00; bottom: 0%; left: 30%; animation: drift3 16s ease-in-out infinite; }
-
     @keyframes drift1 { 0%,100%{ transform: translate(0,0) scale(1);} 50%{ transform: translate(40px,30px) scale(1.15);} }
     @keyframes drift2 { 0%,100%{ transform: translate(0,0) scale(1);} 50%{ transform: translate(-30px,40px) scale(0.9);} }
     @keyframes drift3 { 0%,100%{ transform: translate(0,0) scale(1);} 50%{ transform: translate(20px,-30px) scale(1.1);} }
@@ -107,14 +110,13 @@
     @keyframes shimmer  { 0%{background-position:-200% center;} 100%{background-position:200% center;} }
     @keyframes glowPulse{ 0%,100%{box-shadow:0 0 28px 0 rgba(255,92,0,0.45),0 4px 18px rgba(255,92,0,0.3);} 50%{box-shadow:0 0 46px 6px rgba(255,92,0,0.6),0 6px 22px rgba(255,92,0,0.4);} }
     @keyframes spinSlow { to { transform: rotate(360deg); } }
-    @keyframes marquee  { from{transform:translateX(0);} to{transform:translateX(-50%);} }
+    @keyframes ringPulse{ 0%,100%{transform:translate(-50%,-50%) scale(1); opacity:.65;} 50%{transform:translate(-50%,-50%) scale(1.06); opacity:1;} }
 
     .anim-fade-up   { animation: fadeUp .8s cubic-bezier(.16,.84,.28,1.02) both; }
     .anim-fade-in   { animation: fadeIn .7s ease both; }
     .mascotte-float { animation: float 4.5s ease-in-out infinite; }
     .btn-pulse      { animation: glowPulse 2.6s ease-in-out infinite; }
     .arrow-bounce   { animation: bounceArrow 1.6s ease-in-out infinite; }
-
     .delay-1{animation-delay:.10s;} .delay-2{animation-delay:.20s;} .delay-3{animation-delay:.30s;}
     .delay-4{animation-delay:.40s;} .delay-5{animation-delay:.50s;} .delay-6{animation-delay:.65s;} .delay-7{animation-delay:.8s;}
 
@@ -127,12 +129,25 @@
       animation: shimmer 4s linear infinite;
     }
 
+    /* ════════ HALO AUTOUR DU RENARD (rappel app) ════════ */
+    .fox-stage { position: relative; display:flex; justify-content:center; align-items:center; }
+    .fox-ring {
+      position:absolute; top:50%; left:50%; width:210px; height:210px;
+      transform:translate(-50%,-50%); border-radius:50%; pointer-events:none;
+      background:radial-gradient(circle, rgba(255,92,0,0.20), transparent 62%);
+    }
+    .fox-ring::before {
+      content:''; position:absolute; inset:0; border-radius:50%;
+      border:2px solid rgba(255,92,0,0.45);
+      box-shadow:0 0 40px rgba(255,92,0,0.35), inset 0 0 34px rgba(255,92,0,0.22);
+      animation:ringPulse 3.4s ease-in-out infinite;
+    }
+
     /* ════════ BOUTONS ════════ */
     .btn-primary {
-      position: relative; display:block; width:100%; max-width:320px; margin:0 auto;
-      padding:18px 32px; background:#FF5C00; color:#fff; font-weight:700; font-size:1.1rem;
-      letter-spacing:-0.01em; border-radius:100px; border:none; cursor:pointer; text-align:center;
-      text-decoration:none; overflow:hidden;
+      position: relative; display:block; width:100%; padding:17px 30px; background:#FF5C00; color:#fff;
+      font-weight:700; font-size:1.05rem; letter-spacing:-0.01em; border-radius:100px; border:none;
+      cursor:pointer; text-align:center; text-decoration:none; overflow:hidden;
       transition: transform .18s cubic-bezier(.22,.68,0,1.4), box-shadow .18s ease;
     }
     .btn-primary::after {
@@ -140,7 +155,7 @@
       background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,0.25) 50%,transparent 60%);
       background-size:200% auto; animation:shimmer 3s linear infinite;
     }
-    .btn-primary:hover  { transform:scale(1.04); box-shadow:0 0 48px 6px rgba(255,92,0,0.6),0 8px 28px rgba(255,92,0,0.4); }
+    .btn-primary:hover  { transform:scale(1.03); box-shadow:0 0 48px 6px rgba(255,92,0,0.6),0 8px 28px rgba(255,92,0,0.4); }
     .btn-primary:active { transform:scale(0.97); }
 
     .btn-white {
@@ -151,117 +166,87 @@
     }
     .btn-white:hover  { transform:scale(1.03); box-shadow:0 10px 32px rgba(0,0,0,0.28); }
     .btn-white:active { transform:scale(0.97); }
-    .btn-white:disabled { opacity:.7; cursor:default; transform:none; }
+    button:disabled { opacity:.75; cursor:default; transform:none !important; }
+
+    /* ════════ CHAMPS EMAIL ════════ */
+    .input-dark {
+      width:100%; background:rgba(255,255,255,0.05); border:1.5px solid rgba(255,255,255,0.14); color:#fff;
+      border-radius:100px; padding:16px 22px; font:500 1rem 'Space Grotesk',sans-serif; outline:none;
+      transition:border-color .2s, background .2s, box-shadow .2s;
+    }
+    .input-dark::placeholder { color:#6f6f6f; }
+    .input-dark:focus { border-color:#FF5C00; background:rgba(255,92,0,0.06); box-shadow:0 0 0 4px rgba(255,92,0,0.12); }
+
+    .email-input {
+      width:100%; background:rgba(255,255,255,0.22); border:1.5px solid rgba(255,255,255,0.32); color:#fff;
+      border-radius:100px; padding:16px 24px; font:500 1rem 'Space Grotesk',sans-serif; outline:none;
+      transition:background .2s, border-color .2s;
+    }
+    .email-input::placeholder { color:rgba(255,255,255,0.65); }
+    .email-input:focus { background:rgba(255,255,255,0.3); border-color:rgba(255,255,255,0.8); }
+
+    /* messages inline */
+    .wl-error { color:#ffb4a0; font-size:.8rem; }
+    .wl-success-card {
+      background:rgba(255,92,0,0.1); border:1px solid rgba(255,92,0,0.3); border-radius:18px; padding:20px;
+    }
+    .on-orange .wl-success-card { background:rgba(255,255,255,0.18); border-color:rgba(255,255,255,0.35); }
 
     /* ════════ BADGE ════════ */
     .badge {
-      display:inline-flex; align-items:center; gap:8px;
-      border:1.5px solid rgba(255,92,0,0.45); color:#FF7A33;
-      font-size:.72rem; font-weight:600; letter-spacing:.02em;
-      border-radius:100px; padding:7px 16px; background:rgba(255,92,0,0.08);
-      backdrop-filter: blur(4px);
+      display:inline-flex; align-items:center; gap:8px; border:1.5px solid rgba(255,92,0,0.45);
+      color:#FF7A33; font-size:.72rem; font-weight:600; letter-spacing:.02em; border-radius:100px;
+      padding:7px 16px; background:rgba(255,92,0,0.08); backdrop-filter: blur(4px);
     }
     .badge-dot { width:6px; height:6px; border-radius:50%; background:#FF5C00; animation:pulseDot 1.8s ease-in-out infinite; }
 
-    /* ════════ STAT PILL ════════ */
+    /* chips compatibilité */
+    .app-chip { font-size:.72rem; font-weight:600; color:#9A9A9A; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:100px; padding:5px 12px; }
+
+    /* ════════ STAT ════════ */
     .stat-num { font-family:'Bricolage Grotesque',sans-serif; font-weight:800; letter-spacing:-0.03em; }
 
     /* ════════ DÉMO ════════ */
-    .chat-left {
-      align-self:flex-start; background:#fff; color:#111; border-radius:18px 18px 18px 4px;
-      padding:10px 16px; font-size:.88rem; max-width:82%; box-shadow:0 2px 10px rgba(0,0,0,0.08);
-    }
-    .chat-ghost {
-      align-self:flex-end; background:rgba(0,0,0,0.05); color:#999; border-radius:18px 18px 4px 18px;
-      padding:10px 16px; font-size:.88rem; max-width:82%; border:1.5px dashed rgba(0,0,0,0.15);
-    }
+    .chat-left { align-self:flex-start; background:#fff; color:#111; border-radius:18px 18px 18px 4px; padding:10px 16px; font-size:.88rem; max-width:82%; box-shadow:0 2px 10px rgba(0,0,0,0.08); }
+    .chat-ghost { align-self:flex-end; background:rgba(0,0,0,0.05); color:#999; border-radius:18px 18px 4px 18px; padding:10px 16px; font-size:.88rem; max-width:82%; border:1.5px dashed rgba(0,0,0,0.15); }
     .tone-track { display:flex; gap:6px; background:rgba(0,0,0,0.06); border-radius:100px; padding:5px; position:relative; }
-    .tone-btn {
-      flex:1; position:relative; z-index:1; border-radius:100px; padding:11px 4px; font-size:.82rem;
-      font-weight:600; border:none; cursor:pointer; color:#555; background:transparent;
-      transition: color .25s ease, transform .15s ease;
-    }
+    .tone-btn { flex:1; position:relative; z-index:1; border-radius:100px; padding:11px 4px; font-size:.82rem; font-weight:600; border:none; cursor:pointer; color:#555; background:transparent; transition: color .25s ease, transform .15s ease; }
     .tone-btn.active { color:#fff; }
     .tone-btn:active { transform:scale(0.95); }
-    /* pastille glissante */
-    .tone-glider {
-      position:absolute; top:5px; bottom:5px; left:5px; width:calc((100% - 10px)/3);
-      background:#FF5C00; border-radius:100px; box-shadow:0 4px 16px rgba(255,92,0,0.45); z-index:0;
-      transition: transform .35s cubic-bezier(.34,1.3,.4,1);
-    }
-    /* renard d'humeur qui change selon le ton */
+    .tone-glider { position:absolute; top:5px; bottom:5px; left:5px; width:calc((100% - 10px)/3); background:#FF5C00; border-radius:100px; box-shadow:0 4px 16px rgba(255,92,0,0.45); z-index:0; transition: transform .35s cubic-bezier(.34,1.3,.4,1); }
     .tone-fox { height:150px; width:auto; transition:opacity .3s ease, transform .35s cubic-bezier(.34,1.3,.4,1); filter:drop-shadow(0 12px 22px rgba(0,0,0,0.18)); }
     .tone-fox.swapping { opacity:0; transform:translateY(10px) scale(.94); }
-
     .reply-card { background:#0E0E0E; border-radius:24px; padding:20px; border:1px solid rgba(255,255,255,0.07); position:relative; overflow:hidden; }
-    .reply-card::before {
-      content:''; position:absolute; top:-40%; right:-30%; width:200px; height:200px; border-radius:50%;
-      background:radial-gradient(circle,rgba(255,92,0,0.18),transparent 70%); pointer-events:none;
-    }
+    .reply-card::before { content:''; position:absolute; top:-40%; right:-30%; width:200px; height:200px; border-radius:50%; background:radial-gradient(circle,rgba(255,92,0,0.18),transparent 70%); pointer-events:none; }
     #reponse { font-style:italic; color:#fff; line-height:1.6; font-size:1.02rem; min-height:54px; }
-    .copy-btn {
-      width:100%; padding:13px; background:rgba(255,92,0,0.12); color:#FF7A33; font-weight:600; font-size:.88rem;
-      border-radius:14px; border:1px solid rgba(255,92,0,0.22); cursor:pointer; font-family:'Space Grotesk',sans-serif;
-      transition: background .2s, transform .15s;
-    }
+    .copy-btn { width:100%; padding:13px; background:rgba(255,92,0,0.12); color:#FF7A33; font-weight:600; font-size:.88rem; border-radius:14px; border:1px solid rgba(255,92,0,0.22); cursor:pointer; font-family:'Space Grotesk',sans-serif; transition: background .2s, transform .15s; }
     .copy-btn:hover  { background:rgba(255,92,0,0.2); }
     .copy-btn:active { transform:scale(0.97); }
 
-    /* ════════ TIMELINE "COMMENT ÇA MARCHE" ════════ */
+    /* ════════ TIMELINE ════════ */
     .timeline { position:relative; }
     .tl-step { position:relative; display:flex; gap:20px; padding-bottom:30px; }
     .tl-step:last-child { padding-bottom:0; }
-    /* ligne connectrice verticale dégradée */
-    .tl-step::before {
-      content:''; position:absolute; left:25px; top:54px; bottom:-2px; width:2px;
-      background:linear-gradient(#FF5C00, rgba(255,92,0,0.08));
-    }
+    .tl-step::before { content:''; position:absolute; left:25px; top:54px; bottom:-2px; width:2px; background:linear-gradient(#FF5C00, rgba(255,92,0,0.08)); }
     .tl-step:last-child::before { display:none; }
-    .tl-node {
-      width:52px; height:52px; border-radius:50%; flex-shrink:0; position:relative; z-index:1;
-      display:flex; align-items:center; justify-content:center;
-      font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:1.3rem; color:#fff;
-      background:linear-gradient(140deg,#FF7A33,#FF5C00);
-      box-shadow:0 6px 20px rgba(255,92,0,0.4), inset 0 1px 0 rgba(255,255,255,0.25);
-    }
+    .tl-node { width:52px; height:52px; border-radius:50%; flex-shrink:0; position:relative; z-index:1; display:flex; align-items:center; justify-content:center; font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:1.3rem; color:#fff; background:linear-gradient(140deg,#FF7A33,#FF5C00); box-shadow:0 6px 20px rgba(255,92,0,0.4), inset 0 1px 0 rgba(255,255,255,0.25); }
     .tl-body { padding-top:4px; }
     .tl-body .ic { font-size:1.15rem; }
     .tl-body h3 { font-weight:700; font-size:1.02rem; color:#fff; margin-bottom:3px; letter-spacing:-0.01em; }
     .tl-body p  { color:#777; font-size:.85rem; line-height:1.5; }
 
-    /* ════════ GRILLE FEATURES (réassurance) ════════ */
+    /* ════════ GRILLE FEATURES ════════ */
     .feat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
-    .feat-mini {
-      background:#1A1A1A; border:1px solid rgba(255,255,255,0.06); border-radius:18px;
-      padding:20px 10px 18px; text-align:center; position:relative; overflow:hidden;
-      transition: transform .25s, border-color .25s, background .25s;
-    }
-    .feat-mini::before {
-      content:''; position:absolute; top:0; left:0; right:0; height:2px;
-      background:linear-gradient(90deg,transparent,#FF5C00,transparent);
-      opacity:0; transition:opacity .25s;
-    }
+    .feat-mini { background:#1A1A1A; border:1px solid rgba(255,255,255,0.06); border-radius:18px; padding:20px 10px 18px; text-align:center; position:relative; overflow:hidden; transition: transform .25s, border-color .25s, background .25s; }
+    .feat-mini::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,#FF5C00,transparent); opacity:0; transition:opacity .25s; }
     .feat-mini:hover { transform:translateY(-4px); border-color:rgba(255,92,0,0.3); background:#1F1F1F; }
     .feat-mini:hover::before { opacity:1; }
-    .feat-mini .ic {
-      width:46px; height:46px; border-radius:14px; margin:0 auto 12px;
-      display:flex; align-items:center; justify-content:center; font-size:1.25rem;
-    }
+    .feat-mini .ic { width:46px; height:46px; border-radius:14px; margin:0 auto 12px; display:flex; align-items:center; justify-content:center; font-size:1.25rem; }
     .feat-mini h3 { font-weight:700; font-size:.82rem; color:#fff; line-height:1.2; }
     .feat-mini p  { color:#777; font-size:.68rem; line-height:1.35; margin-top:4px; }
 
-    /* ════════ CARDS ════════ */
-    .feature-card {
-      background:#1A1A1A; border-radius:20px; padding:20px 22px; display:flex; align-items:center; gap:16px;
-      border:1px solid rgba(255,255,255,0.05); transition: border-color .25s, transform .25s, background .25s;
-    }
-    .feature-card:hover { border-color:rgba(255,92,0,0.3); transform:translateY(-3px); background:#1F1F1F; }
-    .feature-icon { width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
-
-    .review-card {
-      background:#1A1A1A; border-radius:20px; padding:22px; border:1px solid rgba(255,255,255,0.05);
-      transition: border-color .25s, transform .25s, box-shadow .25s;
-    }
+    /* ════════ AVIS ════════ */
+    .review-card { background:#1A1A1A; border-radius:20px; padding:22px; border:1px solid rgba(255,255,255,0.05); transition: border-color .25s, transform .25s, box-shadow .25s; }
     .review-card:hover { border-color:rgba(255,92,0,0.25); transform:translateY(-4px); box-shadow:0 16px 36px rgba(0,0,0,0.5); }
     .stars { color:#FF5C00; font-size:.85rem; letter-spacing:1px; }
 
@@ -274,37 +259,49 @@
     .faq-a { max-height:0; overflow:hidden; transition:max-height .35s ease; }
     .faq-a-inner { padding:0 20px 18px; color:#8A8A8A; font-size:.88rem; line-height:1.6; }
 
-    /* ════════ CTA FINAL ════════ */
+    /* ════════ SECTION CTA ORANGE ════════ */
     .cta-section { background:#FF5C00; position:relative; overflow:hidden; }
-    .cta-section .blob1 { content:''; position:absolute; top:-70px; left:50%; transform:translateX(-50%); width:300px; height:300px; border-radius:50%; background:rgba(255,255,255,0.10); pointer-events:none; animation:float 6s ease-in-out infinite; }
-    .cta-section .blob2 { content:''; position:absolute; bottom:-90px; right:-50px; width:220px; height:220px; border-radius:50%; background:rgba(0,0,0,0.07); pointer-events:none; }
-    .email-input {
-      width:100%; background:rgba(255,255,255,0.22); border:1.5px solid rgba(255,255,255,0.32); color:#fff;
-      border-radius:100px; padding:16px 24px; font-size:1rem; font-family:'Space Grotesk',sans-serif; font-weight:500;
-      outline:none; transition:background .2s, border-color .2s;
-    }
-    .email-input::placeholder { color:rgba(255,255,255,0.65); }
-    .email-input:focus { background:rgba(255,255,255,0.3); border-color:rgba(255,255,255,0.7); }
+    .cta-section .blob1 { position:absolute; top:-70px; left:50%; transform:translateX(-50%); width:300px; height:300px; border-radius:50%; background:rgba(255,255,255,0.10); pointer-events:none; animation:float 6s ease-in-out infinite; }
+    .cta-section .blob2 { position:absolute; bottom:-90px; right:-50px; width:220px; height:220px; border-radius:50%; background:rgba(0,0,0,0.07); pointer-events:none; }
 
-    /* ════════ STICKY CTA ════════ */
-    .sticky-cta {
-      position:fixed; left:0; right:0; bottom:0; z-index:50; max-width:480px; margin:0 auto;
-      padding:12px 16px calc(12px + env(safe-area-inset-bottom));
-      background:rgba(14,14,14,0.85); backdrop-filter:blur(12px); border-top:1px solid rgba(255,255,255,0.08);
-      transform:translateY(120%); transition:transform .4s cubic-bezier(.22,.68,0,1.1);
-    }
+    /* barre de progression rareté */
+    .progress { height:8px; background:rgba(255,255,255,0.22); border-radius:100px; overflow:hidden; }
+    .progress > i { display:block; height:100%; width:0; background:#fff; border-radius:100px; transition:width 1.5s cubic-bezier(.16,.84,.28,1); }
+    .progress.dark { background:rgba(255,255,255,0.08); }
+    .progress.dark > i { background:linear-gradient(90deg,#FF7A33,#FF5C00); }
+
+    /* ════════ NAV STICKY HAUT ════════ */
+    .site-nav { position:fixed; top:0; left:0; right:0; z-index:60; transform:translateY(-100%); transition:transform .35s ease; }
+    .site-nav.show { transform:translateY(0); }
+    .site-nav .inner { max-width:480px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; padding:11px 18px; background:rgba(10,10,10,0.82); backdrop-filter:blur(12px); border-bottom:1px solid rgba(255,255,255,0.07); }
+    .nav-brand { display:flex; align-items:center; gap:8px; font-weight:700; font-size:.95rem; color:#fff; }
+    .nav-cta { background:#FF5C00; color:#fff; font-weight:700; font-size:.82rem; padding:9px 18px; border-radius:100px; text-decoration:none; box-shadow:0 0 20px rgba(255,92,0,0.35); transition:transform .15s; }
+    .nav-cta:active { transform:scale(0.95); }
+
+    /* ════════ STICKY CTA BAS (mini formulaire) ════════ */
+    .sticky-cta { position:fixed; left:0; right:0; bottom:0; z-index:50; max-width:480px; margin:0 auto; padding:12px 16px calc(12px + env(safe-area-inset-bottom)); background:rgba(10,10,10,0.9); backdrop-filter:blur(12px); border-top:1px solid rgba(255,255,255,0.08); transform:translateY(130%); transition:transform .4s cubic-bezier(.22,.68,0,1.1); }
     .sticky-cta.show { transform:translateY(0); }
-    .sticky-cta a {
-      display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:14px;
-      background:#FF5C00; color:#fff; font-weight:700; border-radius:100px; text-decoration:none;
-      box-shadow:0 0 24px rgba(255,92,0,0.4);
-    }
+    .sticky-cta form { display:flex; gap:8px; align-items:center; }
+    .mini-input { flex:1; min-width:0; background:rgba(255,255,255,0.08); border:1.5px solid rgba(255,255,255,0.16); color:#fff; border-radius:100px; padding:12px 18px; font:500 .92rem 'Space Grotesk',sans-serif; outline:none; }
+    .mini-input::placeholder { color:#888; }
+    .mini-input:focus { border-color:#FF5C00; }
+    .mini-btn { width:48px; height:48px; flex-shrink:0; background:#FF5C00; border:none; border-radius:50%; color:#fff; font-size:1.15rem; cursor:pointer; box-shadow:0 0 20px rgba(255,92,0,0.4); transition:transform .15s; }
+    .mini-btn:active { transform:scale(0.9); }
+    .sticky-cta .wl-success { color:#fff; text-align:center; font-size:.9rem; font-weight:600; padding:6px 0; }
+
+    /* ════════ MODAL EXIT-INTENT ════════ */
+    .modal { position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(0,0,0,0.72); backdrop-filter:blur(6px); opacity:0; visibility:hidden; transition:opacity .3s; }
+    .modal.show { opacity:1; visibility:visible; }
+    .modal-card { position:relative; width:100%; max-width:400px; background:#151515; border:1px solid rgba(255,92,0,0.28); border-radius:26px; padding:34px 26px 28px; text-align:center; transform:translateY(18px) scale(.96); transition:transform .4s cubic-bezier(.16,.84,.28,1.05); box-shadow:0 30px 80px rgba(0,0,0,0.65); }
+    .modal.show .modal-card { transform:none; }
+    .modal-close { position:absolute; top:14px; right:14px; width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,0.08); border:none; color:#aaa; font-size:1rem; cursor:pointer; transition:background .2s; }
+    .modal-close:hover { background:rgba(255,255,255,0.16); color:#fff; }
 
     /* ════════ SCROLL REVEAL ════════ */
     .reveal { opacity:0; transform:translateY(26px); transition:opacity .7s cubic-bezier(.16,.84,.28,1), transform .7s cubic-bezier(.16,.84,.28,1); }
     .reveal.visible { opacity:1; transform:translateY(0); }
 
-    /* ════════ ACCESSIBILITÉ : motion réduit ════════ */
+    /* ════════ MOTION RÉDUIT ════════ */
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation:none !important; transition:none !important; }
       .reveal { opacity:1; transform:none; }
@@ -314,46 +311,65 @@
 
 <body class="text-white font-grotesk antialiased">
 
+  <!-- ════════ NAV STICKY HAUT ════════ -->
+  <header class="site-nav" id="siteNav">
+    <div class="inner">
+      <span class="nav-brand"><img src="renard-removebg-preview.png" alt="" style="width:26px;height:26px;object-fit:contain;"> Tacotac</span>
+      <a href="#cta" class="nav-cta js-cta">Rejoindre la liste</a>
+    </div>
+  </header>
+
   <div class="max-w-[480px] mx-auto relative">
 
     <!-- ═══════════════════════════════════════════════════════
-         SECTION 1 · HERO
+         SECTION 1 · HERO (+ capture email above the fold)
     ═══════════════════════════════════════════════════════ -->
-    <section id="hero" class="grid-bg relative px-6 pt-12 pb-16 flex flex-col items-center text-center overflow-hidden">
-      <!-- Aurora animée -->
+    <section id="hero" class="grid-bg relative px-6 pt-10 pb-14 flex flex-col items-center text-center overflow-hidden">
       <div class="aurora"><span class="a1"></span><span class="a2"></span><span class="a3"></span></div>
 
       <!-- Badge -->
-      <div class="badge anim-fade-in mb-9 z-10">
+      <div class="badge anim-fade-in mb-7 z-10">
         <span class="badge-dot"></span>
-        🇫🇷 Coach dating IA · Bientôt disponible
+        🇫🇷 Coach dating IA · Accès anticipé
       </div>
 
-      <!-- Mascotte (parallax + float) -->
-      <div id="mascotteWrap" class="mascotte-float mb-7 z-10 anim-fade-in delay-1" style="will-change:transform;">
-        <img src="renard-removebg-preview.png" alt="Le renard Tacotac, bras croisés" class="w-40 mx-auto" style="filter:drop-shadow(0 10px 36px rgba(255,92,0,0.35));">
+      <!-- Mascotte + halo (parallax + float) -->
+      <div id="mascotteWrap" class="fox-stage mascotte-float mb-6 z-10 anim-fade-in delay-1" style="will-change:transform;">
+        <span class="fox-ring"></span>
+        <img src="renard-removebg-preview.png" alt="Le renard Tacotac, bras croisés" class="w-32 relative z-10" style="filter:drop-shadow(0 10px 36px rgba(255,92,0,0.35));">
       </div>
 
       <!-- H1 -->
-      <h1 class="display text-[66px] z-10 anim-fade-up delay-2 mb-5">
+      <h1 class="display text-[60px] z-10 anim-fade-up delay-2 mb-4">
         <span class="text-white">Fini de<br>sécher</span><br>
         <span class="text-shine" style="filter:drop-shadow(0 0 36px rgba(255,92,0,0.35));">en DM</span>
       </h1>
 
       <!-- Sous-titre -->
-      <p class="text-soft text-[1.05rem] leading-relaxed mb-9 max-w-[290px] z-10 anim-fade-up delay-3">
-        1 screenshot → 3 réponses parfaites.<br>
+      <p class="text-soft text-[1.05rem] leading-relaxed mb-7 max-w-[300px] z-10 anim-fade-up delay-3">
+        Envoie 1 screenshot, reçois 3 réponses qui claquent.<br>
         Classe, drôle ou spicy — <span class="text-white font-medium">en 3 secondes.</span>
       </p>
 
-      <!-- CTA -->
-      <div class="w-full max-w-xs z-10 anim-fade-up delay-4">
-        <a href="#cta" class="btn-primary btn-pulse">Tester gratuitement ⚡</a>
-        <p class="text-soft text-xs mt-4 opacity-70">2 analyses offertes · Sans carte bancaire · 30 sec</p>
+      <!-- FORMULAIRE EMAIL (hero) -->
+      <div class="wl-wrap w-full max-w-xs z-10 anim-fade-up delay-4" data-source="hero">
+        <form class="flex flex-col gap-3" novalidate>
+          <input type="email" class="input-dark" placeholder="ton@email.fr" aria-label="Ton adresse email" autocomplete="email" required>
+          <button type="submit" class="btn-primary btn-pulse">Rejoindre la liste — gratuit 🚀</button>
+        </form>
+        <p class="wl-error hidden mt-3"></p>
+        <div class="wl-success hidden mt-3">
+          <div class="wl-success-card">
+            <p class="text-xl mb-1">🎉</p>
+            <p class="text-white font-bold text-sm">C'est bon, t'es sur la liste !</p>
+            <p class="text-soft text-xs mt-1">On te prévient en premier dès l'ouverture.</p>
+          </div>
+        </div>
+        <p class="text-soft text-xs mt-4 opacity-70">🎁 2 analyses offertes · Sans carte bancaire · Zéro spam</p>
       </div>
 
-      <!-- Preuve sociale : avatars + note -->
-      <div class="flex items-center justify-center gap-3 mt-8 z-10 anim-fade-up delay-5">
+      <!-- Preuve sociale -->
+      <div class="flex items-center justify-center gap-3 mt-7 z-10 anim-fade-up delay-5">
         <div class="flex -space-x-2.5">
           <span class="w-7 h-7 rounded-full border-2 border-charcoal flex items-center justify-center text-[10px] font-bold text-white" style="background:linear-gradient(135deg,#7c3aed,#a855f7);">T</span>
           <span class="w-7 h-7 rounded-full border-2 border-charcoal flex items-center justify-center text-[10px] font-bold text-white" style="background:linear-gradient(135deg,#059669,#10b981);">K</span>
@@ -362,23 +378,32 @@
         </div>
         <div class="text-left">
           <div class="stars text-xs">★★★★★</div>
-          <p class="text-soft text-[0.7rem]">+1 200 sur la liste d'attente</p>
+          <p class="text-soft text-[0.7rem]">+1 200 déjà sur la liste</p>
         </div>
       </div>
 
-      <!-- Flèche -->
-      <div class="mt-10 z-10 arrow-bounce anim-fade-in delay-7">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <!-- Chips compatibilité -->
+      <div class="flex flex-wrap items-center justify-center gap-2 mt-6 z-10 anim-fade-up delay-6">
+        <span class="text-soft text-[0.68rem] mr-1">Compatible</span>
+        <span class="app-chip">Tinder</span>
+        <span class="app-chip">Hinge</span>
+        <span class="app-chip">Bumble</span>
+        <span class="app-chip">Insta</span>
+      </div>
+
+      <!-- Flèche vers démo -->
+      <a href="#demo" class="js-cta mt-9 z-10 arrow-bounce anim-fade-in delay-7" aria-label="Voir la démo">
+        <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
           <path d="M10 4v12M4 10l6 6 6-6" stroke="#8A8A8A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-      </div>
+      </a>
     </section>
 
 
     <!-- ═══════════════════════════════════════════════════════
-         SECTION 2 · BARRE DE STATS (count-up)
+         SECTION 2 · STATS (count-up)
     ═══════════════════════════════════════════════════════ -->
-    <section class="px-6 py-7" style="background:#141414; border-top:1px solid rgba(255,255,255,0.05); border-bottom:1px solid rgba(255,255,255,0.05);">
+    <section class="px-6 py-7" style="background:#101010; border-top:1px solid rgba(255,255,255,0.05); border-bottom:1px solid rgba(255,255,255,0.05);">
       <div class="grid grid-cols-3 gap-2 text-center reveal">
         <div>
           <p class="stat-num text-orange text-[1.7rem]" data-count="3" data-prefix="×">×3</p>
@@ -399,14 +424,15 @@
     <!-- ═══════════════════════════════════════════════════════
          SECTION 3 · DÉMO
     ═══════════════════════════════════════════════════════ -->
-    <section class="px-6 py-16" style="background:#F2EDE6;">
+    <section id="demo" class="px-6 py-16" style="background:#F2EDE6;">
       <div class="flex justify-center mb-6 reveal">
-        <span style="background:#FF5C00;color:#fff;font-size:.72rem;font-weight:700;border-radius:100px;padding:6px 18px;letter-spacing:.08em;">DÉMO</span>
+        <span style="background:#FF5C00;color:#fff;font-size:.72rem;font-weight:700;border-radius:100px;padding:6px 18px;letter-spacing:.08em;">DÉMO INTERACTIVE</span>
       </div>
 
-      <h2 class="display-sm text-[2.4rem] text-center mb-10 reveal" style="color:#111;">
+      <h2 class="display-sm text-[2.4rem] text-center mb-3 reveal" style="color:#111;">
         D'un screenshot<br>à la bonne réponse
       </h2>
+      <p class="text-center mb-10 reveal" style="color:#8a7f70;font-size:.9rem;">Change le ton et regarde le renard s'adapter 👇</p>
 
       <!-- AVANT -->
       <p style="color:#999;font-size:.72rem;font-weight:700;letter-spacing:.12em;" class="mb-3 reveal">AVANT 😬</p>
@@ -430,7 +456,7 @@
       <!-- Transition -->
       <div class="reveal mb-6 flex items-center justify-center gap-2" style="background:rgba(255,92,0,0.08);border:1px solid rgba(255,92,0,0.18);border-radius:100px;padding:12px 20px;color:#FF5C00;font-size:.85rem;font-weight:600;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="animation:spinSlow 2s linear infinite;"><path d="M12 3a9 9 0 1 0 9 9" stroke="#FF5C00" stroke-width="2.5" stroke-linecap="round"/></svg>
-        🌮 Tacotac analyse · 3 options générées
+        🦊 Tacotac analyse · 3 options générées
       </div>
 
       <!-- APRÈS -->
@@ -442,7 +468,6 @@
         <button class="tone-btn" data-tone="spicy" data-index="2">🌶️ Spicy</button>
       </div>
 
-      <!-- Renard d'humeur (sa tenue colle au ton sélectionné) -->
       <div class="flex justify-center mb-2 reveal">
         <img id="toneFox" class="tone-fox" src="renard_chill-removebg-preview.png" alt="Le renard Tacotac, mood drôle">
       </div>
@@ -450,7 +475,7 @@
       <div class="reply-card reveal">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-xl flex items-center justify-center text-sm" style="background:#FF5C00;">🌮</div>
+            <div class="w-8 h-8 rounded-xl flex items-center justify-center text-sm overflow-hidden" style="background:#FF5C00;"><img src="renard-removebg-preview.png" alt="" style="width:100%;height:100%;object-fit:contain;"></div>
             <span style="color:#fff;font-size:.85rem;font-weight:600;">Tacotac suggère</span>
           </div>
           <span style="color:#444;font-size:1.1rem;letter-spacing:2px;">···</span>
@@ -462,33 +487,46 @@
 
 
     <!-- ═══════════════════════════════════════════════════════
+         SECTION 3b · CAPTURE APRÈS DÉMO (forte intention)
+    ═══════════════════════════════════════════════════════ -->
+    <section class="px-6 py-14 relative overflow-hidden" style="background:#0E0E0E; border-top:1px solid rgba(255,255,255,0.05);">
+      <div class="reveal text-center">
+        <h2 class="display-sm text-[1.9rem] text-white mb-2">Ça te parle ? 👀</h2>
+        <p class="text-soft text-sm mb-6 max-w-xs mx-auto">Rejoins la liste et sois parmi les premiers à sécher plus jamais.</p>
+        <div class="wl-wrap max-w-xs mx-auto" data-source="post-demo">
+          <form class="flex flex-col gap-3" novalidate>
+            <input type="email" class="input-dark" placeholder="ton@email.fr" aria-label="Ton adresse email" autocomplete="email" required>
+            <button type="submit" class="btn-primary">Je veux l'accès en avant-première ⚡</button>
+          </form>
+          <p class="wl-error hidden mt-3"></p>
+          <div class="wl-success hidden mt-3">
+            <div class="wl-success-card">
+              <p class="text-white font-bold text-sm">🎉 Inscrit ! On te tient au courant.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ═══════════════════════════════════════════════════════
          SECTION 4 · COMMENT ÇA MARCHE
     ═══════════════════════════════════════════════════════ -->
-    <section class="px-6 py-16" style="background:#0E0E0E;">
-      <p class="text-center text-soft text-xs font-bold tracking-widest mb-3 reveal">3 ÉTAPES, ZÉRO PRISE DE TÊTE</p>
+    <section class="px-6 py-16" style="background:#101010;">
+      <p class="kicker text-center mb-3 reveal">3 étapes, zéro prise de tête</p>
       <h2 class="display-sm text-[2.1rem] text-center text-white mb-10 reveal">Comment ça marche</h2>
-
       <div class="timeline reveal">
         <div class="tl-step">
           <div class="tl-node">1</div>
-          <div class="tl-body">
-            <h3><span class="ic">📸</span> Envoie ton screenshot</h3>
-            <p>La conv qui te bloque, capturée en 1 clic.</p>
-          </div>
+          <div class="tl-body"><h3><span class="ic">📸</span> Envoie ton screenshot</h3><p>La conv qui te bloque, capturée en 1 clic.</p></div>
         </div>
         <div class="tl-step">
           <div class="tl-node">2</div>
-          <div class="tl-body">
-            <h3><span class="ic">🎚️</span> Choisis ton ton</h3>
-            <p>Classe, drôle ou spicy — selon ton match.</p>
-          </div>
+          <div class="tl-body"><h3><span class="ic">🎚️</span> Choisis ton ton</h3><p>Classe, drôle ou spicy — selon ton match.</p></div>
         </div>
         <div class="tl-step">
           <div class="tl-node">3</div>
-          <div class="tl-body">
-            <h3><span class="ic">🚀</span> Copie &amp; envoie</h3>
-            <p>3 réponses prêtes. Tu n'as plus qu'à choisir.</p>
-          </div>
+          <div class="tl-body"><h3><span class="ic">🚀</span> Copie &amp; envoie</h3><p>3 réponses prêtes. Tu n'as plus qu'à choisir.</p></div>
         </div>
       </div>
     </section>
@@ -497,26 +535,22 @@
     <!-- ═══════════════════════════════════════════════════════
          SECTION 5 · RÉASSURANCE + AVIS
     ═══════════════════════════════════════════════════════ -->
-    <section class="px-6 py-16" style="background:#141414;">
+    <section class="px-6 py-16" style="background:#0E0E0E;">
       <div class="feat-grid mb-12 reveal">
         <div class="feat-mini">
           <div class="ic" style="background:rgba(220,38,38,0.15);"><span style="font-size:.85rem;font-weight:800;color:#ef4444;">FR</span></div>
-          <h3>Fait en France</h3>
-          <p>Conçu &amp; hébergé en Europe 🇪🇺</p>
+          <h3>Fait en France</h3><p>Conçu &amp; hébergé en Europe 🇪🇺</p>
         </div>
         <div class="feat-mini">
           <div class="ic" style="background:rgba(255,92,0,0.12);">⚡</div>
-          <h3>Réponse en 3 sec</h3>
-          <p>IA ultra-rapide, zéro attente</p>
+          <h3>Réponse en 3 sec</h3><p>IA ultra-rapide, zéro attente</p>
         </div>
         <div class="feat-mini">
           <div class="ic" style="background:rgba(255,255,255,0.06);">🔒</div>
-          <h3>Zéro stockage</h3>
-          <p>Screenshot analysé puis effacé</p>
+          <h3>Zéro stockage</h3><p>Screenshot analysé puis effacé</p>
         </div>
       </div>
 
-      <!-- En-tête avis avec note globale -->
       <div class="flex items-center gap-4 mb-8 reveal">
         <div style="flex:1;height:1px;background:rgba(255,255,255,0.07);"></div>
         <span class="stars">★★★★★</span>
@@ -562,7 +596,7 @@
     <!-- ═══════════════════════════════════════════════════════
          SECTION 6 · FAQ
     ═══════════════════════════════════════════════════════ -->
-    <section class="px-6 py-16" style="background:#0E0E0E;">
+    <section class="px-6 py-16" style="background:#101010;">
       <h2 class="display-sm text-[2.1rem] text-center text-white mb-8 reveal">Questions fréquentes</h2>
       <div class="flex flex-col gap-3" id="faq">
         <div class="faq-item reveal">
@@ -579,57 +613,96 @@
         </div>
         <div class="faq-item reveal">
           <button class="faq-q">C'est dispo quand ?<span class="faq-chevron">+</span></button>
-          <div class="faq-a"><div class="faq-a-inner">Très bientôt. Laisse ton email ci-dessous : les inscrits de la liste d'attente y ont accès en premier.</div></div>
+          <div class="faq-a"><div class="faq-a-inner">Très bientôt. Laisse ton email ci-dessous : les inscrits de la liste d'attente y ont accès en premier, avec 2 analyses offertes.</div></div>
         </div>
       </div>
     </section>
 
 
     <!-- ═══════════════════════════════════════════════════════
-         SECTION 7 · CTA FINAL
+         SECTION 7 · CTA FINAL (+ rareté)
     ═══════════════════════════════════════════════════════ -->
-    <section id="cta" class="cta-section px-6 py-16 text-center">
+    <section id="cta" class="cta-section on-orange px-6 py-16 text-center">
       <span class="blob1"></span><span class="blob2"></span>
 
       <div class="mascotte-float mb-6 relative z-10">
         <img src="renard-removebg-preview.png" alt="Le renard Tacotac" class="w-24 mx-auto" style="filter:drop-shadow(0 6px 20px rgba(0,0,0,0.3));">
       </div>
 
-      <h2 class="display text-[3.1rem] text-white mb-5 relative z-10 reveal">Prêt pour<br>le lancement ?</h2>
-      <p class="text-white mb-8 leading-relaxed max-w-xs mx-auto relative z-10 reveal" style="opacity:.9;font-size:.98rem;">
-        Laisse ton email, on te prévient en premier dès l'ouverture.
+      <h2 class="display text-[3.1rem] text-white mb-4 relative z-10 reveal">Prêt pour<br>le lancement ?</h2>
+      <p class="text-white mb-6 leading-relaxed max-w-xs mx-auto relative z-10 reveal" style="opacity:.92;font-size:.98rem;">
+        Laisse ton email, on te prévient en premier dès l'ouverture — avec tes 2 analyses offertes 🎁
       </p>
 
-      <form id="waitlistForm" class="flex flex-col gap-3 max-w-sm mx-auto relative z-10 reveal">
-        <input type="email" id="emailInput" required placeholder="ton@email.fr" class="email-input">
-        <button type="submit" class="btn-white">Rejoindre la liste d'attente 🚀</button>
-      </form>
-
-      <p id="errorMsg" class="hidden mt-4 relative z-10" style="color:#fff;background:rgba(0,0,0,0.22);border-radius:12px;padding:10px 16px;font-size:.85rem;">
-        Une erreur est survenue, réessaie.
-      </p>
-
-      <div id="successBox" class="hidden relative z-10 mt-4" style="background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:20px;padding:24px;max-width:360px;margin:16px auto 0;">
-        <p style="font-size:1.6rem;margin-bottom:8px;">🎉</p>
-        <p class="text-white font-bold" style="font-size:1.05rem;">T'es sur la liste !</p>
-        <p class="text-white" style="opacity:.88;font-size:.88rem;margin-top:4px;">On te prévient dès le lancement. Prépare-toi 🌮</p>
+      <!-- Rareté -->
+      <div class="max-w-xs mx-auto mb-7 relative z-10 reveal">
+        <div class="flex justify-between text-white text-xs font-semibold mb-2" style="opacity:.9;">
+          <span>Places en accès anticipé</span><span>83%</span>
+        </div>
+        <div class="progress" data-progress="83"><i></i></div>
+        <p class="text-white text-[0.72rem] mt-2" style="opacity:.75;">Il ne reste que quelques places prioritaires.</p>
       </div>
 
-      <p class="relative z-10 mt-5" style="color:rgba(255,255,255,0.6);font-size:.75rem;">Tu seras prévenu en premier. Pas de spam.</p>
+      <div class="wl-wrap max-w-sm mx-auto relative z-10 reveal" data-source="cta-final">
+        <form class="flex flex-col gap-3" novalidate>
+          <input type="email" class="email-input" placeholder="ton@email.fr" aria-label="Ton adresse email" autocomplete="email" required>
+          <button type="submit" class="btn-white">Rejoindre la liste d'attente 🚀</button>
+        </form>
+        <p class="wl-error hidden mt-3" style="color:#fff;background:rgba(0,0,0,0.2);border-radius:12px;padding:8px 14px;"></p>
+        <div class="wl-success hidden mt-4">
+          <div class="wl-success-card">
+            <p style="font-size:1.6rem;margin-bottom:6px;">🎉</p>
+            <p class="text-white font-bold" style="font-size:1.05rem;">T'es sur la liste !</p>
+            <p class="text-white" style="opacity:.9;font-size:.88rem;margin-top:4px;">On te prévient dès le lancement. Prépare-toi 🦊</p>
+          </div>
+        </div>
+      </div>
+
+      <p class="relative z-10 mt-5" style="color:rgba(255,255,255,0.7);font-size:.75rem;">Tu seras prévenu en premier. Pas de spam, promis.</p>
     </section>
 
 
     <!-- ════════ FOOTER ════════ -->
-    <footer style="background:#0A0A0A;" class="text-center py-9 px-6">
+    <footer style="background:#080808;" class="text-center py-9 px-6">
       <img src="renard-removebg-preview.png" alt="" class="w-12 mx-auto mb-3 opacity-90">
       <p style="color:#444;font-size:.75rem;">© 2026 Tacotac · Fait avec ❤️ en France 🇫🇷</p>
     </footer>
 
   </div>
 
-  <!-- ════════ STICKY CTA (apparaît au scroll) ════════ -->
+
+  <!-- ════════ STICKY CTA BAS (mini formulaire) ════════ -->
   <div class="sticky-cta" id="stickyCta">
-    <a href="#cta">Tester gratuitement ⚡</a>
+    <div class="wl-wrap" data-source="sticky">
+      <form class="flex" novalidate>
+        <input type="email" class="mini-input" placeholder="Ton email pour l'accès prioritaire" aria-label="Ton adresse email" autocomplete="email" required>
+        <button type="submit" class="mini-btn" aria-label="Rejoindre">→</button>
+      </form>
+      <p class="wl-error hidden" style="color:#ffb4a0;font-size:.75rem;text-align:center;padding-top:6px;"></p>
+      <div class="wl-success hidden">🎉 T'es sur la liste !</div>
+    </div>
+  </div>
+
+
+  <!-- ════════ MODAL EXIT-INTENT ════════ -->
+  <div class="modal" id="wlModal">
+    <div class="modal-card">
+      <button class="modal-close" id="modalClose" aria-label="Fermer">✕</button>
+      <div class="mascotte-float mb-3"><img src="renard_dragueur-removebg-preview.png" alt="" style="height:120px;margin:0 auto;filter:drop-shadow(0 10px 24px rgba(0,0,0,0.4));"></div>
+      <h3 class="display-sm text-[1.7rem] text-white mb-2">Attends… 🦊</h3>
+      <p class="text-soft text-sm mb-5">Pars pas les mains vides. Rejoins la liste et débloque <span class="text-white font-semibold">2 analyses offertes</span> au lancement.</p>
+      <div class="wl-wrap" data-source="modal">
+        <form class="flex flex-col gap-3" novalidate>
+          <input type="email" class="input-dark" placeholder="ton@email.fr" aria-label="Ton adresse email" autocomplete="email" required>
+          <button type="submit" class="btn-primary">Je réserve ma place 🎁</button>
+        </form>
+        <p class="wl-error hidden mt-3"></p>
+        <div class="wl-success hidden mt-3">
+          <div class="wl-success-card"><p class="text-white font-bold text-sm">🎉 Parfait, t'es sur la liste !</p></div>
+        </div>
+      </div>
+      <p class="text-soft text-[0.7rem] mt-4">Sans carte bancaire · Zéro spam</p>
+    </div>
   </div>
 
 
@@ -637,13 +710,81 @@
        JAVASCRIPT
   ═══════════════════════════════════════════════════════ -->
   <script>
-    /* ════ SÉLECTEUR DE TON (glider + morph texte) ════ */
+    /* ════════ CONFIG ════════ */
+    const WEBHOOK = 'https://script.google.com/macros/s/AKfycbzuCip2KWPlPw7kudrsvP2DuZ94-W6yw6aJ7c_HiSFZysXaPfsvG57uq6lhDsDpGYudtw/exec';
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+    const store = {
+      get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+      set(k,v){ try { localStorage.setItem(k,v); } catch(e){} },
+    };
+    const isSubscribed = () => store.get('tt_subscribed') === '1';
+
+    /* ════════ ENVOI WAITLIST (webhook Apps Script) ════════ */
+    async function sendWaitlist(email, source){
+      const params = new URLSearchParams({ email, source: source || 'landing', timestamp: new Date().toISOString() });
+      // GET + no-cors : évite le 302 POST→GET de Apps Script (réponse opaque ignorée)
+      await fetch(WEBHOOK + '?' + params.toString(), { method: 'GET', mode: 'no-cors' });
+    }
+
+    /* ════════ CÂBLAGE GÉNÉRIQUE DES FORMULAIRES ════════ */
+    function wireForm(wrap){
+      const form    = wrap.querySelector('form');
+      if (!form) return;
+      const input   = form.querySelector('input[type=email]');
+      const btn     = form.querySelector('button');
+      const success = wrap.querySelector('.wl-success');
+      const errorEl = wrap.querySelector('.wl-error');
+      const source  = wrap.dataset.source || 'landing';
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (errorEl) errorEl.classList.add('hidden');
+        const email = (input.value || '').trim();
+        if (!EMAIL_RE.test(email)) {
+          if (errorEl){ errorEl.textContent = 'Entre un email valide 🙏'; errorEl.classList.remove('hidden'); }
+          input.focus();
+          return;
+        }
+        const orig = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = btn.classList.contains('mini-btn') ? '…' : 'Envoi en cours…';
+        try {
+          await sendWaitlist(email, source);
+          gtag('event', 'inscription_waitlist', { event_category: 'conversion', source: source });
+          store.set('tt_subscribed', '1');
+          form.classList.add('hidden');
+          if (success) success.classList.remove('hidden');
+          syncSubscribedUI();
+        } catch(err) {
+          btn.disabled = false;
+          btn.innerHTML = orig;
+          if (errorEl){ errorEl.textContent = 'Une erreur est survenue, réessaie.'; errorEl.classList.remove('hidden'); }
+        }
+      });
+    }
+    document.querySelectorAll('.wl-wrap').forEach(wireForm);
+
+    /* ════════ SYNC UI QUAND INSCRIT ════════ */
+    function syncSubscribedUI(){
+      if (!isSubscribed()) return;
+      document.querySelectorAll('.wl-wrap').forEach(w => {
+        const f = w.querySelector('form');
+        const s = w.querySelector('.wl-success');
+        if (f) f.classList.add('hidden');
+        if (s) s.classList.remove('hidden');
+      });
+      const sticky = document.getElementById('stickyCta');
+      if (sticky) sticky.classList.remove('show');
+      closeModal(true);
+    }
+
+    /* ════════ SÉLECTEUR DE TON (glider + morph + renard) ════════ */
     const reponses = {
       classe: "\"J'avais rien de prévu, mais là ça donne des idées. T'as un endroit en tête ?\"",
       drole:  "\"J'avais prévu rien d'intéressant, mais là ça change 👀 T'as une idée ?\"",
       spicy:  "\"Soirée libre… mais ça dépend de ce qu'on me propose 🌶️ T'as quoi en tête ?\"",
     };
-    // renard d'humeur par ton (tenue = mood)
     const foxes = {
       classe: 'renard_classe_lunette-removebg-preview.png',
       drole:  'renard_chill-removebg-preview.png',
@@ -659,7 +800,6 @@
     const glider    = document.getElementById('toneGlider');
     const toneFox   = document.getElementById('toneFox');
     const toneBtns  = document.querySelectorAll('.tone-btn');
-
     reponseEl.style.transition = 'opacity .25s ease, transform .25s ease';
 
     toneBtns.forEach(btn => {
@@ -668,8 +808,6 @@
         toneBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         glider.style.transform = `translateX(${btn.dataset.index * 100}%)`;
-
-        // morph texte
         reponseEl.style.opacity = '0';
         reponseEl.style.transform = 'translateY(6px)';
         setTimeout(() => {
@@ -677,18 +815,17 @@
           reponseEl.style.opacity = '1';
           reponseEl.style.transform = 'translateY(0)';
         }, 200);
-
-        // swap renard d'humeur
         toneFox.classList.add('swapping');
         setTimeout(() => {
           toneFox.src = foxes[tone];
           toneFox.alt = foxAlt[tone];
           toneFox.classList.remove('swapping');
         }, 220);
+        gtag('event', 'clic_ton_' + tone, { event_category: 'engagement' });
       });
     });
 
-    /* ════ BOUTON COPIER ════ */
+    /* ════════ BOUTON COPIER ════════ */
     const copyBtn = document.getElementById('copyBtn');
     copyBtn.addEventListener('click', async () => {
       const texte = reponseEl.textContent.replace(/^"|"$/g, '');
@@ -709,56 +846,24 @@
         copyBtn.style.color = '';
         copyBtn.style.borderColor = '';
       }, 2000);
+      gtag('event', 'copie_reponse', { event_category: 'engagement' });
     });
 
-    /* ════ FORMULAIRE WAITLIST ════ */
-    const form       = document.getElementById('waitlistForm');
-    const successBox = document.getElementById('successBox');
-    const errorMsg   = document.getElementById('errorMsg');
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      errorMsg.classList.add('hidden');
-      const email = document.getElementById('emailInput').value;
-      const submitBtn = form.querySelector('button[type=submit]');
-      submitBtn.textContent = 'Envoi en cours…';
-      submitBtn.disabled = true;
-      try {
-        // GET + URL params : évite le problème 302 POST→GET de Apps Script.
-        // no-cors = réponse opaque ignorée, mais la requête arrive bien au serveur.
-        const _params = new URLSearchParams({ email, source: 'landing', timestamp: new Date().toISOString() });
-        await fetch('https://script.google.com/macros/s/AKfycbzuCip2KWPlPw7kudrsvP2DuZ94-W6yw6aJ7c_HiSFZysXaPfsvG57uq6lhDsDpGYudtw/exec?' + _params.toString(), {
-          method: 'GET',
-          mode: 'no-cors',
-        });
-        form.classList.add('hidden');
-        successBox.classList.remove('hidden');
-      } catch {
-        submitBtn.textContent = "Rejoindre la liste d'attente 🚀";
-        submitBtn.disabled = false;
-        errorMsg.classList.remove('hidden');
-      }
-    });
-
-    /* ════ FAQ ACCORDÉON ════ */
+    /* ════════ FAQ ACCORDÉON ════════ */
     document.querySelectorAll('.faq-item').forEach(item => {
       const q = item.querySelector('.faq-q');
       const a = item.querySelector('.faq-a');
       q.addEventListener('click', () => {
         const isOpen = item.classList.contains('open');
-        // ferme tout
         document.querySelectorAll('.faq-item').forEach(i => {
           i.classList.remove('open');
           i.querySelector('.faq-a').style.maxHeight = null;
         });
-        if (!isOpen) {
-          item.classList.add('open');
-          a.style.maxHeight = a.scrollHeight + 'px';
-        }
+        if (!isOpen) { item.classList.add('open'); a.style.maxHeight = a.scrollHeight + 'px'; }
       });
     });
 
-    /* ════ PARALLAX MASCOTTE (souris) ════ */
+    /* ════════ PARALLAX MASCOTTE ════════ */
     const mascotte = document.getElementById('mascotteWrap');
     const hero = document.getElementById('hero');
     if (window.matchMedia('(pointer:fine)').matches) {
@@ -766,63 +871,85 @@
         const r = hero.getBoundingClientRect();
         const x = (e.clientX - r.left) / r.width - 0.5;
         const y = (e.clientY - r.top) / r.height - 0.5;
-        mascotte.style.transform = `translate(${x * 18}px, ${y * 14}px) rotate(${x * 5}deg)`;
+        mascotte.style.transform = `translate(${x * 16}px, ${y * 12}px) rotate(${x * 4}deg)`;
       });
       hero.addEventListener('mouseleave', () => { mascotte.style.transform = ''; });
     }
 
-    /* ════ COUNT-UP STATS ════ */
-    function animateCount(el) {
+    /* ════════ COUNT-UP + BARRE PROGRESSION ════════ */
+    function animateCount(el){
       const target = parseFloat(el.dataset.count);
       const prefix = el.dataset.prefix || '';
       const suffix = el.dataset.suffix || '';
       const dur = 1100; const start = performance.now();
-      function step(now) {
+      (function step(now){
         const p = Math.min((now - start) / dur, 1);
         const eased = 1 - Math.pow(1 - p, 3);
         el.textContent = prefix + Math.round(eased * target) + suffix;
         if (p < 1) requestAnimationFrame(step);
-      }
-      requestAnimationFrame(step);
+      })(performance.now());
     }
 
-    /* ════ SCROLL REVEAL + déclenche count-up ════ */
+    /* ════════ SCROLL REVEAL ════════ */
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add('visible');
           entry.target.querySelectorAll('[data-count]').forEach(animateCount);
+          const bar = entry.target.querySelector('.progress[data-progress] > i') ||
+                      (entry.target.matches('.progress[data-progress]') ? entry.target.firstElementChild : null);
+          const barWrap = entry.target.querySelector('.progress[data-progress]');
+          if (barWrap) barWrap.querySelector('i').style.width = barWrap.dataset.progress + '%';
           observer.unobserve(entry.target);
         }
       });
     }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-    /* ════ STICKY CTA (apparaît quand le hero sort) ════ */
-    const sticky = document.getElementById('stickyCta');
-    const ctaSection = document.getElementById('cta');
-    const heroObs = new IntersectionObserver((entries) => {
-      sticky.classList.toggle('show', !entries[0].isIntersecting);
-    }, { threshold: 0 });
-    heroObs.observe(hero);
-    // masque le sticky une fois arrivé au CTA final
-    new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) sticky.classList.remove('show');
-    }, { threshold: 0.2 }).observe(ctaSection);
+    /* ════════ NAV STICKY HAUT ════════ */
+    const siteNav = document.getElementById('siteNav');
+    window.addEventListener('scroll', () => {
+      siteNav.classList.toggle('show', window.scrollY > 480);
+    }, { passive: true });
 
-    /* ════ GOOGLE ANALYTICS EVENTS ════ */
-    document.querySelectorAll('.btn-primary, .sticky-cta a').forEach(el => {
+    /* ════════ STICKY CTA BAS ════════ */
+    const stickyEl = document.getElementById('stickyCta');
+    const ctaSection = document.getElementById('cta');
+    let heroOut = false, ctaIn = false;
+    function refreshSticky(){ stickyEl.classList.toggle('show', heroOut && !ctaIn && !isSubscribed()); }
+    new IntersectionObserver(([e]) => { heroOut = !e.isIntersecting; refreshSticky(); }, { threshold: 0 }).observe(hero);
+    new IntersectionObserver(([e]) => { ctaIn = e.isIntersecting; refreshSticky(); }, { threshold: 0.25 }).observe(ctaSection);
+
+    /* ════════ MODAL EXIT-INTENT ════════ */
+    const modal = document.getElementById('wlModal');
+    function openModal(){
+      if (isSubscribed() || store.get('tt_modal_seen') === '1') return;
+      store.set('tt_modal_seen', '1');
+      modal.classList.add('show');
+      gtag('event', 'ouverture_modal', { event_category: 'engagement' });
+    }
+    function closeModal(){ modal.classList.remove('show'); }
+    document.getElementById('modalClose').addEventListener('click', () => closeModal());
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+    // Déclencheurs : exit-intent desktop · délai 35s · scroll 65%
+    document.addEventListener('mouseout', (e) => { if (!e.relatedTarget && e.clientY <= 0) openModal(); });
+    setTimeout(openModal, 35000);
+    let scrollFired = false;
+    window.addEventListener('scroll', () => {
+      if (scrollFired) return;
+      const depth = (window.scrollY + window.innerHeight) / document.body.scrollHeight;
+      if (depth > 0.65) { scrollFired = true; openModal(); }
+    }, { passive: true });
+
+    /* ════════ GA · clics CTA ════════ */
+    document.querySelectorAll('.js-cta').forEach(el => {
       el.addEventListener('click', () => gtag('event', 'clic_cta', { event_category: 'engagement' }));
     });
-    document.getElementById('waitlistForm')?.addEventListener('submit', () => {
-      gtag('event', 'inscription_waitlist', { event_category: 'conversion' });
-    });
-    document.querySelectorAll('.tone-btn').forEach(btn => {
-      btn.addEventListener('click', () => gtag('event', 'clic_ton_' + btn.dataset.tone, { event_category: 'engagement' }));
-    });
-    document.getElementById('copyBtn')?.addEventListener('click', () => {
-      gtag('event', 'copie_reponse', { event_category: 'engagement' });
-    });
+
+    /* ════════ ÉTAT INITIAL SI DÉJÀ INSCRIT ════════ */
+    if (isSubscribed()) syncSubscribedUI();
   </script>
 
 </body>

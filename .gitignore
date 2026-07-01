@@ -11,3 +11,6 @@ Thumbs.db
 # Editeurs
 .vscode/
 .idea/
+
+# Config preview locale (non déployée)
+.claude/
