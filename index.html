@@ -7,7 +7,7 @@
   <!-- ════════════════════ SEO / META ════════════════════ -->
   <title>Tacotac — Coach dating IA français | 3 réponses parfaites en 3 sec</title>
   <meta name="description" content="Envoie ton screenshot de conv dating, Tacotac te sort 3 réponses parfaites : classe, drôle ou spicy. Rejoins la liste d'attente — accès prioritaire + 2 analyses offertes.">
-  <meta name="theme-color" content="#0E0E0E">
+  <meta name="theme-color" content="#F4EEE2">
 
   <meta property="og:type" content="website">
   <meta property="og:title" content="Tacotac — Coach dating IA français">
@@ -19,14 +19,11 @@
   <meta name="twitter:description" content="1 screenshot → 3 réponses qui claquent. Classe, drôle ou spicy.">
   <meta name="twitter:image" content="og-image.png">
 
-  <!-- Favicon emoji 🦊 -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦊</text></svg>">
 
   <!-- ════════════════════ FONTS ════════════════════ -->
-  <!-- Bricolage Grotesque = titres expressifs · Space Grotesk = body/UI -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700&f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
 
   <!-- ════════════════════ GOOGLE ANALYTICS ════════════════════ -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-14KLWFZXYY"></script>
@@ -37,919 +34,652 @@
     gtag('config', 'G-14KLWFZXYY');
   </script>
 
-  <!-- ════════════════════ TAILWIND ════════════════════ -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            grotesk: ['"Space Grotesk"', 'sans-serif'],
-            display: ['"Bricolage Grotesque"', '"Space Grotesk"', 'sans-serif'],
-          },
-          colors: {
-            orange: '#FF5C00',
-            'orange-soft': '#FF7A33',
-            charcoal: '#0E0E0E',
-            ink: '#080808',
-            card: '#1A1A1A',
-            soft: '#8A8A8A',
-            cream: '#F2EDE6',
-          },
-        },
-      },
-    };
-  </script>
-
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
-    body { font-family: 'Space Grotesk', sans-serif; background: #080808; overflow-x: hidden; }
-    ::selection { background: rgba(255,92,0,0.85); color: #fff; }
+    body { margin: 0; background: #17120E; font-family: 'General Sans', system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+    ::selection { background: #FF5A1F; color: #fff; }
 
-    /* grain filmique global (texture premium très subtile) */
-    body::after {
-      content:''; position:fixed; inset:0; z-index:3; pointer-events:none; opacity:.035;
-      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 220 220' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-      background-size:200px 200px;
-    }
+    @keyframes ttFloat { 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-9px); } }
+    @keyframes ttDot   { 0%,100%{ opacity:1; } 50%{ opacity:.3; } }
+    @keyframes ttSpin  { to{ transform:rotate(360deg); } }
 
-    /* ════════ TYPOGRAPHIE DISPLAY ════════ */
-    .display    { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; letter-spacing: -0.035em; line-height: 0.9; }
-    .display-sm { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: -0.025em; line-height: 0.95; }
-    .kicker { font-size:.72rem; font-weight:700; letter-spacing:.18em; color:#FF7A33; text-transform:uppercase; }
-
-    /* ════════ GRILLE DE FOND ════════ */
-    .grid-bg::before {
-      content: ''; position: absolute; inset: 0;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
-      background-size: 44px 44px;
-      -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 38%, #000 30%, transparent 80%);
-              mask-image: radial-gradient(ellipse 80% 60% at 50% 38%, #000 30%, transparent 80%);
-      pointer-events: none; z-index: 0;
-    }
-
-    /* ════════ AURORA GLOW MOUVANT (hero) ════════ */
-    .aurora { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
-    .aurora span { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.5; }
-    .aurora .a1 { width: 320px; height: 320px; background: #FF5C00; top: 8%;  left: -20%; animation: drift1 14s ease-in-out infinite; }
-    .aurora .a2 { width: 260px; height: 260px; background: #FF7A33; top: 40%; right: -25%; animation: drift2 18s ease-in-out infinite; }
-    .aurora .a3 { width: 280px; height: 280px; background: #B83E00; bottom: 0%; left: 30%; animation: drift3 16s ease-in-out infinite; }
-    @keyframes drift1 { 0%,100%{ transform: translate(0,0) scale(1);} 50%{ transform: translate(40px,30px) scale(1.15);} }
-    @keyframes drift2 { 0%,100%{ transform: translate(0,0) scale(1);} 50%{ transform: translate(-30px,40px) scale(0.9);} }
-    @keyframes drift3 { 0%,100%{ transform: translate(0,0) scale(1);} 50%{ transform: translate(20px,-30px) scale(1.1);} }
-
-    /* ════════ ANIMATIONS ════════ */
-    @keyframes fadeUp   { from{opacity:0; transform:translateY(28px);} to{opacity:1; transform:translateY(0);} }
-    @keyframes fadeIn   { from{opacity:0;} to{opacity:1;} }
-    @keyframes float    { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);} }
-    @keyframes pulseDot { 0%,100%{box-shadow:0 0 0 0 rgba(255,92,0,0.6);} 50%{box-shadow:0 0 0 5px rgba(255,92,0,0);} }
-    @keyframes bounceArrow { 0%,100%{transform:translateY(0); opacity:0.4;} 50%{transform:translateY(7px); opacity:1;} }
-    @keyframes shimmer  { 0%{background-position:-200% center;} 100%{background-position:200% center;} }
-    @keyframes glowPulse{ 0%,100%{box-shadow:0 0 28px 0 rgba(255,92,0,0.45),0 4px 18px rgba(255,92,0,0.3);} 50%{box-shadow:0 0 46px 6px rgba(255,92,0,0.6),0 6px 22px rgba(255,92,0,0.4);} }
-    @keyframes spinSlow { to { transform: rotate(360deg); } }
-    @keyframes ringPulse{ 0%,100%{transform:translate(-50%,-50%) scale(1); opacity:.65;} 50%{transform:translate(-50%,-50%) scale(1.06); opacity:1;} }
-
-    .anim-fade-up   { animation: fadeUp .8s cubic-bezier(.16,.84,.28,1.02) both; }
-    .anim-fade-in   { animation: fadeIn .7s ease both; }
-    .mascotte-float { animation: float 4.5s ease-in-out infinite; }
-    .btn-pulse      { animation: glowPulse 2.6s ease-in-out infinite; }
-    .arrow-bounce   { animation: bounceArrow 1.6s ease-in-out infinite; }
-    .delay-1{animation-delay:.10s;} .delay-2{animation-delay:.20s;} .delay-3{animation-delay:.30s;}
-    .delay-4{animation-delay:.40s;} .delay-5{animation-delay:.50s;} .delay-6{animation-delay:.65s;} .delay-7{animation-delay:.8s;}
-
-    /* ════════ TITRE GRADIENT SHIMMER ════════ */
-    .text-shine {
-      background: linear-gradient(100deg,#FF5C00 30%,#FFB07A 50%,#FF5C00 70%);
-      background-size: 200% auto;
-      -webkit-background-clip: text; background-clip: text;
-      -webkit-text-fill-color: transparent; color: transparent;
-      animation: shimmer 4s linear infinite;
-    }
-
-    /* ════════ HALO AUTOUR DU RENARD (rappel app) ════════ */
-    .fox-stage { position: relative; display:flex; justify-content:center; align-items:center; }
-    .fox-ring {
-      position:absolute; top:50%; left:50%; width:210px; height:210px;
-      transform:translate(-50%,-50%); border-radius:50%; pointer-events:none;
-      background:radial-gradient(circle, rgba(255,92,0,0.20), transparent 62%);
-    }
-    .fox-ring::before {
-      content:''; position:absolute; inset:0; border-radius:50%;
-      border:2px solid rgba(255,92,0,0.45);
-      box-shadow:0 0 40px rgba(255,92,0,0.35), inset 0 0 34px rgba(255,92,0,0.22);
-      animation:ringPulse 3.4s ease-in-out infinite;
-    }
-
-    /* ════════ BOUTONS ════════ */
-    .btn-primary {
-      position: relative; display:block; width:100%; padding:17px 30px; background:#FF5C00; color:#fff;
-      font-weight:700; font-size:1.05rem; letter-spacing:-0.01em; border-radius:100px; border:none;
-      cursor:pointer; text-align:center; text-decoration:none; overflow:hidden;
-      transition: transform .18s cubic-bezier(.22,.68,0,1.4), box-shadow .18s ease;
-    }
-    .btn-primary::after {
-      content:''; position:absolute; inset:0;
-      background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,0.25) 50%,transparent 60%);
-      background-size:200% auto; animation:shimmer 3s linear infinite;
-    }
-    .btn-primary:hover  { transform:scale(1.03); box-shadow:0 0 48px 6px rgba(255,92,0,0.6),0 8px 28px rgba(255,92,0,0.4); }
-    .btn-primary:active { transform:scale(0.97); }
-
-    .btn-white {
-      width:100%; padding:17px 32px; background:#fff; color:#FF5C00; font-weight:700; font-size:1rem;
-      letter-spacing:-0.01em; border-radius:100px; border:none; cursor:pointer;
-      box-shadow:0 6px 24px rgba(0,0,0,0.18);
-      transition: transform .18s cubic-bezier(.22,.68,0,1.4), box-shadow .18s;
-    }
-    .btn-white:hover  { transform:scale(1.03); box-shadow:0 10px 32px rgba(0,0,0,0.28); }
-    .btn-white:active { transform:scale(0.97); }
-    button:disabled { opacity:.75; cursor:default; transform:none !important; }
-
-    /* ════════ CHAMPS EMAIL ════════ */
-    .input-dark {
-      width:100%; background:rgba(255,255,255,0.05); border:1.5px solid rgba(255,255,255,0.14); color:#fff;
-      border-radius:100px; padding:16px 22px; font:500 1rem 'Space Grotesk',sans-serif; outline:none;
-      transition:border-color .2s, background .2s, box-shadow .2s;
-    }
-    .input-dark::placeholder { color:#6f6f6f; }
-    .input-dark:focus { border-color:#FF5C00; background:rgba(255,92,0,0.06); box-shadow:0 0 0 4px rgba(255,92,0,0.12); }
-
-    .email-input {
-      width:100%; background:rgba(255,255,255,0.22); border:1.5px solid rgba(255,255,255,0.32); color:#fff;
-      border-radius:100px; padding:16px 24px; font:500 1rem 'Space Grotesk',sans-serif; outline:none;
-      transition:background .2s, border-color .2s;
-    }
-    .email-input::placeholder { color:rgba(255,255,255,0.65); }
-    .email-input:focus { background:rgba(255,255,255,0.3); border-color:rgba(255,255,255,0.8); }
-
-    /* messages inline */
-    .wl-error { color:#ffb4a0; font-size:.8rem; }
-    .wl-success-card {
-      background:rgba(255,92,0,0.1); border:1px solid rgba(255,92,0,0.3); border-radius:18px; padding:20px;
-    }
-    .on-orange .wl-success-card { background:rgba(255,255,255,0.18); border-color:rgba(255,255,255,0.35); }
-
-    /* ════════ BADGE ════════ */
-    .badge {
-      display:inline-flex; align-items:center; gap:8px; border:1.5px solid rgba(255,92,0,0.45);
-      color:#FF7A33; font-size:.72rem; font-weight:600; letter-spacing:.02em; border-radius:100px;
-      padding:7px 16px; background:rgba(255,92,0,0.08); backdrop-filter: blur(4px);
-    }
-    .badge-dot { width:6px; height:6px; border-radius:50%; background:#FF5C00; animation:pulseDot 1.8s ease-in-out infinite; }
-
-    /* chips compatibilité */
-    .app-chip { font-size:.72rem; font-weight:600; color:#9A9A9A; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:100px; padding:5px 12px; }
-
-    /* ════════ STAT ════════ */
-    .stat-num { font-family:'Bricolage Grotesque',sans-serif; font-weight:800; letter-spacing:-0.03em; }
-
-    /* ════════ DÉMO ════════ */
-    .chat-left { align-self:flex-start; background:#fff; color:#111; border-radius:18px 18px 18px 4px; padding:10px 16px; font-size:.88rem; max-width:82%; box-shadow:0 2px 10px rgba(0,0,0,0.08); }
-    .chat-ghost { align-self:flex-end; background:rgba(0,0,0,0.05); color:#999; border-radius:18px 18px 4px 18px; padding:10px 16px; font-size:.88rem; max-width:82%; border:1.5px dashed rgba(0,0,0,0.15); }
-    .tone-track { display:flex; gap:6px; background:rgba(0,0,0,0.06); border-radius:100px; padding:5px; position:relative; }
-    .tone-btn { flex:1; position:relative; z-index:1; border-radius:100px; padding:11px 4px; font-size:.82rem; font-weight:600; border:none; cursor:pointer; color:#555; background:transparent; transition: color .25s ease, transform .15s ease; }
-    .tone-btn.active { color:#fff; }
-    .tone-btn:active { transform:scale(0.95); }
-    .tone-glider { position:absolute; top:5px; bottom:5px; left:5px; width:calc((100% - 10px)/3); background:#FF5C00; border-radius:100px; box-shadow:0 4px 16px rgba(255,92,0,0.45); z-index:0; transition: transform .35s cubic-bezier(.34,1.3,.4,1); }
-    .tone-fox { height:150px; width:auto; transition:opacity .3s ease, transform .35s cubic-bezier(.34,1.3,.4,1); filter:drop-shadow(0 12px 22px rgba(0,0,0,0.18)); }
-    .tone-fox.swapping { opacity:0; transform:translateY(10px) scale(.94); }
-    .reply-card { background:#0E0E0E; border-radius:24px; padding:20px; border:1px solid rgba(255,255,255,0.07); position:relative; overflow:hidden; }
-    .reply-card::before { content:''; position:absolute; top:-40%; right:-30%; width:200px; height:200px; border-radius:50%; background:radial-gradient(circle,rgba(255,92,0,0.18),transparent 70%); pointer-events:none; }
-    #reponse { font-style:italic; color:#fff; line-height:1.6; font-size:1.02rem; min-height:54px; }
-    .copy-btn { width:100%; padding:13px; background:rgba(255,92,0,0.12); color:#FF7A33; font-weight:600; font-size:.88rem; border-radius:14px; border:1px solid rgba(255,92,0,0.22); cursor:pointer; font-family:'Space Grotesk',sans-serif; transition: background .2s, transform .15s; }
-    .copy-btn:hover  { background:rgba(255,92,0,0.2); }
-    .copy-btn:active { transform:scale(0.97); }
-
-    /* ════════ TIMELINE ════════ */
-    .timeline { position:relative; }
-    .tl-step { position:relative; display:flex; gap:20px; padding-bottom:30px; }
-    .tl-step:last-child { padding-bottom:0; }
-    .tl-step::before { content:''; position:absolute; left:25px; top:54px; bottom:-2px; width:2px; background:linear-gradient(#FF5C00, rgba(255,92,0,0.08)); }
-    .tl-step:last-child::before { display:none; }
-    .tl-node { width:52px; height:52px; border-radius:50%; flex-shrink:0; position:relative; z-index:1; display:flex; align-items:center; justify-content:center; font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:1.3rem; color:#fff; background:linear-gradient(140deg,#FF7A33,#FF5C00); box-shadow:0 6px 20px rgba(255,92,0,0.4), inset 0 1px 0 rgba(255,255,255,0.25); }
-    .tl-body { padding-top:4px; }
-    .tl-body .ic { font-size:1.15rem; }
-    .tl-body h3 { font-weight:700; font-size:1.02rem; color:#fff; margin-bottom:3px; letter-spacing:-0.01em; }
-    .tl-body p  { color:#777; font-size:.85rem; line-height:1.5; }
-
-    /* ════════ GRILLE FEATURES ════════ */
-    .feat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
-    .feat-mini { background:#1A1A1A; border:1px solid rgba(255,255,255,0.06); border-radius:18px; padding:20px 10px 18px; text-align:center; position:relative; overflow:hidden; transition: transform .25s, border-color .25s, background .25s; }
-    .feat-mini::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,#FF5C00,transparent); opacity:0; transition:opacity .25s; }
-    .feat-mini:hover { transform:translateY(-4px); border-color:rgba(255,92,0,0.3); background:#1F1F1F; }
-    .feat-mini:hover::before { opacity:1; }
-    .feat-mini .ic { width:46px; height:46px; border-radius:14px; margin:0 auto 12px; display:flex; align-items:center; justify-content:center; font-size:1.25rem; }
-    .feat-mini h3 { font-weight:700; font-size:.82rem; color:#fff; line-height:1.2; }
-    .feat-mini p  { color:#777; font-size:.68rem; line-height:1.35; margin-top:4px; }
-
-    /* ════════ AVIS ════════ */
-    .review-card { background:#1A1A1A; border-radius:20px; padding:22px; border:1px solid rgba(255,255,255,0.05); transition: border-color .25s, transform .25s, box-shadow .25s; }
-    .review-card:hover { border-color:rgba(255,92,0,0.25); transform:translateY(-4px); box-shadow:0 16px 36px rgba(0,0,0,0.5); }
-    .stars { color:#FF5C00; font-size:.85rem; letter-spacing:1px; }
-
-    /* ════════ FAQ ════════ */
-    .faq-item { background:#1A1A1A; border:1px solid rgba(255,255,255,0.05); border-radius:18px; overflow:hidden; transition:border-color .25s; }
-    .faq-item.open { border-color:rgba(255,92,0,0.3); }
-    .faq-q { width:100%; display:flex; justify-content:space-between; align-items:center; gap:12px; padding:18px 20px; cursor:pointer; background:none; border:none; color:#fff; font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:.95rem; text-align:left; }
-    .faq-chevron { transition:transform .3s ease; color:#FF7A33; flex-shrink:0; }
-    .faq-item.open .faq-chevron { transform:rotate(45deg); }
-    .faq-a { max-height:0; overflow:hidden; transition:max-height .35s ease; }
-    .faq-a-inner { padding:0 20px 18px; color:#8A8A8A; font-size:.88rem; line-height:1.6; }
-
-    /* ════════ SECTION CTA ORANGE ════════ */
-    .cta-section { background:#FF5C00; position:relative; overflow:hidden; }
-    .cta-section .blob1 { position:absolute; top:-70px; left:50%; transform:translateX(-50%); width:300px; height:300px; border-radius:50%; background:rgba(255,255,255,0.10); pointer-events:none; animation:float 6s ease-in-out infinite; }
-    .cta-section .blob2 { position:absolute; bottom:-90px; right:-50px; width:220px; height:220px; border-radius:50%; background:rgba(0,0,0,0.07); pointer-events:none; }
-
-    /* barre de progression rareté */
-    .progress { height:8px; background:rgba(255,255,255,0.22); border-radius:100px; overflow:hidden; }
-    .progress > i { display:block; height:100%; width:0; background:#fff; border-radius:100px; transition:width 1.5s cubic-bezier(.16,.84,.28,1); }
-    .progress.dark { background:rgba(255,255,255,0.08); }
-    .progress.dark > i { background:linear-gradient(90deg,#FF7A33,#FF5C00); }
-
-    /* ════════ NAV STICKY HAUT ════════ */
-    .site-nav { position:fixed; top:0; left:0; right:0; z-index:60; transform:translateY(-100%); transition:transform .35s ease; }
-    .site-nav.show { transform:translateY(0); }
-    .site-nav .inner { max-width:480px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; padding:11px 18px; background:rgba(10,10,10,0.82); backdrop-filter:blur(12px); border-bottom:1px solid rgba(255,255,255,0.07); }
-    .nav-brand { display:flex; align-items:center; gap:8px; font-weight:700; font-size:.95rem; color:#fff; }
-    .nav-cta { background:#FF5C00; color:#fff; font-weight:700; font-size:.82rem; padding:9px 18px; border-radius:100px; text-decoration:none; box-shadow:0 0 20px rgba(255,92,0,0.35); transition:transform .15s; }
-    .nav-cta:active { transform:scale(0.95); }
-
-    /* ════════ STICKY CTA BAS (mini formulaire) ════════ */
-    .sticky-cta { position:fixed; left:0; right:0; bottom:0; z-index:50; max-width:480px; margin:0 auto; padding:12px 16px calc(12px + env(safe-area-inset-bottom)); background:rgba(10,10,10,0.9); backdrop-filter:blur(12px); border-top:1px solid rgba(255,255,255,0.08); transform:translateY(130%); transition:transform .4s cubic-bezier(.22,.68,0,1.1); }
-    .sticky-cta.show { transform:translateY(0); }
-    .sticky-cta form { display:flex; gap:8px; align-items:center; }
-    .mini-input { flex:1; min-width:0; background:rgba(255,255,255,0.08); border:1.5px solid rgba(255,255,255,0.16); color:#fff; border-radius:100px; padding:12px 18px; font:500 .92rem 'Space Grotesk',sans-serif; outline:none; }
-    .mini-input::placeholder { color:#888; }
-    .mini-input:focus { border-color:#FF5C00; }
-    .mini-btn { width:48px; height:48px; flex-shrink:0; background:#FF5C00; border:none; border-radius:50%; color:#fff; font-size:1.15rem; cursor:pointer; box-shadow:0 0 20px rgba(255,92,0,0.4); transition:transform .15s; }
-    .mini-btn:active { transform:scale(0.9); }
-    .sticky-cta .wl-success { color:#fff; text-align:center; font-size:.9rem; font-weight:600; padding:6px 0; }
-
-    /* ════════ MODAL EXIT-INTENT ════════ */
-    .modal { position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(0,0,0,0.72); backdrop-filter:blur(6px); opacity:0; visibility:hidden; transition:opacity .3s; }
-    .modal.show { opacity:1; visibility:visible; }
-    .modal-card { position:relative; width:100%; max-width:400px; background:#151515; border:1px solid rgba(255,92,0,0.28); border-radius:26px; padding:34px 26px 28px; text-align:center; transform:translateY(18px) scale(.96); transition:transform .4s cubic-bezier(.16,.84,.28,1.05); box-shadow:0 30px 80px rgba(0,0,0,0.65); }
-    .modal.show .modal-card { transform:none; }
-    .modal-close { position:absolute; top:14px; right:14px; width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,0.08); border:none; color:#aaa; font-size:1rem; cursor:pointer; transition:background .2s; }
-    .modal-close:hover { background:rgba(255,255,255,0.16); color:#fff; }
-
-    /* ════════ SCROLL REVEAL ════════ */
-    .reveal { opacity:0; transform:translateY(26px); transition:opacity .7s cubic-bezier(.16,.84,.28,1), transform .7s cubic-bezier(.16,.84,.28,1); }
-    .reveal.visible { opacity:1; transform:translateY(0); }
-
-    /* ════════ MOTION RÉDUIT ════════ */
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { animation:none !important; transition:none !important; }
-      .reveal { opacity:1; transform:none; }
-    }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
   </style>
 </head>
 
-<body class="text-white font-grotesk antialiased">
+<body>
 
   <!-- ════════ NAV STICKY HAUT ════════ -->
-  <header class="site-nav" id="siteNav">
-    <div class="inner">
-      <span class="nav-brand"><img src="renard-removebg-preview.png" alt="" style="width:26px;height:26px;object-fit:contain;"> Tacotac</span>
-      <a href="#cta" class="nav-cta js-cta">Rejoindre la liste</a>
+  <header id="tt-nav" style="position:fixed;top:0;left:0;right:0;z-index:60;transform:translateY(-100%);transition:transform .35s ease;">
+    <div style="max-width:460px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:11px 18px;background:rgba(23,18,14,0.88);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,0.08);">
+      <span style="display:flex;align-items:center;gap:9px;font-family:'Clash Display',sans-serif;font-weight:600;font-size:16px;color:#F4EEE2;letter-spacing:-0.01em;">
+        <img src="assets/fox_full.png" alt="" style="width:26px;height:26px;object-fit:contain;">
+        Tacotac
+      </span>
+      <a href="#tt-cta" class="js-cta" style="background:#FF5A1F;color:#fff;font-weight:600;font-size:13px;padding:9px 16px;border-radius:11px;text-decoration:none;">Rejoindre</a>
     </div>
   </header>
 
-  <div class="max-w-[480px] mx-auto relative">
+  <!-- ════════ COLONNE APP ════════ -->
+  <div style="max-width:460px;margin:0 auto;background:#F4EEE2;position:relative;box-shadow:0 0 90px rgba(0,0,0,0.5);overflow:hidden;">
 
-    <!-- ═══════════════════════════════════════════════════════
-         SECTION 1 · HERO (+ capture email above the fold)
-    ═══════════════════════════════════════════════════════ -->
-    <section id="hero" class="grid-bg relative px-6 pt-10 pb-14 flex flex-col items-center text-center overflow-hidden">
-      <div class="aurora"><span class="a1"></span><span class="a2"></span><span class="a3"></span></div>
-
+    <!-- ════════ HERO ════════ -->
+    <section style="position:relative;padding:52px 24px 46px;text-align:center;overflow:hidden;">
       <!-- Badge -->
-      <div class="badge anim-fade-in mb-7 z-10">
-        <span class="badge-dot"></span>
-        🇫🇷 Coach dating IA · Accès anticipé
+      <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(216,67,14,0.07);border:1px solid rgba(216,67,14,0.22);color:#C4400F;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;border-radius:999px;padding:7px 15px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#FF5A1F;animation:ttDot 1.8s ease-in-out infinite;"></span>
+        Coach dating IA · Accès anticipé
       </div>
 
-      <!-- Mascotte + halo (parallax + float) -->
-      <div id="mascotteWrap" class="fox-stage mascotte-float mb-6 z-10 anim-fade-in delay-1" style="will-change:transform;">
-        <span class="fox-ring"></span>
-        <img src="renard-removebg-preview.png" alt="Le renard Tacotac, bras croisés" class="w-32 relative z-10" style="filter:drop-shadow(0 10px 36px rgba(255,92,0,0.35));">
+      <!-- Mascotte -->
+      <div style="position:relative;margin:28px auto 20px;width:170px;">
+        <img src="assets/fox_full.png" alt="Le renard Tacotac, bras croisés" style="width:150px;display:block;margin:0 auto;position:relative;z-index:1;animation:ttFloat 5s ease-in-out infinite;filter:drop-shadow(0 14px 22px rgba(23,18,14,0.18));">
+        <div style="position:absolute;left:50%;bottom:-4px;transform:translateX(-50%);width:118px;height:15px;background:radial-gradient(ellipse,rgba(23,18,14,0.22),transparent 70%);filter:blur(3px);"></div>
       </div>
 
       <!-- H1 -->
-      <h1 class="display text-[60px] z-10 anim-fade-up delay-2 mb-4">
-        <span class="text-white">Fini de<br>sécher</span><br>
-        <span class="text-shine" style="filter:drop-shadow(0 0 36px rgba(255,92,0,0.35));">en DM</span>
+      <h1 style="font-family:'Clash Display',sans-serif;font-weight:700;font-size:clamp(46px,14vw,58px);line-height:0.94;letter-spacing:-0.03em;color:#17120E;margin:0 0 16px;">
+        Fini de sécher<br><span style="color:#FF5A1F;">en DM.</span>
       </h1>
 
       <!-- Sous-titre -->
-      <p class="text-soft text-[1.05rem] leading-relaxed mb-7 max-w-[300px] z-10 anim-fade-up delay-3">
-        Envoie 1 screenshot, reçois 3 réponses qui claquent.<br>
-        Classe, drôle ou spicy — <span class="text-white font-medium">en 3 secondes.</span>
+      <p style="font-size:16.5px;line-height:1.5;color:#8A7F70;max-width:312px;margin:0 auto 24px;">
+        Envoie 1 screenshot, reçois <span style="color:#17120E;font-weight:600;">3 réponses qui claquent</span>. Classe, drôle ou spicy — en 3 secondes.
       </p>
 
-      <!-- FORMULAIRE EMAIL (hero) -->
-      <div class="wl-wrap w-full max-w-xs z-10 anim-fade-up delay-4" data-source="hero">
-        <form class="flex flex-col gap-3" novalidate>
-          <input type="email" class="input-dark" placeholder="ton@email.fr" aria-label="Ton adresse email" autocomplete="email" required>
-          <button type="submit" class="btn-primary btn-pulse">Rejoindre la liste — gratuit 🚀</button>
+      <!-- Formulaire hero -->
+      <div data-wl="hero" style="max-width:332px;margin:0 auto;">
+        <form novalidate style="display:flex;flex-direction:column;gap:10px;">
+          <input id="hero-email" type="email" required placeholder="ton@email.fr" autocomplete="email" aria-label="Ton email"
+            style="width:100%;background:#FBF7EF;border:1.5px solid rgba(23,18,14,0.14);color:#17120E;border-radius:13px;padding:15px 18px;font:500 15px 'General Sans',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s;">
+          <button type="submit" class="btn-orange"
+            style="width:100%;padding:15px 24px;background:#FF5A1F;color:#fff;font-family:'General Sans',sans-serif;font-weight:600;font-size:16px;border:none;border-radius:13px;cursor:pointer;box-shadow:0 6px 18px rgba(216,67,14,0.28);transition:transform .15s ease,box-shadow .2s ease,filter .2s ease;">
+            Rejoindre la liste
+          </button>
         </form>
-        <p class="wl-error hidden mt-3"></p>
-        <div class="wl-success hidden mt-3">
-          <div class="wl-success-card">
-            <p class="text-xl mb-1">🎉</p>
-            <p class="text-white font-bold text-sm">C'est bon, t'es sur la liste !</p>
-            <p class="text-soft text-xs mt-1">On te prévient en premier dès l'ouverture.</p>
-          </div>
+        <p data-err style="display:none;color:#C4400F;font-size:13px;margin:10px 0 0;"></p>
+        <div data-success style="display:none;margin-top:12px;background:rgba(255,90,31,0.09);border:1px solid rgba(216,67,14,0.25);border-radius:14px;padding:16px;text-align:center;">
+          <p style="margin:0;color:#17120E;font-weight:600;font-size:14px;">C'est bon, tu es sur la liste.</p>
+          <p style="margin:5px 0 0;color:#8A7F70;font-size:12.5px;">On te prévient en premier dès l'ouverture.</p>
         </div>
-        <p class="text-soft text-xs mt-4 opacity-70">🎁 2 analyses offertes · Sans carte bancaire · Zéro spam</p>
+        <div style="margin:14px 0 0;color:#8A7F70;font-size:12px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
+          <span><span style="color:#C4400F;">✓</span> 2 analyses offertes</span>
+          <span><span style="color:#C4400F;">✓</span> Sans carte</span>
+          <span><span style="color:#C4400F;">✓</span> Zéro spam</span>
+        </div>
       </div>
 
       <!-- Preuve sociale -->
-      <div class="flex items-center justify-center gap-3 mt-7 z-10 anim-fade-up delay-5">
-        <div class="flex -space-x-2.5">
-          <span class="w-7 h-7 rounded-full border-2 border-charcoal flex items-center justify-center text-[10px] font-bold text-white" style="background:linear-gradient(135deg,#7c3aed,#a855f7);">T</span>
-          <span class="w-7 h-7 rounded-full border-2 border-charcoal flex items-center justify-center text-[10px] font-bold text-white" style="background:linear-gradient(135deg,#059669,#10b981);">K</span>
-          <span class="w-7 h-7 rounded-full border-2 border-charcoal flex items-center justify-center text-[10px] font-bold text-white" style="background:linear-gradient(135deg,#d97706,#f59e0b);">A</span>
-          <span class="w-7 h-7 rounded-full border-2 border-charcoal flex items-center justify-center text-[10px] font-bold text-white" style="background:linear-gradient(135deg,#FF5C00,#FF7A33);">+</span>
+      <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:28px;">
+        <div style="display:flex;">
+          <span style="width:28px;height:28px;border-radius:50%;border:2px solid #F4EEE2;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;background:linear-gradient(135deg,#7c3aed,#a855f7);">T</span>
+          <span style="width:28px;height:28px;border-radius:50%;border:2px solid #F4EEE2;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;background:linear-gradient(135deg,#059669,#10b981);margin-left:-9px;">K</span>
+          <span style="width:28px;height:28px;border-radius:50%;border:2px solid #F4EEE2;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;background:linear-gradient(135deg,#d97706,#f59e0b);margin-left:-9px;">A</span>
+          <span style="width:28px;height:28px;border-radius:50%;border:2px solid #F4EEE2;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;background:#FF5A1F;margin-left:-9px;">+</span>
         </div>
-        <div class="text-left">
-          <div class="stars text-xs">★★★★★</div>
-          <p class="text-soft text-[0.7rem]">+1 200 déjà sur la liste</p>
+        <div style="text-align:left;">
+          <div style="color:#FF5A1F;font-size:13px;letter-spacing:1.5px;">★★★★★</div>
+          <p style="margin:2px 0 0;color:#8A7F70;font-size:12px;">+1 200 déjà inscrits</p>
         </div>
       </div>
 
       <!-- Chips compatibilité -->
-      <div class="flex flex-wrap items-center justify-center gap-2 mt-6 z-10 anim-fade-up delay-6">
-        <span class="text-soft text-[0.68rem] mr-1">Compatible</span>
-        <span class="app-chip">Tinder</span>
-        <span class="app-chip">Hinge</span>
-        <span class="app-chip">Bumble</span>
-        <span class="app-chip">Insta</span>
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:7px;margin-top:22px;">
+        <span style="color:#8A7F70;font-size:12px;margin-right:2px;">Compatible</span>
+        <span style="background:rgba(23,18,14,0.05);border:1px solid rgba(23,18,14,0.09);color:#6B6153;font-size:12px;font-weight:600;border-radius:999px;padding:5px 12px;">Tinder</span>
+        <span style="background:rgba(23,18,14,0.05);border:1px solid rgba(23,18,14,0.09);color:#6B6153;font-size:12px;font-weight:600;border-radius:999px;padding:5px 12px;">Hinge</span>
+        <span style="background:rgba(23,18,14,0.05);border:1px solid rgba(23,18,14,0.09);color:#6B6153;font-size:12px;font-weight:600;border-radius:999px;padding:5px 12px;">Bumble</span>
+        <span style="background:rgba(23,18,14,0.05);border:1px solid rgba(23,18,14,0.09);color:#6B6153;font-size:12px;font-weight:600;border-radius:999px;padding:5px 12px;">Instagram</span>
       </div>
-
-      <!-- Flèche vers démo -->
-      <a href="#demo" class="js-cta mt-9 z-10 arrow-bounce anim-fade-in delay-7" aria-label="Voir la démo">
-        <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
-          <path d="M10 4v12M4 10l6 6 6-6" stroke="#8A8A8A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </a>
     </section>
 
-
-    <!-- ═══════════════════════════════════════════════════════
-         SECTION 2 · STATS (count-up)
-    ═══════════════════════════════════════════════════════ -->
-    <section class="px-6 py-7" style="background:#101010; border-top:1px solid rgba(255,255,255,0.05); border-bottom:1px solid rgba(255,255,255,0.05);">
-      <div class="grid grid-cols-3 gap-2 text-center reveal">
-        <div>
-          <p class="stat-num text-orange text-[1.7rem]" data-count="3" data-prefix="×">×3</p>
-          <p class="text-soft text-[0.7rem] mt-1">options par screen</p>
+    <!-- ════════ STATS ════════ -->
+    <section style="background:#17120E;padding:30px 20px;">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);text-align:center;">
+        <div style="padding:0 6px;">
+          <p data-count="3" data-prefix="×" style="font-family:'Clash Display',sans-serif;font-weight:700;font-size:30px;letter-spacing:-0.02em;color:#FF5A1F;margin:0;">×3</p>
+          <p style="margin:5px 0 0;color:#9C9082;font-size:11.5px;line-height:1.3;">options par message</p>
         </div>
-        <div style="border-left:1px solid rgba(255,255,255,0.07); border-right:1px solid rgba(255,255,255,0.07);">
-          <p class="stat-num text-orange text-[1.7rem]" data-count="3" data-suffix="s">3s</p>
-          <p class="text-soft text-[0.7rem] mt-1">par réponse</p>
+        <div style="padding:0 6px;border-left:1px solid rgba(255,255,255,0.08);border-right:1px solid rgba(255,255,255,0.08);">
+          <p data-count="3" data-suffix="s" style="font-family:'Clash Display',sans-serif;font-weight:700;font-size:30px;letter-spacing:-0.02em;color:#FF5A1F;margin:0;">3s</p>
+          <p style="margin:5px 0 0;color:#9C9082;font-size:11.5px;line-height:1.3;">par réponse</p>
         </div>
-        <div>
-          <p class="stat-num text-orange text-[1.7rem]" data-count="100" data-suffix="%">100%</p>
-          <p class="text-soft text-[0.7rem] mt-1">privé</p>
+        <div style="padding:0 6px;">
+          <p data-count="100" data-suffix="%" style="font-family:'Clash Display',sans-serif;font-weight:700;font-size:30px;letter-spacing:-0.02em;color:#FF5A1F;margin:0;">100%</p>
+          <p style="margin:5px 0 0;color:#9C9082;font-size:11.5px;line-height:1.3;">privé</p>
         </div>
       </div>
     </section>
 
+    <!-- ════════ DÉMO INTERACTIVE ════════ -->
+    <section style="background:#F4EEE2;padding:56px 24px;">
+      <p data-reveal style="text-align:center;font-size:11px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:#C4400F;margin:0 0 10px;">Démo interactive</p>
+      <h2 data-reveal style="font-family:'Clash Display',sans-serif;font-weight:600;font-size:clamp(30px,8vw,38px);line-height:1.02;letter-spacing:-0.02em;color:#17120E;text-align:center;margin:0 0 8px;">D'un screenshot<br>à la bonne réponse</h2>
+      <p data-reveal style="text-align:center;color:#8A7F70;font-size:14px;margin:0 0 30px;">Change le ton, regarde le renard s'adapter.</p>
 
-    <!-- ═══════════════════════════════════════════════════════
-         SECTION 3 · DÉMO
-    ═══════════════════════════════════════════════════════ -->
-    <section id="demo" class="px-6 py-16" style="background:#F2EDE6;">
-      <div class="flex justify-center mb-6 reveal">
-        <span style="background:#FF5C00;color:#fff;font-size:.72rem;font-weight:700;border-radius:100px;padding:6px 18px;letter-spacing:.08em;">DÉMO INTERACTIVE</span>
-      </div>
-
-      <h2 class="display-sm text-[2.4rem] text-center mb-3 reveal" style="color:#111;">
-        D'un screenshot<br>à la bonne réponse
-      </h2>
-      <p class="text-center mb-10 reveal" style="color:#8a7f70;font-size:.9rem;">Change le ton et regarde le renard s'adapter 👇</p>
-
-      <!-- AVANT -->
-      <p style="color:#999;font-size:.72rem;font-weight:700;letter-spacing:.12em;" class="mb-3 reveal">AVANT 😬</p>
-      <div class="bg-white rounded-3xl p-5 mb-6 reveal" style="box-shadow:0 8px 30px rgba(0,0,0,0.08);">
-        <div class="flex items-center gap-3 pb-4 mb-4" style="border-bottom:1px solid #f0f0f0;">
-          <div class="w-11 h-11 rounded-full flex items-center justify-center text-white text-lg flex-shrink-0" style="background:linear-gradient(135deg,#f472b6,#e11d48);">✦</div>
-          <div class="text-left">
-            <p class="font-bold text-sm leading-tight" style="color:#111;">Sophie</p>
-            <p style="color:#aaa;font-size:.72rem;">En ligne il y a 2h</p>
+      <!-- Carte avant -->
+      <div data-reveal style="background:#fff;border-radius:22px;padding:18px;box-shadow:0 12px 34px rgba(23,18,14,0.10);border:1px solid rgba(23,18,14,0.05);margin-bottom:22px;">
+        <div style="display:flex;align-items:center;gap:12px;padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid #f1eef0;">
+          <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#f472b6,#e11d48);flex-shrink:0;"></div>
+          <div>
+            <p style="margin:0;font-weight:600;font-size:14px;color:#17120E;">Sophie</p>
+            <p style="margin:1px 0 0;color:#b3aca4;font-size:12px;">En ligne il y a 2h</p>
           </div>
-          <div class="ml-auto w-2 h-2 rounded-full bg-green-400"></div>
+          <span style="margin-left:auto;width:8px;height:8px;border-radius:50%;background:#22c55e;"></span>
         </div>
-        <div class="flex flex-col gap-3">
-          <div class="chat-left">Haha t'es vraiment trop 🤣</div>
-          <div class="chat-left">Tu fais quoi ce week-end ? 😊</div>
-          <div class="chat-ghost">Hm… je réponds quoi là ? 🥲</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="align-self:flex-start;background:#f3f0ec;color:#2a2620;border-radius:16px 16px 16px 5px;padding:9px 14px;font-size:13.5px;max-width:84%;">Haha t'es vraiment trop</div>
+          <div style="align-self:flex-start;background:#f3f0ec;color:#2a2620;border-radius:16px 16px 16px 5px;padding:9px 14px;font-size:13.5px;max-width:84%;">Tu fais quoi ce week-end ?</div>
+          <div style="align-self:flex-end;background:#fff;color:#c7bfb6;border:1.5px dashed rgba(23,18,14,0.16);border-radius:16px 16px 5px 16px;padding:9px 14px;font-size:13.5px;max-width:84%;">Hm… je réponds quoi là ?</div>
         </div>
-        <p style="color:#bbb;font-size:.7rem;text-align:right;margin-top:10px;">Vu ✓✓ · Il y a 2h</p>
       </div>
 
-      <!-- Transition -->
-      <div class="reveal mb-6 flex items-center justify-center gap-2" style="background:rgba(255,92,0,0.08);border:1px solid rgba(255,92,0,0.18);border-radius:100px;padding:12px 20px;color:#FF5C00;font-size:.85rem;font-weight:600;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="animation:spinSlow 2s linear infinite;"><path d="M12 3a9 9 0 1 0 9 9" stroke="#FF5C00" stroke-width="2.5" stroke-linecap="round"/></svg>
-        🦊 Tacotac analyse · 3 options générées
+      <!-- Bandeau analyse -->
+      <div data-reveal style="display:flex;align-items:center;justify-content:center;gap:9px;background:rgba(255,90,31,0.07);border:1px solid rgba(216,67,14,0.16);border-radius:999px;padding:10px 18px;color:#C4400F;font-size:13px;font-weight:600;margin-bottom:22px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="animation:ttSpin 1.6s linear infinite;"><path d="M12 3a9 9 0 1 0 9 9" stroke="#C4400F" stroke-width="2.6" stroke-linecap="round"/></svg>
+        Tacotac analyse · 3 options générées
       </div>
 
-      <!-- APRÈS -->
-      <p style="color:#999;font-size:.72rem;font-weight:700;letter-spacing:.12em;" class="mb-3 reveal">APRÈS ✨</p>
-      <div class="tone-track mb-4 reveal">
-        <span class="tone-glider" id="toneGlider" style="transform:translateX(100%);"></span>
-        <button class="tone-btn" data-tone="classe" data-index="0">🎩 Classe</button>
-        <button class="tone-btn active" data-tone="drole" data-index="1">😂 Drôle</button>
-        <button class="tone-btn" data-tone="spicy" data-index="2">🌶️ Spicy</button>
+      <!-- Sélecteur de ton -->
+      <div data-reveal style="position:relative;display:flex;gap:6px;background:rgba(23,18,14,0.06);border-radius:14px;padding:5px;margin-bottom:18px;">
+        <span id="tt-glider" style="position:absolute;top:5px;bottom:5px;left:5px;width:calc((100% - 10px)/3);background:#FF5A1F;border-radius:10px;box-shadow:0 4px 14px rgba(216,67,14,0.4);transition:transform .35s cubic-bezier(.34,1.3,.4,1);transform:translateX(100%);z-index:0;"></span>
+        <button class="tt-tone" data-index="0" data-fox="assets/fox_classe.png" data-reply="J'avais rien de prévu, mais là ça donne des idées. T'as un endroit en tête ?"
+          style="flex:1;position:relative;z-index:1;border:none;background:transparent;border-radius:10px;padding:11px 4px;font:600 13.5px 'General Sans',sans-serif;cursor:pointer;color:#8A7F70;transition:color .25s;">🎩 Classe</button>
+        <button class="tt-tone" data-index="1" data-fox="assets/fox_chill.png" data-reply="J'avais prévu rien d'intéressant, mais là ça change. T'as une idée ?"
+          style="flex:1;position:relative;z-index:1;border:none;background:transparent;border-radius:10px;padding:11px 4px;font:600 13.5px 'General Sans',sans-serif;cursor:pointer;color:#fff;transition:color .25s;">😏 Drôle</button>
+        <button class="tt-tone" data-index="2" data-fox="assets/fox_spicy.png" data-reply="Soirée libre… mais ça dépend de ce qu'on me propose. T'as quoi en tête ?"
+          style="flex:1;position:relative;z-index:1;border:none;background:transparent;border-radius:10px;padding:11px 4px;font:600 13.5px 'General Sans',sans-serif;cursor:pointer;color:#8A7F70;transition:color .25s;">🌶 Spicy</button>
       </div>
 
-      <div class="flex justify-center mb-2 reveal">
-        <img id="toneFox" class="tone-fox" src="renard_chill-removebg-preview.png" alt="Le renard Tacotac, mood drôle">
+      <!-- Renard démo -->
+      <div data-reveal style="display:flex;justify-content:center;margin-bottom:8px;">
+        <img id="tt-fox" src="assets/fox_chill.png" alt="Le renard Tacotac" style="height:150px;width:auto;filter:drop-shadow(0 12px 20px rgba(23,18,14,0.16));transition:opacity .25s,transform .3s cubic-bezier(.34,1.3,.4,1);">
       </div>
 
-      <div class="reply-card reveal">
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-xl flex items-center justify-center text-sm overflow-hidden" style="background:#FF5C00;"><img src="renard-removebg-preview.png" alt="" style="width:100%;height:100%;object-fit:contain;"></div>
-            <span style="color:#fff;font-size:.85rem;font-weight:600;">Tacotac suggère</span>
+      <!-- Carte réponse -->
+      <div data-reveal style="background:#17120E;border-radius:22px;padding:20px;border:1px solid rgba(255,255,255,0.06);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:9px;">
+            <div style="width:30px;height:30px;border-radius:9px;background:#FF5A1F;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+              <img src="assets/fox_full.png" alt="" style="width:100%;height:100%;object-fit:contain;">
+            </div>
+            <span style="color:#F4EEE2;font-size:14px;font-weight:600;">Tacotac suggère</span>
           </div>
-          <span style="color:#444;font-size:1.1rem;letter-spacing:2px;">···</span>
+          <span style="color:#5C5348;font-size:18px;letter-spacing:2px;">···</span>
         </div>
-        <p id="reponse" class="mb-5">"J'avais prévu rien d'intéressant, mais là ça change 👀 T'as une idée ?"</p>
-        <button id="copyBtn" class="copy-btn">📋 Copier la réponse</button>
+        <p id="tt-reply" style="font-style:italic;color:#F4EEE2;line-height:1.6;font-size:16px;margin:0 0 16px;transition:opacity .2s;">« J'avais prévu rien d'intéressant, mais là ça change. T'as une idée ? »</p>
+        <button id="tt-copy"
+          style="width:100%;padding:12px;background:rgba(255,90,31,0.12);color:#FF7A45;font-weight:600;font-size:14px;border-radius:11px;border:1px solid rgba(255,90,31,0.25);cursor:pointer;font-family:'General Sans',sans-serif;transition:background .2s;">
+          Copier la réponse
+        </button>
       </div>
     </section>
 
-
-    <!-- ═══════════════════════════════════════════════════════
-         SECTION 3b · CAPTURE APRÈS DÉMO (forte intention)
-    ═══════════════════════════════════════════════════════ -->
-    <section class="px-6 py-14 relative overflow-hidden" style="background:#0E0E0E; border-top:1px solid rgba(255,255,255,0.05);">
-      <div class="reveal text-center">
-        <h2 class="display-sm text-[1.9rem] text-white mb-2">Ça te parle ? 👀</h2>
-        <p class="text-soft text-sm mb-6 max-w-xs mx-auto">Rejoins la liste et sois parmi les premiers à sécher plus jamais.</p>
-        <div class="wl-wrap max-w-xs mx-auto" data-source="post-demo">
-          <form class="flex flex-col gap-3" novalidate>
-            <input type="email" class="input-dark" placeholder="ton@email.fr" aria-label="Ton adresse email" autocomplete="email" required>
-            <button type="submit" class="btn-primary">Je veux l'accès en avant-première ⚡</button>
+    <!-- ════════ CAPTURE POST-DÉMO ════════ -->
+    <section style="background:#17120E;padding:48px 24px;">
+      <div data-reveal style="text-align:center;">
+        <h2 style="font-family:'Clash Display',sans-serif;font-weight:600;font-size:28px;letter-spacing:-0.02em;color:#F4EEE2;margin:0 0 8px;">Ça te parle ?</h2>
+        <p style="color:#9C9082;font-size:14px;margin:0 auto 22px;max-width:300px;">Rejoins la liste et sois parmi les premiers à ne plus jamais sécher.</p>
+        <div data-wl="post-demo" style="max-width:332px;margin:0 auto;">
+          <form novalidate style="display:flex;flex-direction:column;gap:10px;">
+            <input type="email" required placeholder="ton@email.fr" autocomplete="email" aria-label="Ton email"
+              style="width:100%;background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.14);color:#fff;border-radius:13px;padding:15px 18px;font:500 15px 'General Sans',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s;">
+            <button type="submit" class="btn-orange"
+              style="width:100%;padding:15px 24px;background:#FF5A1F;color:#fff;font-family:'General Sans',sans-serif;font-weight:600;font-size:16px;border:none;border-radius:13px;cursor:pointer;box-shadow:0 6px 18px rgba(216,67,14,0.3);transition:transform .15s,box-shadow .2s,filter .2s;">
+              Je veux l'accès en avant-première
+            </button>
           </form>
-          <p class="wl-error hidden mt-3"></p>
-          <div class="wl-success hidden mt-3">
-            <div class="wl-success-card">
-              <p class="text-white font-bold text-sm">🎉 Inscrit ! On te tient au courant.</p>
-            </div>
+          <p data-err style="display:none;color:#FF9A78;font-size:13px;margin:10px 0 0;"></p>
+          <div data-success style="display:none;margin-top:12px;background:rgba(255,90,31,0.12);border:1px solid rgba(255,90,31,0.3);border-radius:14px;padding:16px;">
+            <p style="margin:0;color:#fff;font-weight:600;font-size:14px;">Inscrit — on te tient au courant.</p>
           </div>
         </div>
       </div>
     </section>
 
-
-    <!-- ═══════════════════════════════════════════════════════
-         SECTION 4 · COMMENT ÇA MARCHE
-    ═══════════════════════════════════════════════════════ -->
-    <section class="px-6 py-16" style="background:#101010;">
-      <p class="kicker text-center mb-3 reveal">3 étapes, zéro prise de tête</p>
-      <h2 class="display-sm text-[2.1rem] text-center text-white mb-10 reveal">Comment ça marche</h2>
-      <div class="timeline reveal">
-        <div class="tl-step">
-          <div class="tl-node">1</div>
-          <div class="tl-body"><h3><span class="ic">📸</span> Envoie ton screenshot</h3><p>La conv qui te bloque, capturée en 1 clic.</p></div>
+    <!-- ════════ COMMENT ÇA MARCHE ════════ -->
+    <section style="background:#F4EEE2;padding:56px 24px;">
+      <p data-reveal style="text-align:center;font-size:11px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:#C4400F;margin:0 0 10px;">En 3 étapes</p>
+      <h2 data-reveal style="font-family:'Clash Display',sans-serif;font-weight:600;font-size:clamp(30px,8vw,36px);letter-spacing:-0.02em;color:#17120E;text-align:center;margin:0;">Comment ça marche</h2>
+      <div data-reveal style="display:flex;flex-direction:column;gap:24px;max-width:360px;margin:34px auto 0;">
+        <div style="display:flex;gap:18px;align-items:flex-start;">
+          <span style="font-family:'Clash Display',sans-serif;font-weight:700;font-size:34px;color:#FF5A1F;line-height:1;min-width:40px;">01</span>
+          <div>
+            <h3 style="font-weight:600;font-size:16px;color:#17120E;margin:2px 0 3px;">Envoie ton screenshot</h3>
+            <p style="color:#8A7F70;font-size:13.5px;line-height:1.5;margin:0;">La conv qui te bloque, capturée en 1 clic.</p>
+          </div>
         </div>
-        <div class="tl-step">
-          <div class="tl-node">2</div>
-          <div class="tl-body"><h3><span class="ic">🎚️</span> Choisis ton ton</h3><p>Classe, drôle ou spicy — selon ton match.</p></div>
+        <div style="display:flex;gap:18px;align-items:flex-start;">
+          <span style="font-family:'Clash Display',sans-serif;font-weight:700;font-size:34px;color:#FF5A1F;line-height:1;min-width:40px;">02</span>
+          <div>
+            <h3 style="font-weight:600;font-size:16px;color:#17120E;margin:2px 0 3px;">Choisis ton ton</h3>
+            <p style="color:#8A7F70;font-size:13.5px;line-height:1.5;margin:0;">Classe, drôle ou spicy — selon ton match.</p>
+          </div>
         </div>
-        <div class="tl-step">
-          <div class="tl-node">3</div>
-          <div class="tl-body"><h3><span class="ic">🚀</span> Copie &amp; envoie</h3><p>3 réponses prêtes. Tu n'as plus qu'à choisir.</p></div>
+        <div style="display:flex;gap:18px;align-items:flex-start;">
+          <span style="font-family:'Clash Display',sans-serif;font-weight:700;font-size:34px;color:#FF5A1F;line-height:1;min-width:40px;">03</span>
+          <div>
+            <h3 style="font-weight:600;font-size:16px;color:#17120E;margin:2px 0 3px;">Copie &amp; envoie</h3>
+            <p style="color:#8A7F70;font-size:13.5px;line-height:1.5;margin:0;">3 réponses prêtes. Tu n'as plus qu'à choisir.</p>
+          </div>
         </div>
       </div>
     </section>
 
-
-    <!-- ═══════════════════════════════════════════════════════
-         SECTION 5 · RÉASSURANCE + AVIS
-    ═══════════════════════════════════════════════════════ -->
-    <section class="px-6 py-16" style="background:#0E0E0E;">
-      <div class="feat-grid mb-12 reveal">
-        <div class="feat-mini">
-          <div class="ic" style="background:rgba(220,38,38,0.15);"><span style="font-size:.85rem;font-weight:800;color:#ef4444;">FR</span></div>
-          <h3>Fait en France</h3><p>Conçu &amp; hébergé en Europe 🇪🇺</p>
+    <!-- ════════ AVIS + RÉASSURANCE ════════ -->
+    <section style="background:#17120E;padding:56px 24px;">
+      <!-- Mini-cartes réassurance -->
+      <div data-reveal style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:36px;">
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px 8px;text-align:center;">
+          <div style="width:34px;height:34px;border-radius:10px;background:rgba(255,90,31,0.14);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:11px;font-weight:700;color:#FF7A45;">FR</div>
+          <h3 style="font-weight:600;font-size:12.5px;color:#F4EEE2;margin:0;line-height:1.2;">Fait en France</h3>
+          <p style="color:#8A7C70;font-size:11px;margin:3px 0 0;line-height:1.3;">Conçu &amp; hébergé en Europe</p>
         </div>
-        <div class="feat-mini">
-          <div class="ic" style="background:rgba(255,92,0,0.12);">⚡</div>
-          <h3>Réponse en 3 sec</h3><p>IA ultra-rapide, zéro attente</p>
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px 8px;text-align:center;">
+          <div style="width:34px;height:34px;border-radius:10px;background:rgba(255,90,31,0.14);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="#FF7A45"/></svg>
+          </div>
+          <h3 style="font-weight:600;font-size:12.5px;color:#F4EEE2;margin:0;line-height:1.2;">Réponse en 3 sec</h3>
+          <p style="color:#8A7C70;font-size:11px;margin:3px 0 0;line-height:1.3;">IA rapide, zéro attente</p>
         </div>
-        <div class="feat-mini">
-          <div class="ic" style="background:rgba(255,255,255,0.06);">🔒</div>
-          <h3>Zéro stockage</h3><p>Screenshot analysé puis effacé</p>
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px 8px;text-align:center;">
+          <div style="width:34px;height:34px;border-radius:10px;background:rgba(255,90,31,0.14);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="11" rx="2.5" fill="#FF7A45"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#FF7A45" stroke-width="2"/></svg>
+          </div>
+          <h3 style="font-weight:600;font-size:12.5px;color:#F4EEE2;margin:0;line-height:1.2;">Zéro stockage</h3>
+          <p style="color:#8A7C70;font-size:11px;margin:3px 0 0;line-height:1.3;">Analysé puis effacé</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-4 mb-8 reveal">
-        <div style="flex:1;height:1px;background:rgba(255,255,255,0.07);"></div>
-        <span class="stars">★★★★★</span>
-        <span class="text-white text-sm font-semibold">4,9/5</span>
-        <div style="flex:1;height:1px;background:rgba(255,255,255,0.07);"></div>
+      <!-- Barre note -->
+      <div data-reveal style="display:flex;align-items:center;gap:14px;margin-bottom:22px;">
+        <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
+        <span style="color:#FF5A1F;font-size:14px;letter-spacing:1.5px;">★★★★★</span>
+        <span style="color:#F4EEE2;font-size:14px;font-weight:600;">4,9/5</span>
+        <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
       </div>
 
-      <div class="flex flex-col gap-4">
-        <div class="review-card reveal">
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0" style="background:linear-gradient(135deg,#7c3aed,#a855f7);">T</div>
-              <div><p class="font-bold text-white text-sm">Thomas_R</p><p style="color:#666;font-size:.72rem;">Paris · 26 ans</p></div>
+      <!-- Avis -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div data-reveal style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:18px;padding:20px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:11px;">
+              <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a855f7);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:14px;">T</div>
+              <div>
+                <p style="margin:0;font-weight:600;color:#F4EEE2;font-size:14px;">Thomas_R</p>
+                <p style="margin:1px 0 0;color:#7A7062;font-size:12px;">Paris · 26 ans</p>
+              </div>
             </div>
-            <span class="stars">★★★★★</span>
+            <span style="color:#FF5A1F;font-size:12px;letter-spacing:1px;">★★★★★</span>
           </div>
-          <p style="color:#999;font-size:.85rem;line-height:1.6;">"L'option Spicy m'a valu un rendez-vous le soir même. Je mentirais si je disais que j'aurais trouvé ça tout seul 🤩"</p>
+          <p style="color:#B5ABA0;font-size:14px;line-height:1.6;margin:0;">« L'option Spicy m'a valu un rendez-vous le soir même. Jamais je n'aurais trouvé ça tout seul. »</p>
         </div>
-        <div class="review-card reveal">
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0" style="background:linear-gradient(135deg,#059669,#10b981);">K</div>
-              <div><p class="font-bold text-white text-sm">Kilian.M</p><p style="color:#666;font-size:.72rem;">Lyon · 23 ans</p></div>
+        <div data-reveal style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:18px;padding:20px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:11px;">
+              <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#059669,#10b981);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:14px;">K</div>
+              <div>
+                <p style="margin:0;font-weight:600;color:#F4EEE2;font-size:14px;">Kilian.M</p>
+                <p style="margin:1px 0 0;color:#7A7062;font-size:12px;">Lyon · 23 ans</p>
+              </div>
             </div>
-            <span class="stars">★★★★★</span>
+            <span style="color:#FF5A1F;font-size:12px;letter-spacing:1px;">★★★★★</span>
           </div>
-          <p style="color:#999;font-size:.85rem;line-height:1.6;">"J'envoyais les pires réponses. Depuis Tacotac, mes matchs me répondent. Simple comme ça."</p>
+          <p style="color:#B5ABA0;font-size:14px;line-height:1.6;margin:0;">« J'envoyais les pires réponses. Depuis Tacotac, mes matchs me répondent. Simple comme ça. »</p>
         </div>
-        <div class="review-card reveal">
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0" style="background:linear-gradient(135deg,#d97706,#f59e0b);">A</div>
-              <div><p class="font-bold text-white text-sm">Alex_bdx</p><p style="color:#666;font-size:.72rem;">Bordeaux · 28 ans</p></div>
+        <div data-reveal style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:18px;padding:20px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:11px;">
+              <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#d97706,#f59e0b);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:14px;">A</div>
+              <div>
+                <p style="margin:0;font-weight:600;color:#F4EEE2;font-size:14px;">Alex_bdx</p>
+                <p style="margin:1px 0 0;color:#7A7062;font-size:12px;">Bordeaux · 28 ans</p>
+              </div>
             </div>
-            <span class="stars">★★★★★</span>
+            <span style="color:#FF5A1F;font-size:12px;letter-spacing:1px;">★★★★★</span>
           </div>
-          <p style="color:#999;font-size:.85rem;line-height:1.6;">"Le mode Classe m'a sauvé deux fois cette semaine. L'IA comprend le contexte mieux que mes potes 🤣"</p>
+          <p style="color:#B5ABA0;font-size:14px;line-height:1.6;margin:0;">« Le mode Classe m'a sauvé deux fois cette semaine. L'IA comprend le contexte mieux que mes potes. »</p>
         </div>
       </div>
     </section>
 
-
-    <!-- ═══════════════════════════════════════════════════════
-         SECTION 6 · FAQ
-    ═══════════════════════════════════════════════════════ -->
-    <section class="px-6 py-16" style="background:#101010;">
-      <h2 class="display-sm text-[2.1rem] text-center text-white mb-8 reveal">Questions fréquentes</h2>
-      <div class="flex flex-col gap-3" id="faq">
-        <div class="faq-item reveal">
-          <button class="faq-q">Et si les réponses ne me plaisent pas ?<span class="faq-chevron">+</span></button>
-          <div class="faq-a"><div class="faq-a-inner">Tu as 3 tons à chaque fois, et tu peux régénérer autant que tu veux jusqu'à trouver celle qui te ressemble. C'est toi qui choisis, toujours.</div></div>
+    <!-- ════════ FAQ ════════ -->
+    <section style="background:#F4EEE2;padding:56px 24px;">
+      <h2 data-reveal style="font-family:'Clash Display',sans-serif;font-weight:600;font-size:clamp(28px,7vw,34px);letter-spacing:-0.02em;color:#17120E;text-align:center;margin:0;">Questions fréquentes</h2>
+      <div style="display:flex;flex-direction:column;gap:10px;max-width:400px;margin:30px auto 0;">
+        <div class="tt-faq" style="background:#FBF7EF;border:1px solid rgba(23,18,14,0.10);border-radius:14px;overflow:hidden;transition:border-color .25s;">
+          <button class="tt-faq-q" style="width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;background:none;border:none;cursor:pointer;color:#17120E;font-family:'General Sans',sans-serif;font-weight:600;font-size:15px;text-align:left;">
+            Et si les réponses ne me plaisent pas ?
+            <span class="tt-faq-sign" style="color:#FF5A1F;font-size:20px;transition:transform .3s;flex-shrink:0;line-height:1;">+</span>
+          </button>
+          <div class="tt-faq-a"><div style="padding:0 18px 16px;color:#8A7F70;font-size:13.5px;line-height:1.6;">Tu as 3 tons à chaque fois, et tu peux régénérer autant que tu veux jusqu'à trouver celle qui te ressemble. C'est toi qui choisis, toujours.</div></div>
         </div>
-        <div class="faq-item reveal">
-          <button class="faq-q">Mes conversations sont-elles stockées ?<span class="faq-chevron">+</span></button>
-          <div class="faq-a"><div class="faq-a-inner">Non. Ton screenshot est analysé puis immédiatement effacé. Rien n'est conservé sur nos serveurs.</div></div>
+        <div class="tt-faq" style="background:#FBF7EF;border:1px solid rgba(23,18,14,0.10);border-radius:14px;overflow:hidden;transition:border-color .25s;">
+          <button class="tt-faq-q" style="width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;background:none;border:none;cursor:pointer;color:#17120E;font-family:'General Sans',sans-serif;font-weight:600;font-size:15px;text-align:left;">
+            Mes conversations sont-elles stockées ?
+            <span class="tt-faq-sign" style="color:#FF5A1F;font-size:20px;transition:transform .3s;flex-shrink:0;line-height:1;">+</span>
+          </button>
+          <div class="tt-faq-a"><div style="padding:0 18px 16px;color:#8A7F70;font-size:13.5px;line-height:1.6;">Non. Ton screenshot est analysé puis immédiatement effacé. Rien n'est conservé sur nos serveurs.</div></div>
         </div>
-        <div class="faq-item reveal">
-          <button class="faq-q">Ça marche sur quelles applis ?<span class="faq-chevron">+</span></button>
-          <div class="faq-a"><div class="faq-a-inner">Toutes : Tinder, Hinge, Bumble, Instagram, Snap… Tant que tu peux faire un screenshot, Tacotac comprend.</div></div>
+        <div class="tt-faq" style="background:#FBF7EF;border:1px solid rgba(23,18,14,0.10);border-radius:14px;overflow:hidden;transition:border-color .25s;">
+          <button class="tt-faq-q" style="width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;background:none;border:none;cursor:pointer;color:#17120E;font-family:'General Sans',sans-serif;font-weight:600;font-size:15px;text-align:left;">
+            Ça marche sur quelles applis ?
+            <span class="tt-faq-sign" style="color:#FF5A1F;font-size:20px;transition:transform .3s;flex-shrink:0;line-height:1;">+</span>
+          </button>
+          <div class="tt-faq-a"><div style="padding:0 18px 16px;color:#8A7F70;font-size:13.5px;line-height:1.6;">Toutes : Tinder, Hinge, Bumble, Instagram, Snap… Tant que tu peux faire un screenshot, Tacotac comprend.</div></div>
         </div>
-        <div class="faq-item reveal">
-          <button class="faq-q">C'est dispo quand ?<span class="faq-chevron">+</span></button>
-          <div class="faq-a"><div class="faq-a-inner">Très bientôt. Laisse ton email ci-dessous : les inscrits de la liste d'attente y ont accès en premier, avec 2 analyses offertes.</div></div>
+        <div class="tt-faq" style="background:#FBF7EF;border:1px solid rgba(23,18,14,0.10);border-radius:14px;overflow:hidden;transition:border-color .25s;">
+          <button class="tt-faq-q" style="width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;background:none;border:none;cursor:pointer;color:#17120E;font-family:'General Sans',sans-serif;font-weight:600;font-size:15px;text-align:left;">
+            C'est dispo quand ?
+            <span class="tt-faq-sign" style="color:#FF5A1F;font-size:20px;transition:transform .3s;flex-shrink:0;line-height:1;">+</span>
+          </button>
+          <div class="tt-faq-a"><div style="padding:0 18px 16px;color:#8A7F70;font-size:13.5px;line-height:1.6;">Très bientôt. Laisse ton email : les inscrits de la liste d'attente y ont accès en premier, avec 2 analyses offertes.</div></div>
         </div>
       </div>
     </section>
 
-
-    <!-- ═══════════════════════════════════════════════════════
-         SECTION 7 · CTA FINAL (+ rareté)
-    ═══════════════════════════════════════════════════════ -->
-    <section id="cta" class="cta-section on-orange px-6 py-16 text-center">
-      <span class="blob1"></span><span class="blob2"></span>
-
-      <div class="mascotte-float mb-6 relative z-10">
-        <img src="renard-removebg-preview.png" alt="Le renard Tacotac" class="w-24 mx-auto" style="filter:drop-shadow(0 6px 20px rgba(0,0,0,0.3));">
+    <!-- ════════ CTA FINAL ════════ -->
+    <section id="tt-cta" style="background:#FF5A1F;padding:56px 24px;text-align:center;position:relative;overflow:hidden;">
+      <div style="margin-bottom:18px;">
+        <img src="assets/fox_full.png" alt="Le renard Tacotac" style="width:92px;margin:0 auto;display:block;animation:ttFloat 5s ease-in-out infinite;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.25));">
       </div>
-
-      <h2 class="display text-[3.1rem] text-white mb-4 relative z-10 reveal">Prêt pour<br>le lancement ?</h2>
-      <p class="text-white mb-6 leading-relaxed max-w-xs mx-auto relative z-10 reveal" style="opacity:.92;font-size:.98rem;">
-        Laisse ton email, on te prévient en premier dès l'ouverture — avec tes 2 analyses offertes 🎁
-      </p>
+      <h2 style="font-family:'Clash Display',sans-serif;font-weight:700;font-size:clamp(38px,11vw,48px);line-height:0.96;letter-spacing:-0.03em;color:#fff;margin:0 0 14px;">Prêt pour<br>le lancement ?</h2>
+      <p style="color:rgba(255,255,255,0.92);font-size:15px;line-height:1.5;max-width:300px;margin:0 auto 24px;">Laisse ton email, on te prévient en premier dès l'ouverture — avec tes 2 analyses offertes.</p>
 
       <!-- Rareté -->
-      <div class="max-w-xs mx-auto mb-7 relative z-10 reveal">
-        <div class="flex justify-between text-white text-xs font-semibold mb-2" style="opacity:.9;">
+      <div style="max-width:300px;margin:0 auto 24px;">
+        <div style="display:flex;justify-content:space-between;color:#fff;font-size:12px;font-weight:600;margin-bottom:7px;opacity:.92;">
           <span>Places en accès anticipé</span><span>83%</span>
         </div>
-        <div class="progress" data-progress="83"><i></i></div>
-        <p class="text-white text-[0.72rem] mt-2" style="opacity:.75;">Il ne reste que quelques places prioritaires.</p>
+        <div style="height:7px;background:rgba(255,255,255,0.28);border-radius:999px;overflow:hidden;">
+          <i style="display:block;height:100%;width:83%;background:#fff;border-radius:999px;"></i>
+        </div>
+        <p style="color:rgba(255,255,255,0.78);font-size:11.5px;margin:8px 0 0;">Il ne reste que quelques places prioritaires.</p>
       </div>
 
-      <div class="wl-wrap max-w-sm mx-auto relative z-10 reveal" data-source="cta-final">
-        <form class="flex flex-col gap-3" novalidate>
-          <input type="email" class="email-input" placeholder="ton@email.fr" aria-label="Ton adresse email" autocomplete="email" required>
-          <button type="submit" class="btn-white">Rejoindre la liste d'attente 🚀</button>
+      <!-- Formulaire CTA final -->
+      <div data-wl="cta-final" style="max-width:332px;margin:0 auto;">
+        <form novalidate style="display:flex;flex-direction:column;gap:10px;">
+          <input type="email" required placeholder="ton@email.fr" autocomplete="email" aria-label="Ton email"
+            style="width:100%;background:rgba(255,255,255,0.92);border:none;color:#17120E;border-radius:13px;padding:15px 18px;font:500 15px 'General Sans',sans-serif;outline:none;">
+          <button type="submit"
+            style="width:100%;padding:15px 24px;background:#17120E;color:#fff;font-family:'General Sans',sans-serif;font-weight:600;font-size:16px;border:none;border-radius:13px;cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,0.22);transition:transform .15s,box-shadow .2s;">
+            Rejoindre la liste d'attente
+          </button>
         </form>
-        <p class="wl-error hidden mt-3" style="color:#fff;background:rgba(0,0,0,0.2);border-radius:12px;padding:8px 14px;"></p>
-        <div class="wl-success hidden mt-4">
-          <div class="wl-success-card">
-            <p style="font-size:1.6rem;margin-bottom:6px;">🎉</p>
-            <p class="text-white font-bold" style="font-size:1.05rem;">T'es sur la liste !</p>
-            <p class="text-white" style="opacity:.9;font-size:.88rem;margin-top:4px;">On te prévient dès le lancement. Prépare-toi 🦊</p>
-          </div>
+        <p data-err style="display:none;color:#fff;background:rgba(0,0,0,0.22);border-radius:11px;padding:8px 14px;font-size:13px;margin:10px 0 0;"></p>
+        <div data-success style="display:none;margin-top:14px;background:rgba(255,255,255,0.16);border:1px solid rgba(255,255,255,0.4);border-radius:14px;padding:18px;">
+          <p style="margin:0;color:#fff;font-weight:600;font-size:15px;">Tu es sur la liste.</p>
+          <p style="margin:5px 0 0;color:rgba(255,255,255,0.9);font-size:13px;">On te prévient dès le lancement.</p>
         </div>
       </div>
-
-      <p class="relative z-10 mt-5" style="color:rgba(255,255,255,0.7);font-size:.75rem;">Tu seras prévenu en premier. Pas de spam, promis.</p>
+      <p style="color:rgba(255,255,255,0.72);font-size:12px;margin:16px 0 0;">Tu seras prévenu en premier. Pas de spam, promis.</p>
     </section>
 
-
     <!-- ════════ FOOTER ════════ -->
-    <footer style="background:#080808;" class="text-center py-9 px-6">
-      <img src="renard-removebg-preview.png" alt="" class="w-12 mx-auto mb-3 opacity-90">
-      <p style="color:#444;font-size:.75rem;">© 2026 Tacotac · Fait avec ❤️ en France 🇫🇷</p>
+    <footer style="background:#17120E;text-align:center;padding:34px 24px;">
+      <img src="assets/fox_full.png" alt="" style="width:44px;margin:0 auto;display:block;opacity:0.85;">
+      <p style="color:#5C5348;font-size:12px;margin:12px 0 0;">© 2026 Tacotac · Fait avec soin en France</p>
     </footer>
 
   </div>
 
-
-  <!-- ════════ STICKY CTA BAS (mini formulaire) ════════ -->
-  <div class="sticky-cta" id="stickyCta">
-    <div class="wl-wrap" data-source="sticky">
-      <form class="flex" novalidate>
-        <input type="email" class="mini-input" placeholder="Ton email pour l'accès prioritaire" aria-label="Ton adresse email" autocomplete="email" required>
-        <button type="submit" class="mini-btn" aria-label="Rejoindre">→</button>
+  <!-- ════════ STICKY CTA BAS ════════ -->
+  <div id="tt-sticky" style="position:fixed;left:0;right:0;bottom:0;z-index:50;max-width:460px;margin:0 auto;padding:12px 16px;background:rgba(23,18,14,0.92);backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,0.08);transform:translateY(130%);transition:transform .4s cubic-bezier(.22,.68,0,1.1);">
+    <div data-wl="sticky">
+      <form novalidate style="display:flex;gap:8px;">
+        <input type="email" required placeholder="Ton email pour l'accès prioritaire" autocomplete="email" aria-label="Ton email"
+          style="flex:1;min-width:0;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.16);color:#fff;border-radius:12px;padding:12px 16px;font:500 14px 'General Sans',sans-serif;outline:none;">
+        <button type="submit" aria-label="Rejoindre"
+          style="width:46px;height:46px;flex-shrink:0;background:#FF5A1F;border:none;border-radius:12px;color:#fff;font-size:18px;cursor:pointer;transition:transform .15s;">→</button>
       </form>
-      <p class="wl-error hidden" style="color:#ffb4a0;font-size:.75rem;text-align:center;padding-top:6px;"></p>
-      <div class="wl-success hidden">🎉 T'es sur la liste !</div>
+      <p data-err style="display:none;color:#FF9A78;font-size:12.5px;text-align:center;padding-top:6px;margin:0;"></p>
+      <div data-success style="display:none;color:#fff;text-align:center;font-size:13px;font-weight:600;padding:6px 0;">Tu es sur la liste.</div>
     </div>
   </div>
-
 
   <!-- ════════ MODAL EXIT-INTENT ════════ -->
-  <div class="modal" id="wlModal">
-    <div class="modal-card">
-      <button class="modal-close" id="modalClose" aria-label="Fermer">✕</button>
-      <div class="mascotte-float mb-3"><img src="renard_dragueur-removebg-preview.png" alt="" style="height:120px;margin:0 auto;filter:drop-shadow(0 10px 24px rgba(0,0,0,0.4));"></div>
-      <h3 class="display-sm text-[1.7rem] text-white mb-2">Attends… 🦊</h3>
-      <p class="text-soft text-sm mb-5">Pars pas les mains vides. Rejoins la liste et débloque <span class="text-white font-semibold">2 analyses offertes</span> au lancement.</p>
-      <div class="wl-wrap" data-source="modal">
-        <form class="flex flex-col gap-3" novalidate>
-          <input type="email" class="input-dark" placeholder="ton@email.fr" aria-label="Ton adresse email" autocomplete="email" required>
-          <button type="submit" class="btn-primary">Je réserve ma place 🎁</button>
+  <div id="tt-modal" style="position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(23,18,14,0.72);backdrop-filter:blur(6px);opacity:0;visibility:hidden;transition:opacity .3s;">
+    <div data-modal-card style="position:relative;width:100%;max-width:390px;background:#FBF7EF;border:1px solid rgba(216,67,14,0.25);border-radius:24px;padding:32px 24px 26px;text-align:center;transform:translateY(16px);transition:transform .4s cubic-bezier(.16,.84,.28,1.05);box-shadow:0 30px 80px rgba(0,0,0,0.5);">
+      <button id="tt-modal-close" aria-label="Fermer"
+        style="position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;background:rgba(23,18,14,0.07);border:none;color:#8A7F70;font-size:14px;cursor:pointer;">✕</button>
+      <img src="assets/fox_spicy.png" alt="" style="height:108px;margin:0 auto 10px;display:block;filter:drop-shadow(0 10px 20px rgba(23,18,14,0.18));">
+      <h3 style="font-family:'Clash Display',sans-serif;font-weight:600;font-size:24px;color:#17120E;margin:0 0 8px;">Attends…</h3>
+      <p style="color:#8A7F70;font-size:14px;line-height:1.5;margin:0 0 18px;">Pars pas les mains vides. Rejoins la liste et débloque <span style="color:#17120E;font-weight:600;">2 analyses offertes</span> au lancement.</p>
+      <div data-wl="modal" style="max-width:320px;margin:0 auto;">
+        <form novalidate style="display:flex;flex-direction:column;gap:10px;">
+          <input type="email" required placeholder="ton@email.fr" autocomplete="email" aria-label="Ton email"
+            style="width:100%;background:#fff;border:1.5px solid rgba(23,18,14,0.14);color:#17120E;border-radius:13px;padding:14px 18px;font:500 15px 'General Sans',sans-serif;outline:none;">
+          <button type="submit" class="btn-orange"
+            style="width:100%;padding:14px 24px;background:#FF5A1F;color:#fff;font-family:'General Sans',sans-serif;font-weight:600;font-size:15px;border:none;border-radius:13px;cursor:pointer;box-shadow:0 6px 18px rgba(216,67,14,0.3);transition:transform .15s,filter .2s;">
+            Je réserve ma place
+          </button>
         </form>
-        <p class="wl-error hidden mt-3"></p>
-        <div class="wl-success hidden mt-3">
-          <div class="wl-success-card"><p class="text-white font-bold text-sm">🎉 Parfait, t'es sur la liste !</p></div>
+        <p data-err style="display:none;color:#C4400F;font-size:13px;margin:10px 0 0;"></p>
+        <div data-success style="display:none;margin-top:12px;background:rgba(255,90,31,0.09);border:1px solid rgba(216,67,14,0.25);border-radius:14px;padding:14px;">
+          <p style="margin:0;color:#17120E;font-weight:600;font-size:14px;">Parfait, tu es sur la liste.</p>
         </div>
       </div>
-      <p class="text-soft text-[0.7rem] mt-4">Sans carte bancaire · Zéro spam</p>
+      <p style="color:#8A7F70;font-size:11.5px;margin:14px 0 0;">Sans carte bancaire · Zéro spam</p>
     </div>
   </div>
 
-
-  <!-- ═══════════════════════════════════════════════════════
-       JAVASCRIPT
-  ═══════════════════════════════════════════════════════ -->
   <script>
-    /* ════════ CONFIG ════════ */
-    const WEBHOOK = 'https://script.google.com/macros/s/AKfycbzuCip2KWPlPw7kudrsvP2DuZ94-W6yw6aJ7c_HiSFZysXaPfsvG57uq6lhDsDpGYudtw/exec';
-    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    /* ════════ INTERACTIONS AU SURVOL / FOCUS ════════ */
+    document.querySelectorAll('.btn-orange').forEach(btn => {
+      btn.addEventListener('mouseenter', () => { btn.style.transform = 'translateY(-2px)'; btn.style.boxShadow = '0 10px 26px rgba(216,67,14,0.4)'; btn.style.filter = 'brightness(1.04)'; });
+      btn.addEventListener('mouseleave', () => { btn.style.transform = ''; btn.style.boxShadow = ''; btn.style.filter = ''; });
+      btn.addEventListener('mousedown', () => { btn.style.transform = 'scale(.98)'; });
+      btn.addEventListener('mouseup',   () => { btn.style.transform = ''; });
+    });
+    document.querySelectorAll('input[type=email]').forEach(inp => {
+      inp.addEventListener('focus', () => { inp.style.borderColor = '#FF5A1F'; inp.style.boxShadow = '0 0 0 4px rgba(255,90,31,0.12)'; });
+      inp.addEventListener('blur',  () => { inp.style.borderColor = ''; inp.style.boxShadow = ''; });
+    });
+    document.getElementById('tt-copy').addEventListener('mouseenter', function(){ this.style.background = 'rgba(255,90,31,0.2)'; });
+    document.getElementById('tt-copy').addEventListener('mouseleave', function(){ this.style.background = 'rgba(255,90,31,0.12)'; });
 
+    /* ════════ SÉLECTEUR DE TON ════════ */
+    const replyEl  = document.getElementById('tt-reply');
+    const foxEl    = document.getElementById('tt-fox');
+    const glider   = document.getElementById('tt-glider');
+    const toneBtns = document.querySelectorAll('.tt-tone');
+
+    toneBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        toneBtns.forEach(b => { b.style.color = '#8A7F70'; });
+        btn.style.color = '#fff';
+        glider.style.transform = 'translateX(' + (btn.dataset.index * 100) + '%)';
+        if (replyEl) {
+          replyEl.style.opacity = '0';
+          setTimeout(() => { replyEl.textContent = '« ' + btn.dataset.reply + ' »'; replyEl.style.opacity = '1'; }, 170);
+        }
+        if (foxEl) {
+          foxEl.style.opacity = '0';
+          foxEl.style.transform = 'translateY(8px) scale(.96)';
+          setTimeout(() => {
+            foxEl.src = btn.dataset.fox;
+            foxEl.style.opacity = '1';
+            foxEl.style.transform = 'none';
+          }, 200);
+        }
+        try { gtag('event', 'clic_ton_' + ['classe','drole','spicy'][btn.dataset.index], { event_category: 'engagement' }); } catch(e) {}
+      });
+    });
+
+    /* ════════ BOUTON COPIER ════════ */
+    const copyBtn = document.getElementById('tt-copy');
+    if (copyBtn && replyEl) {
+      copyBtn.addEventListener('click', async () => {
+        const t = replyEl.textContent.replace(/^[«"\s]+|[»"\s]+$/g, '');
+        try { await navigator.clipboard.writeText(t); } catch(e) {
+          const ta = document.createElement('textarea');
+          ta.value = t; document.body.appendChild(ta); ta.select();
+          document.execCommand('copy'); document.body.removeChild(ta);
+        }
+        const o = copyBtn.textContent;
+        copyBtn.textContent = 'Copié ✓';
+        setTimeout(() => { copyBtn.textContent = o; }, 1500);
+        try { gtag('event', 'copie_reponse', { event_category: 'engagement' }); } catch(e) {}
+      });
+    }
+
+    /* ════════ FAQ ACCORDÉON ════════ */
+    document.querySelectorAll('.tt-faq').forEach(item => {
+      const q    = item.querySelector('.tt-faq-q');
+      const a    = item.querySelector('.tt-faq-a');
+      const sign = item.querySelector('.tt-faq-sign');
+      a.style.maxHeight = '0'; a.style.overflow = 'hidden'; a.style.transition = 'max-height .35s ease';
+      q.addEventListener('click', () => {
+        const isOpen = a.style.maxHeight && a.style.maxHeight !== '0px';
+        document.querySelectorAll('.tt-faq').forEach(o => {
+          const oa = o.querySelector('.tt-faq-a');
+          const os = o.querySelector('.tt-faq-sign');
+          oa.style.maxHeight = '0';
+          if (os) os.style.transform = 'none';
+          o.style.borderColor = 'rgba(23,18,14,0.10)';
+        });
+        if (!isOpen) {
+          a.style.maxHeight = a.scrollHeight + 'px';
+          if (sign) sign.style.transform = 'rotate(45deg)';
+          item.style.borderColor = 'rgba(216,67,14,0.35)';
+        }
+      });
+    });
+
+    /* ════════ FORMULAIRES WAITLIST ════════ */
+    const WEBHOOK = 'https://script.google.com/macros/s/AKfycbzuCip2KWPlPw7kudrsvP2DuZ94-W6yw6aJ7c_HiSFZysXaPfsvG57uq6lhDsDpGYudtw/exec';
+    const RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     const store = {
       get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
       set(k,v){ try { localStorage.setItem(k,v); } catch(e){} },
     };
     const isSubscribed = () => store.get('tt_subscribed') === '1';
 
-    /* ════════ ENVOI WAITLIST (webhook Apps Script) ════════ */
-    async function sendWaitlist(email, source){
-      const params = new URLSearchParams({ email, source: source || 'landing', timestamp: new Date().toISOString() });
-      // GET + no-cors : évite le 302 POST→GET de Apps Script (réponse opaque ignorée)
-      await fetch(WEBHOOK + '?' + params.toString(), { method: 'GET', mode: 'no-cors' });
+    async function send(email, source) {
+      const p = new URLSearchParams({ email, source: source || 'landing', timestamp: new Date().toISOString() });
+      try { await fetch(WEBHOOK + '?' + p.toString(), { method: 'GET', mode: 'no-cors' }); } catch(e) {}
     }
 
-    /* ════════ CÂBLAGE GÉNÉRIQUE DES FORMULAIRES ════════ */
-    function wireForm(wrap){
-      const form    = wrap.querySelector('form');
-      if (!form) return;
-      const input   = form.querySelector('input[type=email]');
-      const btn     = form.querySelector('button');
-      const success = wrap.querySelector('.wl-success');
-      const errorEl = wrap.querySelector('.wl-error');
-      const source  = wrap.dataset.source || 'landing';
+    function showAllSuccess() {
+      document.querySelectorAll('[data-wl]').forEach(w => {
+        const f = w.querySelector('form');
+        const s = w.querySelector('[data-success]');
+        if (f) f.style.display = 'none';
+        if (s) s.style.display = 'block';
+      });
+      const st = document.getElementById('tt-sticky');
+      if (st) st.style.transform = 'translateY(130%)';
+    }
 
-      form.addEventListener('submit', async (e) => {
+    document.querySelectorAll('[data-wl]').forEach(w => {
+      const form   = w.querySelector('form');
+      if (!form) return;
+      const input  = form.querySelector('input[type=email]');
+      const btn    = form.querySelector('button');
+      const err    = w.querySelector('[data-err]');
+      const source = w.dataset.wl || 'landing';
+
+      form.addEventListener('submit', async e => {
         e.preventDefault();
-        if (errorEl) errorEl.classList.add('hidden');
+        if (err) err.style.display = 'none';
         const email = (input.value || '').trim();
-        if (!EMAIL_RE.test(email)) {
-          if (errorEl){ errorEl.textContent = 'Entre un email valide 🙏'; errorEl.classList.remove('hidden'); }
+        if (!RE.test(email)) {
+          if (err) { err.textContent = 'Entre un email valide.'; err.style.display = 'block'; }
           input.focus();
           return;
         }
-        const orig = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = btn.classList.contains('mini-btn') ? '…' : 'Envoi en cours…';
+        const o = btn.innerHTML;
+        btn.disabled = true; btn.style.opacity = '.7';
+        btn.innerHTML = btn.getAttribute('aria-label') === 'Rejoindre' ? '…' : 'Envoi…';
+        await send(email, source);
         try {
-          await sendWaitlist(email, source);
-          gtag('event', 'inscription_waitlist', { event_category: 'conversion', source: source });
-          store.set('tt_subscribed', '1');
-          form.classList.add('hidden');
-          if (success) success.classList.remove('hidden');
-          syncSubscribedUI();
-        } catch(err) {
-          btn.disabled = false;
-          btn.innerHTML = orig;
-          if (errorEl){ errorEl.textContent = 'Une erreur est survenue, réessaie.'; errorEl.classList.remove('hidden'); }
-        }
-      });
-    }
-    document.querySelectorAll('.wl-wrap').forEach(wireForm);
-
-    /* ════════ SYNC UI QUAND INSCRIT ════════ */
-    function syncSubscribedUI(){
-      if (!isSubscribed()) return;
-      document.querySelectorAll('.wl-wrap').forEach(w => {
-        const f = w.querySelector('form');
-        const s = w.querySelector('.wl-success');
-        if (f) f.classList.add('hidden');
-        if (s) s.classList.remove('hidden');
-      });
-      const sticky = document.getElementById('stickyCta');
-      if (sticky) sticky.classList.remove('show');
-      closeModal(true);
-    }
-
-    /* ════════ SÉLECTEUR DE TON (glider + morph + renard) ════════ */
-    const reponses = {
-      classe: "\"J'avais rien de prévu, mais là ça donne des idées. T'as un endroit en tête ?\"",
-      drole:  "\"J'avais prévu rien d'intéressant, mais là ça change 👀 T'as une idée ?\"",
-      spicy:  "\"Soirée libre… mais ça dépend de ce qu'on me propose 🌶️ T'as quoi en tête ?\"",
-    };
-    const foxes = {
-      classe: 'renard_classe_lunette-removebg-preview.png',
-      drole:  'renard_chill-removebg-preview.png',
-      spicy:  'renard_dragueur-removebg-preview.png',
-    };
-    const foxAlt = {
-      classe: 'Le renard Tacotac en costume, mood classe',
-      drole:  'Le renard Tacotac décontracté, mood drôle',
-      spicy:  'Le renard Tacotac avec une rose, mood spicy',
-    };
-
-    const reponseEl = document.getElementById('reponse');
-    const glider    = document.getElementById('toneGlider');
-    const toneFox   = document.getElementById('toneFox');
-    const toneBtns  = document.querySelectorAll('.tone-btn');
-    reponseEl.style.transition = 'opacity .25s ease, transform .25s ease';
-
-    toneBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const tone = btn.dataset.tone;
-        toneBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        glider.style.transform = `translateX(${btn.dataset.index * 100}%)`;
-        reponseEl.style.opacity = '0';
-        reponseEl.style.transform = 'translateY(6px)';
-        setTimeout(() => {
-          reponseEl.textContent = reponses[tone];
-          reponseEl.style.opacity = '1';
-          reponseEl.style.transform = 'translateY(0)';
-        }, 200);
-        toneFox.classList.add('swapping');
-        setTimeout(() => {
-          toneFox.src = foxes[tone];
-          toneFox.alt = foxAlt[tone];
-          toneFox.classList.remove('swapping');
-        }, 220);
-        gtag('event', 'clic_ton_' + tone, { event_category: 'engagement' });
+          gtag('event', 'inscription_waitlist', { event_category: 'conversion', source });
+        } catch(e) {}
+        store.set('tt_subscribed', '1');
+        showAllSuccess();
       });
     });
+    if (isSubscribed()) showAllSuccess();
 
-    /* ════════ BOUTON COPIER ════════ */
-    const copyBtn = document.getElementById('copyBtn');
-    copyBtn.addEventListener('click', async () => {
-      const texte = reponseEl.textContent.replace(/^"|"$/g, '');
-      try { await navigator.clipboard.writeText(texte); }
-      catch {
-        const ta = document.createElement('textarea');
-        ta.value = texte; document.body.appendChild(ta); ta.select();
-        document.execCommand('copy'); document.body.removeChild(ta);
-      }
-      const orig = copyBtn.textContent;
-      copyBtn.textContent = '✅ Copié !';
-      copyBtn.style.background = 'rgba(34,197,94,0.15)';
-      copyBtn.style.color = '#22c55e';
-      copyBtn.style.borderColor = 'rgba(34,197,94,0.3)';
-      setTimeout(() => {
-        copyBtn.textContent = orig;
-        copyBtn.style.background = '';
-        copyBtn.style.color = '';
-        copyBtn.style.borderColor = '';
-      }, 2000);
-      gtag('event', 'copie_reponse', { event_category: 'engagement' });
-    });
-
-    /* ════════ FAQ ACCORDÉON ════════ */
-    document.querySelectorAll('.faq-item').forEach(item => {
-      const q = item.querySelector('.faq-q');
-      const a = item.querySelector('.faq-a');
-      q.addEventListener('click', () => {
-        const isOpen = item.classList.contains('open');
-        document.querySelectorAll('.faq-item').forEach(i => {
-          i.classList.remove('open');
-          i.querySelector('.faq-a').style.maxHeight = null;
-        });
-        if (!isOpen) { item.classList.add('open'); a.style.maxHeight = a.scrollHeight + 'px'; }
-      });
-    });
-
-    /* ════════ PARALLAX MASCOTTE ════════ */
-    const mascotte = document.getElementById('mascotteWrap');
-    const hero = document.getElementById('hero');
-    if (window.matchMedia('(pointer:fine)').matches) {
-      hero.addEventListener('mousemove', (e) => {
-        const r = hero.getBoundingClientRect();
-        const x = (e.clientX - r.left) / r.width - 0.5;
-        const y = (e.clientY - r.top) / r.height - 0.5;
-        mascotte.style.transform = `translate(${x * 16}px, ${y * 12}px) rotate(${x * 4}deg)`;
-      });
-      hero.addEventListener('mouseleave', () => { mascotte.style.transform = ''; });
-    }
-
-    /* ════════ COUNT-UP + BARRE PROGRESSION ════════ */
-    function animateCount(el){
-      const target = parseFloat(el.dataset.count);
-      const prefix = el.dataset.prefix || '';
-      const suffix = el.dataset.suffix || '';
-      const dur = 1100; const start = performance.now();
-      (function step(now){
-        const p = Math.min((now - start) / dur, 1);
-        const eased = 1 - Math.pow(1 - p, 3);
-        el.textContent = prefix + Math.round(eased * target) + suffix;
-        if (p < 1) requestAnimationFrame(step);
-      })(performance.now());
-    }
-
-    /* ════════ SCROLL REVEAL ════════ */
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          entry.target.querySelectorAll('[data-count]').forEach(animateCount);
-          const bar = entry.target.querySelector('.progress[data-progress] > i') ||
-                      (entry.target.matches('.progress[data-progress]') ? entry.target.firstElementChild : null);
-          const barWrap = entry.target.querySelector('.progress[data-progress]');
-          if (barWrap) barWrap.querySelector('i').style.width = barWrap.dataset.progress + '%';
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-
-    /* ════════ NAV STICKY HAUT ════════ */
-    const siteNav = document.getElementById('siteNav');
+    /* ════════ NAV + STICKY AU SCROLL ════════ */
+    const nav    = document.getElementById('tt-nav');
+    const sticky = document.getElementById('tt-sticky');
     window.addEventListener('scroll', () => {
-      siteNav.classList.toggle('show', window.scrollY > 480);
+      const y = window.scrollY || 0;
+      if (nav) nav.style.transform = y > 620 ? 'translateY(0)' : 'translateY(-100%)';
+      if (sticky && !isSubscribed()) sticky.style.transform = y > 1000 ? 'translateY(0)' : 'translateY(130%)';
     }, { passive: true });
 
-    /* ════════ STICKY CTA BAS ════════ */
-    const stickyEl = document.getElementById('stickyCta');
-    const ctaSection = document.getElementById('cta');
-    let heroOut = false, ctaIn = false;
-    function refreshSticky(){ stickyEl.classList.toggle('show', heroOut && !ctaIn && !isSubscribed()); }
-    new IntersectionObserver(([e]) => { heroOut = !e.isIntersecting; refreshSticky(); }, { threshold: 0 }).observe(hero);
-    new IntersectionObserver(([e]) => { ctaIn = e.isIntersecting; refreshSticky(); }, { threshold: 0.25 }).observe(ctaSection);
+    /* ════════ REVEAL AU SCROLL ════════ */
+    document.querySelectorAll('[data-reveal]').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(22px)';
+      el.style.transition = 'opacity .7s cubic-bezier(.16,.84,.28,1), transform .7s cubic-bezier(.16,.84,.28,1)';
+    });
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(ents => {
+        ents.forEach(en => {
+          if (en.isIntersecting) {
+            en.target.style.opacity = '1';
+            en.target.style.transform = 'none';
+            io.unobserve(en.target);
+          }
+        });
+      }, { threshold: 0.12 });
+      document.querySelectorAll('[data-reveal]').forEach(el => io.observe(el));
+
+      /* COUNT-UP */
+      const io2 = new IntersectionObserver(ents => {
+        ents.forEach(en => {
+          if (!en.isIntersecting) return;
+          const el  = en.target;
+          const end = +el.dataset.count;
+          const pre = el.dataset.prefix || '';
+          const suf = el.dataset.suffix || '';
+          let t0 = null; const dur = 1100;
+          const step = ts => {
+            if (!t0) t0 = ts;
+            const p = Math.min((ts - t0) / dur, 1);
+            el.textContent = pre + Math.round(p * end) + suf;
+            if (p < 1) requestAnimationFrame(step);
+          };
+          requestAnimationFrame(step);
+          io2.unobserve(el);
+        });
+      }, { threshold: 0.5 });
+      document.querySelectorAll('[data-count]').forEach(el => io2.observe(el));
+    } else {
+      document.querySelectorAll('[data-reveal]').forEach(el => { el.style.opacity = '1'; el.style.transform = 'none'; });
+    }
 
     /* ════════ MODAL EXIT-INTENT ════════ */
-    const modal = document.getElementById('wlModal');
-    function openModal(){
-      if (isSubscribed() || store.get('tt_modal_seen') === '1') return;
-      store.set('tt_modal_seen', '1');
-      modal.classList.add('show');
-      gtag('event', 'ouverture_modal', { event_category: 'engagement' });
-    }
-    function closeModal(){ modal.classList.remove('show'); }
-    document.getElementById('modalClose').addEventListener('click', () => closeModal());
-    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
-
-    // Déclencheurs : exit-intent desktop · délai 35s · scroll 65%
-    document.addEventListener('mouseout', (e) => { if (!e.relatedTarget && e.clientY <= 0) openModal(); });
-    setTimeout(openModal, 35000);
-    let scrollFired = false;
-    window.addEventListener('scroll', () => {
-      if (scrollFired) return;
-      const depth = (window.scrollY + window.innerHeight) / document.body.scrollHeight;
-      if (depth > 0.65) { scrollFired = true; openModal(); }
-    }, { passive: true });
+    const modal  = document.getElementById('tt-modal');
+    const mClose = document.getElementById('tt-modal-close');
+    let shown = false;
+    const openModal = () => {
+      if (shown || isSubscribed()) return;
+      if (store.get('tt_modal') === '1') return;
+      shown = true;
+      modal.style.opacity = '1';
+      modal.style.visibility = 'visible';
+      const c = modal.querySelector('[data-modal-card]');
+      if (c) c.style.transform = 'none';
+      store.set('tt_modal', '1');
+      try { gtag('event', 'ouverture_modal', { event_category: 'engagement' }); } catch(e) {}
+    };
+    const closeModal = () => { modal.style.opacity = '0'; modal.style.visibility = 'hidden'; };
+    document.addEventListener('mouseout', e => { if (e.clientY <= 0) openModal(); });
+    setTimeout(() => { if (!shown) openModal(); }, 30000);
+    if (mClose) mClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
     /* ════════ GA · clics CTA ════════ */
     document.querySelectorAll('.js-cta').forEach(el => {
-      el.addEventListener('click', () => gtag('event', 'clic_cta', { event_category: 'engagement' }));
+      el.addEventListener('click', () => { try { gtag('event', 'clic_cta', { event_category: 'engagement' }); } catch(e) {} });
     });
-
-    /* ════════ ÉTAT INITIAL SI DÉJÀ INSCRIT ════════ */
-    if (isSubscribed()) syncSubscribedUI();
   </script>
 
 </body>
