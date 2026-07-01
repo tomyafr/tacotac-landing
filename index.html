@@ -29,6 +29,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- ════════════════════ TAILWIND ════════════════════ -->
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-14KLWFZXYY"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-14KLWFZXYY');
+  </script>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -800,6 +809,20 @@
     new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting) sticky.classList.remove('show');
     }, { threshold: 0.2 }).observe(ctaSection);
+
+    /* ════ GOOGLE ANALYTICS EVENTS ════ */
+    document.querySelectorAll('.btn-primary, .sticky-cta a').forEach(el => {
+      el.addEventListener('click', () => gtag('event', 'clic_cta', { event_category: 'engagement' }));
+    });
+    document.getElementById('waitlistForm')?.addEventListener('submit', () => {
+      gtag('event', 'inscription_waitlist', { event_category: 'conversion' });
+    });
+    document.querySelectorAll('.tone-btn').forEach(btn => {
+      btn.addEventListener('click', () => gtag('event', 'clic_ton_' + btn.dataset.tone, { event_category: 'engagement' }));
+    });
+    document.getElementById('copyBtn')?.addEventListener('click', () => {
+      gtag('event', 'copie_reponse', { event_category: 'engagement' });
+    });
   </script>
 
 </body>
