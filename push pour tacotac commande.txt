@@ -1,0 +1,4 @@
+cd "C:\Users\tomdu\Desktop\AGENT IA\tacotac"
+git add -A
+git commit -m "update"
+git push

@@ -1,0 +1,209 @@
+{
+  "name": "Tacotac — Waitlist Inscriptions",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "tacotac-waitlist",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "n001",
+      "name": "Webhook Inscription",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "tacotac-waitlist-001"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\n\n// Paramètres reçus via URL (?email=...&source=...)\nconst email     = (item.email     || '').toString().trim().toLowerCase();\nconst source    = (item.source    || 'landing').toString().trim();\nconst timestamp = (item.timestamp || new Date().toISOString());\n\n// Validation format email\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/;\nif (!email || !emailRegex.test(email)) {\n  return [{ json: { valid: false, email, source, timestamp } }];\n}\n\n// Date / heure format FR (Paris)\nconst now  = new Date();\nconst date = now.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' });\nconst time = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' });\n\nreturn [{ json: { valid: true, email, source, timestamp, date, time } }];"
+      },
+      "id": "n002",
+      "name": "Valider et Formater",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond-valid",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "n003",
+      "name": "Email valide ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1PpFhlTHgpcILyDazvL1rRSzNwIEKgK-vG14e2QyGfkk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Waitlist",
+          "mode": "name"
+        },
+        "filtersUI": { "values": [] },
+        "options": {}
+      },
+      "id": "n004",
+      "name": "Lire la Waitlist",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [900, 200],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REMPLACER_PAR_TON_ID_CREDENTIAL",
+          "name": "Google Sheets OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Email entrant\nconst emailToCheck = $('Valider et Formater').first().json.email;\n\n// Toutes les lignes existantes du Sheet\nconst allRows = $input.all();\n\n// Vérifier si l'email existe déjà (insensible à la casse)\nconst isDuplicate = allRows.some(row => {\n  const existing = (\n    row.json['Email'] ||\n    row.json['email'] ||\n    ''\n  ).toString().trim().toLowerCase();\n  return existing === emailToCheck;\n});\n\nconst data = $('Valider et Formater').first().json;\n\nreturn [{\n  json: {\n    isDuplicate,\n    email:  data.email,\n    source: data.source,\n    date:   data.date,\n    time:   data.time\n  }\n}];"
+      },
+      "id": "n005",
+      "name": "Verifier doublon",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond-dedup",
+              "leftValue": "={{ $json.isDuplicate }}",
+              "rightValue": false,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "n006",
+      "name": "Pas encore inscrit ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1340, 200]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1PpFhlTHgpcILyDazvL1rRSzNwIEKgK-vG14e2QyGfkk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Waitlist",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Email":  "={{ $json.email }}",
+            "Date":   "={{ $json.date }}",
+            "Heure":  "={{ $json.time }}",
+            "Source": "={{ $json.source }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            { "id": "Email",  "displayName": "Email",  "type": "string", "required": false, "defaultMatch": false, "display": true, "readOnly": false, "removed": false },
+            { "id": "Date",   "displayName": "Date",   "type": "string", "required": false, "defaultMatch": false, "display": true, "readOnly": false, "removed": false },
+            { "id": "Heure",  "displayName": "Heure",  "type": "string", "required": false, "defaultMatch": false, "display": true, "readOnly": false, "removed": false },
+            { "id": "Source", "displayName": "Source", "type": "string", "required": false, "defaultMatch": false, "display": true, "readOnly": false, "removed": false }
+          ]
+        },
+        "options": { "cellFormat": "USER_ENTERED" }
+      },
+      "id": "n007",
+      "name": "Ajouter au Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [1560, 100],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REMPLACER_PAR_TON_ID_CREDENTIAL",
+          "name": "Google Sheets OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "tomathieuia@gmail.com",
+        "subject": "=🦊 Nouveau inscrit Tacotac — {{ $('Verifier doublon').first().json.email }}",
+        "emailType": "html",
+        "message": "=<div style=\"font-family:sans-serif;max-width:500px;margin:0 auto;background:#1A1A1A;color:#fff;border-radius:16px;padding:32px;\">\n  <div style=\"text-align:center;margin-bottom:24px;\">\n    <span style=\"font-size:48px;\">🦊</span>\n    <h2 style=\"color:#FF5C00;margin:10px 0 0;font-size:22px;\">Nouvel inscrit sur la liste !</h2>\n  </div>\n  <table style=\"width:100%;border-collapse:collapse;\">\n    <tr style=\"border-bottom:1px solid #2A2A2A;\">\n      <td style=\"padding:14px 0;color:#9A9A9A;font-size:13px;width:80px;\">Email</td>\n      <td style=\"padding:14px 0;font-weight:700;font-size:15px;\">{{ $('Verifier doublon').first().json.email }}</td>\n    </tr>\n    <tr style=\"border-bottom:1px solid #2A2A2A;\">\n      <td style=\"padding:14px 0;color:#9A9A9A;font-size:13px;\">Date</td>\n      <td style=\"padding:14px 0;font-size:14px;\">{{ $('Verifier doublon').first().json.date }} à {{ $('Verifier doublon').first().json.time }}</td>\n    </tr>\n    <tr>\n      <td style=\"padding:14px 0;color:#9A9A9A;font-size:13px;\">Source</td>\n      <td style=\"padding:14px 0;font-size:14px;\">{{ $('Verifier doublon').first().json.source }}</td>\n    </tr>\n  </table>\n  <div style=\"text-align:center;margin-top:28px;\">\n    <a href=\"https://docs.google.com/spreadsheets/d/1PpFhlTHgpcILyDazvL1rRSzNwIEKgK-vG14e2QyGfkk\"\n       style=\"display:inline-block;padding:14px 28px;background:#FF5C00;color:#fff;text-decoration:none;border-radius:100px;font-weight:700;font-size:15px;\">Voir le Sheet →</a>\n  </div>\n</div>",
+        "options": {}
+      },
+      "id": "n008",
+      "name": "Email notification",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [1780, 100],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REMPLACER_PAR_TON_ID_CREDENTIAL_GMAIL",
+          "name": "Gmail OAuth2"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Inscription": {
+      "main": [[{ "node": "Valider et Formater", "type": "main", "index": 0 }]]
+    },
+    "Valider et Formater": {
+      "main": [[{ "node": "Email valide ?", "type": "main", "index": 0 }]]
+    },
+    "Email valide ?": {
+      "main": [
+        [{ "node": "Lire la Waitlist", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Lire la Waitlist": {
+      "main": [[{ "node": "Verifier doublon", "type": "main", "index": 0 }]]
+    },
+    "Verifier doublon": {
+      "main": [[{ "node": "Pas encore inscrit ?", "type": "main", "index": 0 }]]
+    },
+    "Pas encore inscrit ?": {
+      "main": [
+        [{ "node": "Ajouter au Sheet", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Ajouter au Sheet": {
+      "main": [[{ "node": "Email notification", "type": "main", "index": 0 }]]
+    }
+  },
+  "pinData": {},
+  "settings": { "executionOrder": "v1" },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "versionId": "1"
+}

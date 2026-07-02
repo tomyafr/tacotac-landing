@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="ext-resource-dependency" content="assets/fox_classe.png" data-resource-id="foxClasse" />
+<meta name="ext-resource-dependency" content="assets/fox_chill.png" data-resource-id="foxChill" />
+<meta name="ext-resource-dependency" content="assets/fox_spicy.png" data-resource-id="foxSpicy" />
+<script src="./support.js"></script>
+</head>
+<template id="__bundler_thumbnail" data-bg-color="#0E0E0E">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#0E0E0E"/>
+    <circle cx="600" cy="360" r="150" fill="none" stroke="#FF5C00" stroke-width="14" stroke-dasharray="600 320" stroke-linecap="round"/>
+    <path d="M520 300 L560 230 L600 290 L640 230 L680 300 Q600 350 520 300 Z" fill="#FF5C00"/>
+    <circle cx="568" cy="320" r="10" fill="#0E0E0E"/>
+    <circle cx="632" cy="320" r="10" fill="#0E0E0E"/>
+    <text x="600" y="600" font-family="'Space Grotesk',sans-serif" font-size="72" font-weight="700" fill="#ffffff" text-anchor="middle">Tacotac</text>
+  </svg>
+</template>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  @keyframes tt-spin { to { transform: rotate(360deg); } }
+  @keyframes tt-glow { 0%,100% { opacity: .55; transform: scale(1); } 50% { opacity: 1; transform: scale(1.06); } }
+  @keyframes tt-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+  @keyframes tt-think { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+  @keyframes tt-dots { 0%,80%,100% { opacity: .25; } 40% { opacity: 1; } }
+  @keyframes tt-arrow { 0%,100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
+</style>
+</helmet>
+<div style="min-height:100vh;background:radial-gradient(120% 90% at 50% 0%,#1c1410 0%,#121212 55%,#0a0a0a 100%);font-family:'Space Grotesk',sans-serif;padding:56px 40px 72px;display:flex;flex-direction:column;align-items:center;gap:40px;">
+
+  <div style="text-align:center;color:#fff;">
+    <div style="display:inline-flex;align-items:center;gap:10px;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#FF5C00;font-weight:600;">
+      <span style="width:28px;height:1px;background:#FF5C00;opacity:.6;"></span>Tacotac · Coach dating IA<span style="width:28px;height:1px;background:#FF5C00;opacity:.6;"></span>
+    </div>
+    <div style="margin-top:10px;font-size:15px;color:#8a8580;font-weight:400;">3 écrans · 375 × 812</div>
+  </div>
+
+  <div style="display:flex;gap:48px;flex-wrap:wrap;justify-content:center;align-items:flex-start;">
+
+    <!-- ============ ÉCRAN 1 — UPLOAD ============ -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+      <div style="font-size:13px;color:#6e6a66;font-weight:500;letter-spacing:.5px;">01 · Envoi</div>
+      <div style="position:relative;width:375px;height:812px;border-radius:46px;background:#0E0E0E;overflow:hidden;box-shadow:0 0 0 1px rgba(255,92,0,.14),0 40px 90px -30px rgba(255,92,0,.35),0 30px 80px -20px rgba(0,0,0,.8);">
+        <div style="position:absolute;inset:0;background:radial-gradient(90% 55% at 50% -8%,rgba(255,92,0,.16) 0%,transparent 60%);"></div>
+        <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:128px;height:30px;background:#000;border-radius:0 0 18px 18px;z-index:5;"></div>
+
+        <div style="position:relative;height:100%;display:flex;flex-direction:column;padding:58px 24px 30px;">
+          <!-- header -->
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:9px;">
+              <div style="width:42px;height:42px;border-radius:50%;overflow:hidden;background:#1a1a1a;border:2px solid #FF5C00;box-shadow:0 6px 18px -4px rgba(255,92,0,.5);display:flex;align-items:flex-start;justify-content:center;"><img src="assets/fox_chill.png" alt="Tacotac" style="width:100%;height:100%;object-fit:cover;object-position:50% 3%;"></div>
+              <div style="color:#fff;font-size:22px;font-weight:700;letter-spacing:-.5px;">Tacotac</div>
+            </div>
+            <div style="width:38px;height:38px;border-radius:50%;background:#1a1a1a;border:1px solid #262626;display:flex;align-items:center;justify-content:center;">
+              <div style="width:16px;height:16px;border-radius:50%;background:linear-gradient(150deg,#FF7A2E,#FF5C00);"></div>
+            </div>
+          </div>
+
+          <!-- title -->
+          <div style="margin-top:34px;">
+            <div style="color:#fff;font-size:27px;font-weight:700;letter-spacing:-.8px;line-height:1.15;">Balance ton <span style="color:#FF5C00;">match</span>.</div>
+            <div style="color:#8a8580;font-size:14px;margin-top:7px;line-height:1.45;">Glisse ta conversation, le renard te sort 3 répliques qui font mouche.</div>
+          </div>
+
+          <!-- dropzone -->
+          <div style="margin-top:26px;flex:1;border:2px dashed rgba(255,92,0,.4);border-radius:26px;background:linear-gradient(180deg,rgba(255,92,0,.06),rgba(255,92,0,.02));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;text-align:center;">
+            <div style="width:66px;height:66px;border-radius:20px;background:rgba(255,92,0,.14);display:flex;align-items:center;justify-content:center;animation:tt-arrow 2.2s ease-in-out infinite;">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FF5C00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"></path><path d="m6 10 6-6 6 6"></path><path d="M4 20h16"></path></svg>
+            </div>
+            <div>
+              <div style="color:#fff;font-size:16px;font-weight:600;">Dépose ta capture ici</div>
+              <div style="color:#6e6a66;font-size:13px;margin-top:5px;">ou appuie pour choisir</div>
+            </div>
+            <div style="display:flex;gap:7px;margin-top:2px;">
+              <span style="font-size:11px;color:#6e6a66;border:1px solid #2a2a2a;border-radius:8px;padding:4px 9px;">PNG</span>
+              <span style="font-size:11px;color:#6e6a66;border:1px solid #2a2a2a;border-radius:8px;padding:4px 9px;">JPG</span>
+              <span style="font-size:11px;color:#6e6a66;border:1px solid #2a2a2a;border-radius:8px;padding:4px 9px;">Capture</span>
+            </div>
+          </div>
+
+          <!-- cta -->
+          <button style="margin-top:22px;width:100%;height:58px;border:none;border-radius:18px;background:linear-gradient(150deg,#FF7A2E,#FF5C00);color:#fff;font-family:inherit;font-size:17px;font-weight:700;letter-spacing:-.2px;cursor:pointer;box-shadow:0 14px 34px -10px rgba(255,92,0,.7);display:flex;align-items:center;justify-content:center;gap:8px;">Analyser ma conv <span style="font-size:18px;">⚡</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ ÉCRAN 2 — ANALYSE ============ -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+      <div style="font-size:13px;color:#6e6a66;font-weight:500;letter-spacing:.5px;">02 · Analyse</div>
+      <div style="position:relative;width:375px;height:812px;border-radius:46px;background:#0E0E0E;overflow:hidden;box-shadow:0 0 0 1px rgba(255,92,0,.14),0 40px 90px -30px rgba(255,92,0,.4),0 30px 80px -20px rgba(0,0,0,.8);">
+        <div style="position:absolute;inset:0;background:radial-gradient(70% 45% at 50% 42%,rgba(255,92,0,.2) 0%,transparent 62%);"></div>
+        <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:128px;height:30px;background:#000;border-radius:0 0 18px 18px;z-index:5;"></div>
+
+        <div style="position:relative;height:100%;display:flex;flex-direction:column;align-items:center;padding:58px 24px 40px;">
+          <div style="display:flex;align-items:center;gap:9px;">
+            <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;background:#1a1a1a;border:2px solid #FF5C00;display:flex;align-items:flex-start;justify-content:center;"><img src="assets/fox_chill.png" alt="Tacotac" style="width:100%;height:100%;object-fit:cover;object-position:50% 3%;"></div>
+            <div style="color:#fff;font-size:18px;font-weight:700;letter-spacing:-.5px;">Tacotac</div>
+          </div>
+
+          <!-- mascot + spinner -->
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;">
+            <div style="position:relative;width:230px;height:230px;display:flex;align-items:center;justify-content:center;">
+              <div style="position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,rgba(255,92,0,.45) 0%,transparent 65%);filter:blur(8px);animation:tt-glow 2.6s ease-in-out infinite;"></div>
+              <div style="position:absolute;width:210px;height:210px;border-radius:50%;border:3px solid rgba(255,92,0,.12);"></div>
+              <div style="position:absolute;width:210px;height:210px;border-radius:50%;border:3px solid transparent;border-top-color:#FF5C00;border-right-color:#FF5C00;animation:tt-spin 1.1s linear infinite;box-shadow:0 0 18px rgba(255,92,0,.3);"></div>
+              <img src="assets/fox_chill.png" alt="renard pensif" style="position:relative;height:178px;object-fit:contain;filter:drop-shadow(0 14px 26px rgba(255,92,0,.4));animation:tt-think 3s ease-in-out infinite;z-index:2;">
+              <!-- thinking bubble -->
+              <div style="position:absolute;top:8px;right:6px;display:flex;align-items:center;gap:5px;background:#171717;border:1px solid #2a2a2a;border-radius:16px;padding:9px 12px;z-index:3;box-shadow:0 8px 20px -8px rgba(0,0,0,.8);">
+                <span style="width:7px;height:7px;border-radius:50%;background:#FF5C00;animation:tt-dots 1.4s ease-in-out infinite;"></span>
+                <span style="width:7px;height:7px;border-radius:50%;background:#FF5C00;animation:tt-dots 1.4s ease-in-out .2s infinite;"></span>
+                <span style="width:7px;height:7px;border-radius:50%;background:#FF5C00;animation:tt-dots 1.4s ease-in-out .4s infinite;"></span>
+              </div>
+            </div>
+
+            <div style="margin-top:40px;text-align:center;">
+              <div style="color:#fff;font-size:24px;font-weight:700;letter-spacing:-.6px;">Tacotac analyse<span style="color:#FF5C00;">…</span></div>
+              <div style="color:#8a8580;font-size:14px;margin-top:10px;">3 réponses en cours de génération</div>
+            </div>
+
+            <!-- progress dots -->
+            <div style="display:flex;gap:8px;margin-top:26px;">
+              <span style="width:9px;height:9px;border-radius:50%;background:#FF5C00;animation:tt-dots 1.4s ease-in-out infinite;"></span>
+              <span style="width:9px;height:9px;border-radius:50%;background:#FF5C00;animation:tt-dots 1.4s ease-in-out .2s infinite;"></span>
+              <span style="width:9px;height:9px;border-radius:50%;background:#FF5C00;animation:tt-dots 1.4s ease-in-out .4s infinite;"></span>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:8px;color:#6e6a66;font-size:12px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6e6a66" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            Analyse privée · rien n'est stocké
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ ÉCRAN 3 — RÉSULTATS ============ -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+      <div style="font-size:13px;color:#6e6a66;font-weight:500;letter-spacing:.5px;">03 · Résultats</div>
+      <div style="position:relative;width:375px;height:812px;border-radius:46px;background:#0E0E0E;overflow:hidden;box-shadow:0 0 0 1px rgba(255,92,0,.14),0 40px 90px -30px rgba(255,92,0,.35),0 30px 80px -20px rgba(0,0,0,.8);">
+        <div style="position:absolute;inset:0;background:radial-gradient(85% 50% at 50% -6%,rgba(255,92,0,.14) 0%,transparent 60%);"></div>
+        <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:128px;height:30px;background:#000;border-radius:0 0 18px 18px;z-index:5;"></div>
+
+        <div style="position:relative;height:100%;display:flex;flex-direction:column;padding:58px 22px 26px;">
+          <!-- header -->
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:34px;height:34px;border-radius:50%;overflow:hidden;background:#1a1a1a;border:2px solid #FF5C00;display:flex;align-items:flex-start;justify-content:center;"><img src="assets/fox_chill.png" alt="Tacotac" style="width:100%;height:100%;object-fit:cover;object-position:50% 3%;"></div>
+              <div style="color:#fff;font-size:17px;font-weight:700;letter-spacing:-.4px;">Tes répliques</div>
+            </div>
+            <div style="color:#6e6a66;font-size:12px;border:1px solid #2a2a2a;border-radius:20px;padding:5px 11px;">3 prêtes</div>
+          </div>
+
+          <!-- tone selector -->
+          <div style="margin-top:22px;">
+            <div style="color:#6e6a66;font-size:12px;letter-spacing:.5px;text-transform:uppercase;font-weight:500;margin-bottom:10px;">Choisis ton ton</div>
+            <div style="display:flex;gap:9px;">
+              <sc-for list="{{ tones }}" as="t" hint-placeholder-count="3">
+                <button onClick="{{ t.select }}" style="{{ t.btnStyle }}">
+                  <span style="font-size:21px;">{{ t.emoji }}</span>
+                  <span style="{{ t.labelStyle }}">{{ t.label }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+
+          <!-- result card -->
+          <div style="margin-top:16px;flex:1;position:relative;border-radius:24px;background:linear-gradient(180deg,#161616,#0f0f0f);border:1px solid #232323;padding:18px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px -24px rgba(255,92,0,.3);">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="display:flex;align-items:center;gap:7px;color:#fff;font-size:15px;font-weight:600;"><span style="font-size:18px;">{{ currentEmoji }}</span> Ton {{ currentLabel }}</div>
+              <button onClick="{{ regen }}" style="display:flex;align-items:center;gap:6px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:20px;padding:6px 11px;color:#8a8580;font-family:inherit;font-size:12px;cursor:pointer;font-weight:500;">Refaire <span style="font-size:13px;">↻</span></button>
+            </div>
+
+            <!-- bulle -->
+            <div style="margin-top:16px;position:relative;background:#1d1d1d;border:1px solid #2e2e2e;border-radius:20px;padding:15px 17px;box-shadow:0 14px 30px -16px rgba(0,0,0,.8);z-index:2;">
+              <div style="color:#FF5C00;font-size:12.5px;font-weight:600;letter-spacing:.2px;margin-bottom:8px;">tiens répond lui ça</div>
+              <p style="margin:0;color:#ECE8E3;font-size:18px;line-height:1.5;font-style:italic;font-weight:400;letter-spacing:-.2px;">{{ currentReply }}</p>
+              <div style="position:absolute;bottom:-8px;left:42px;width:16px;height:16px;background:#1d1d1d;border-right:1px solid #2e2e2e;border-bottom:1px solid #2e2e2e;transform:rotate(45deg);"></div>
+            </div>
+
+            <!-- mascotte -->
+            <div style="flex:1;display:flex;align-items:flex-end;justify-content:center;min-height:130px;margin-top:4px;">
+              {{ currentFoxImg }}
+            </div>
+          </div>
+
+          <!-- copy button -->
+          <button onClick="{{ copy }}" style="{{ copyStyle }}">
+            <span style="font-size:16px;">{{ copyIcon }}</span> {{ copyText }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1300,&quot;height&quot;:960}}">
+class Component extends DCLogic {
+  state = { active: "drole", copied: false, variant: 0 };
+
+  data = {
+    classe: {
+      emoji: "🎩", label: "Classe", foxId: "foxClasse", fox: "assets/fox_classe.png",
+      replies: [
+        "franchement t'as un truc qui change des autres faut vraiment qu'on s'voie autour d'un verre",
+        "jsuis pas du genre à proposer ça à tout l'monde mais toi jt'emmène dîner sans réfléchir"
+      ]
+    },
+    drole: {
+      emoji: "😂", label: "Drôle", foxId: "foxChill", fox: "assets/fox_chill.png",
+      replies: [
+        "mdrrr bon jte préviens jchoisis jamais le bon resto mais jte fais marrer grave en attendant deal",
+        "ptdrrr notre premier rdv va être tellement bien que tu vas regretter d'avoir pas proposé avant moi"
+      ]
+    },
+    spicy: {
+      emoji: "🌶️", label: "Spicy", foxId: "foxSpicy", fox: "assets/fox_spicy.png",
+      replies: [
+        "ouuu toi t'as l'air dangereuse jdevrais me méfier mais t'es bien trop mon style pour que jjoue la sécurité",
+        "préviens moi à l'avance pour qu'on s'voie le temps que jdevienne encore plus irrésistible mdrr"
+      ]
+    }
+  };
+
+  order = ["classe", "drole", "spicy"];
+
+  select(key) { this.setState({ active: key, copied: false, variant: 0 }); }
+  regen() { this.setState(s => ({ variant: (s.variant + 1) % 2, copied: false })); }
+  copy() {
+    const cur = this.data[this.state.active];
+    const txt = cur.replies[this.state.variant % cur.replies.length];
+    try { navigator.clipboard && navigator.clipboard.writeText(txt); } catch (e) {}
+    this.setState({ copied: true });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.setState({ copied: false }), 1800);
+  }
+
+  renderVals() {
+    const active = this.state.active;
+    const tones = this.order.map(key => {
+      const d = this.data[key];
+      const on = key === active;
+      return {
+        key, emoji: d.emoji, label: d.label,
+        select: () => this.select(key),
+        btnStyle: `flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:13px 6px;border-radius:16px;cursor:pointer;font-family:inherit;transition:all .15s;border:1px solid ${on ? "#FF5C00" : "#262626"};background:${on ? "linear-gradient(160deg,rgba(255,92,0,.22),rgba(255,92,0,.08))" : "#151515"};box-shadow:${on ? "0 10px 26px -12px rgba(255,92,0,.7)" : "none"};`,
+        labelStyle: `font-size:13px;font-weight:600;color:${on ? "#fff" : "#7a756f"};`
+      };
+    });
+    const cur = this.data[active];
+    const reply = cur.replies[this.state.variant % cur.replies.length];
+    const copied = this.state.copied;
+    return {
+      tones,
+      currentFoxImg: React.createElement("img", { src: (typeof window !== "undefined" && window.__resources && window.__resources[cur.foxId]) || cur.fox, alt: "", style: { height: "168px", objectFit: "contain", objectPosition: "bottom", filter: "drop-shadow(0 14px 24px rgba(255,92,0,.38))" } }),
+      currentEmoji: cur.emoji,
+      currentLabel: cur.label,
+      currentReply: reply,
+      regen: () => this.regen(),
+      copy: () => this.copy(),
+      copyIcon: copied ? "✅" : "📋",
+      copyText: copied ? "Copié !" : "Copier la réponse",
+      copyStyle: `margin-top:16px;width:100%;height:54px;border:none;border-radius:18px;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;transition:all .2s;color:#fff;background:${copied ? "linear-gradient(150deg,#3aa35a,#2c8a49)" : "linear-gradient(150deg,#FF7A2E,#FF5C00)"};box-shadow:0 14px 32px -12px ${copied ? "rgba(58,163,90,.6)" : "rgba(255,92,0,.7)"};`
+    };
+  }
+}
+</script>
+</body>
+</html>
