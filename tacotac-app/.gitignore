@@ -3,3 +3,9 @@ node_modules/
 *.log
 .DS_Store
 Thumbs.db
+
+# Base de données SQLite (données users/usage — jamais versionnée)
+*.db
+*.db-wal
+*.db-shm
+*.sqlite

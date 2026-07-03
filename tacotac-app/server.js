@@ -10,15 +10,125 @@ import 'dotenv/config';
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { randomUUID } from 'node:crypto';
+import cookieParser from 'cookie-parser';
+import rateLimit from 'express-rate-limit';
 import OpenAI from 'openai';
+import Stripe from 'stripe';
+import { consumeQuota, getStatus, activatePremium, syncSubscription, deactivatePremium } from './db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3000;
+const PUBLIC_URL = process.env.PUBLIC_URL || `http://localhost:${PORT}`;
+
+// Derrière le reverse proxy nginx (prod) : nécessaire pour l'IP réelle (rate-limit) et les cookies secure
+app.set('trust proxy', 1);
+
+// ── Client Stripe ───────────────────────────────────────────────
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+const PRICES = { weekly: process.env.STRIPE_PRICE_WEEKLY, monthly: process.env.STRIPE_PRICE_MONTHLY };
+
+// ⚠️ Le webhook Stripe DOIT recevoir le corps BRUT (non parsé) pour vérifier la signature.
+// On le déclare donc AVANT express.json().
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+  if (!stripe) return res.status(500).end();
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, req.headers['stripe-signature'], process.env.STRIPE_WEBHOOK_SECRET);
+  } catch (err) {
+    console.error('[webhook] signature invalide:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const s = event.data.object;
+        activateFromSession(s).catch((e) => console.error('[webhook] activate:', e.message));
+        break;
+      }
+      case 'customer.subscription.updated':
+      case 'customer.subscription.created': {
+        const sub = event.data.object;
+        syncSubscription({
+          customerId: sub.customer,
+          subscriptionId: sub.id,
+          status: sub.status,
+          expiresAt: subEnd(sub),
+        });
+        break;
+      }
+      case 'customer.subscription.deleted': {
+        deactivatePremium(event.data.object.customer);
+        break;
+      }
+    }
+  } catch (e) {
+    console.error('[webhook] traitement:', e.message);
+  }
+  res.json({ received: true });
+});
 
 // screenshots en base64 → il faut une limite de body généreuse
 app.use(express.json({ limit: '12mb' }));
+app.use(cookieParser(process.env.COOKIE_SECRET || 'dev-secret-change-me'));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Fin de période d'un abonnement (compatible anciennes/nouvelles versions d'API Stripe).
+function subEnd(sub) {
+  return sub?.current_period_end || sub?.items?.data?.[0]?.current_period_end || null;
+}
+
+// Active le premium à partir d'une Checkout Session payée (utilisé par le webhook ET la confirmation au retour).
+async function activateFromSession(session) {
+  if (!session || session.payment_status !== 'paid') return null;
+  const deviceId = session.client_reference_id || session.metadata?.device_id;
+  if (!deviceId) return null;
+  let expiresAt = null;
+  if (session.subscription) {
+    try {
+      const sub = await stripe.subscriptions.retrieve(session.subscription);
+      expiresAt = subEnd(sub);
+    } catch { /* on active quand même, l'expiration sera corrigée au 1er webhook de renouvellement */ }
+  }
+  return activatePremium({
+    deviceId,
+    email: session.customer_details?.email || session.customer_email || null,
+    customerId: session.customer,
+    subscriptionId: session.subscription,
+    expiresAt,
+  });
+}
+
+// ── Identité anonyme : un cookie signé device_id par visiteur ────
+// C'est la clé qui remplace le localStorage contournable. httpOnly => le JS du
+// navigateur ne peut pas le lire/falsifier, signé => impossible à forger.
+const DEVICE_COOKIE = 'tacotac_did';
+function attachDevice(req, res) {
+  let deviceId = req.signedCookies?.[DEVICE_COOKIE];
+  if (!deviceId) {
+    deviceId = randomUUID();
+    res.cookie(DEVICE_COOKIE, deviceId, {
+      httpOnly: true,
+      signed: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 1000 * 60 * 60 * 24 * 365 * 2, // 2 ans
+    });
+  }
+  req.deviceId = deviceId;
+  return deviceId;
+}
+
+// ── Rate-limit dur par IP sur l'IA (anti-script / anti-abus de coûts) ──
+const analyzeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 min
+  max: 30,                  // 30 requêtes / 15 min / IP (bien au-dessus d'un usage humain)
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop de requêtes, réessaie dans quelques minutes.', code: 'rate_limited' },
+});
 
 // ── Client OpenAI ───────────────────────────────────────────────
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -197,17 +307,82 @@ function isValidDataUrl(dataUrl) {
   return /^data:image\/(png|jpe?g|webp|gif);base64,.+$/i.test(dataUrl || '');
 }
 
-// ── Endpoint IA ─────────────────────────────────────────────────
-app.post('/api/analyze', async (req, res) => {
+// ── État de l'utilisateur courant (quota, plan) ─────────────────
+app.get('/api/me', (req, res) => {
+  const deviceId = attachDevice(req, res);
+  res.json(getStatus(deviceId));
+});
+
+// ── Créer une session de paiement Stripe (abonnement) ───────────
+app.post('/api/checkout', async (req, res) => {
   try {
+    if (!stripe) return res.status(500).json({ error: 'Paiement indisponible.' });
+    const deviceId = attachDevice(req, res);
+    const plan = req.body?.plan === 'monthly' ? 'monthly' : 'weekly';
+    const price = PRICES[plan];
+    if (!price) return res.status(500).json({ error: 'Offre indisponible.' });
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      line_items: [{ price, quantity: 1 }],
+      client_reference_id: deviceId,             // relie le paiement à l'appareil
+      subscription_data: { metadata: { device_id: deviceId } },
+      allow_promotion_codes: true,
+      success_url: `${PUBLIC_URL}/app?paid=1&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${PUBLIC_URL}/app?canceled=1`,
+    });
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error('[checkout] erreur:', err?.message || err);
+    res.status(500).json({ error: 'Impossible de créer la session de paiement.' });
+  }
+});
+
+// ── Confirmer au retour de Stripe (active le premium sans dépendre du webhook) ──
+app.get('/api/checkout/confirm', async (req, res) => {
+  try {
+    if (!stripe) return res.status(500).json({ ok: false });
+    const deviceId = attachDevice(req, res);
+    const sessionId = req.query.session_id;
+    if (sessionId) {
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+      // sécurité : la session doit appartenir à CET appareil
+      if ((session.client_reference_id || session.metadata?.device_id) === deviceId) {
+        await activateFromSession(session);
+      }
+    }
+    res.json(getStatus(deviceId));
+  } catch (err) {
+    console.error('[confirm] erreur:', err?.message || err);
+    res.status(500).json({ ok: false });
+  }
+});
+
+// ── Endpoint IA ─────────────────────────────────────────────────
+app.post('/api/analyze', analyzeLimiter, async (req, res) => {
+  try {
+    const deviceId = attachDevice(req, res);
+
     const dataUrl = req.body?.image;
     if (!isValidDataUrl(dataUrl)) {
       return res.status(400).json({ error: 'Image manquante ou format invalide (png/jpg/webp attendu).' });
     }
 
+    // ── QUOTA (côté serveur, seule source de vérité) ──
+    const quota = consumeQuota(deviceId);
+    if (!quota.allowed) {
+      return res.status(402).json({
+        error: quota.isPremium
+          ? "Limite quotidienne atteinte, reviens demain."
+          : "T'as utilisé tes analyses gratuites du jour.",
+        code: 'quota_exceeded',
+        quota,
+      });
+    }
+
     if (!process.env.OPENAI_API_KEY) {
       // Pas de clé → on renvoie le fallback pour ne jamais casser la démo
-      return res.json({ replies: FALLBACK, source: 'fallback' });
+      return res.json({ replies: FALLBACK, source: 'fallback', quota });
     }
 
     const completion = await openai.chat.completions.create({
@@ -228,7 +403,7 @@ app.post('/api/analyze', async (req, res) => {
     });
 
     const call = completion.choices?.[0]?.message?.tool_calls?.[0];
-    if (!call?.function?.arguments) return res.json({ replies: FALLBACK, source: 'fallback' });
+    if (!call?.function?.arguments) return res.json({ replies: FALLBACK, source: 'fallback', quota });
 
     let out = {};
     try { out = JSON.parse(call.function.arguments); } catch { out = {}; }
@@ -240,7 +415,7 @@ app.post('/api/analyze', async (req, res) => {
       spicy: clean(out.spicy).length ? clean(out.spicy) : FALLBACK.spicy,
     };
 
-    res.json({ replies, source: 'ai' });
+    res.json({ replies, source: 'ai', quota });
   } catch (err) {
     console.error('[analyze] erreur:', err?.message || err);
     // On dégrade proprement plutôt que de casser l'app

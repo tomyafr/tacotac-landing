@@ -283,17 +283,26 @@
     <div class="gate-overlay" id="gate">
       <div class="gate-card">
         <div style="font-size:40px;margin-bottom:6px;">🦊🔒</div>
-        <div class="display" style="color:#fff;font-size:24px;line-height:1.1;">T'as cramé tes 2 essais gratuits</div>
-        <p style="color:#8a8580;font-size:14px;margin:10px 0 18px;line-height:1.5;">Laisse ton email : les inscrits ont un accès <span style="color:#FF7A33;font-weight:600;">illimité gratuit</span> au lancement de la version complète.</p>
-        <form id="gateForm" style="display:flex;flex-direction:column;gap:10px;">
-          <input class="gate-input" id="gateEmail" type="email" required placeholder="ton@email.fr" autocomplete="email">
-          <button type="submit" class="cta" style="height:52px;font-size:16px;">Débloquer l'accès 🚀</button>
-        </form>
-        <div id="gateSuccess" style="display:none;margin-top:14px;background:rgba(58,163,90,.12);border:1px solid rgba(58,163,90,.35);border-radius:16px;padding:16px;">
-          <p style="margin:0;color:#5fce86;font-weight:700;font-size:15px;">🎉 T'es sur la liste !</p>
-          <p style="margin:5px 0 0;color:#8a8580;font-size:13px;">On te prévient dès l'ouverture. Prépare-toi 🌮</p>
+        <div class="display" style="color:#fff;font-size:24px;line-height:1.1;">Passe en Premium 🌮</div>
+        <p style="color:#8a8580;font-size:14px;margin:10px 0 18px;line-height:1.5;">T'as cramé tes analyses gratuites du jour. Débloque les <span style="color:#FF7A33;font-weight:600;">analyses illimitées</span>, tout de suite.</p>
+
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <!-- Offre mensuelle (mise en avant) -->
+          <button class="plan-btn" data-plan="monthly" style="position:relative;height:60px;border:none;border-radius:16px;cursor:pointer;background:linear-gradient(90deg,#FF5C00,#FF8A3D);color:#fff;font-family:inherit;font-weight:700;display:flex;align-items:center;justify-content:space-between;padding:0 18px;">
+            <span style="font-size:16px;">Mensuel</span>
+            <span style="font-size:16px;">9,99€<span style="font-weight:500;font-size:12px;opacity:.85;"> /mois</span></span>
+            <span style="position:absolute;top:-9px;right:14px;background:#111;color:#FF9A55;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;border:1px solid rgba(255,138,61,.5);">MEILLEUR PRIX</span>
+          </button>
+          <!-- Offre hebdo -->
+          <button class="plan-btn" data-plan="weekly" style="height:56px;border:1.5px solid #2a2a2a;border-radius:16px;cursor:pointer;background:#0d0d0d;color:#fff;font-family:inherit;font-weight:600;display:flex;align-items:center;justify-content:space-between;padding:0 18px;">
+            <span style="font-size:15px;">Hebdo</span>
+            <span style="font-size:15px;">4,99€<span style="font-weight:500;font-size:12px;color:#8a8580;"> /semaine</span></span>
+          </button>
         </div>
-        <button id="gateClose" style="margin-top:14px;background:none;border:none;color:#56524e;font-family:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline;">Revenir plus tard</button>
+
+        <p style="color:#56524e;font-size:11.5px;margin:14px 0 0;">🔒 Paiement sécurisé par Stripe · annulable à tout moment</p>
+        <div id="gateError" style="display:none;color:#ff6b5c;font-size:12.5px;margin-top:10px;"></div>
+        <button id="gateClose" style="margin-top:12px;background:none;border:none;color:#56524e;font-family:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline;">Revenir plus tard</button>
       </div>
     </div>
 
@@ -302,8 +311,6 @@
   <script>
     // ══════════════ CONFIG ══════════════
     const WAITLIST_WEBHOOK = 'https://script.google.com/macros/s/AKfycbzuCip2KWPlPw7kudrsvP2DuZ94-W6yw6aJ7c_HiSFZysXaPfsvG57uq6lhDsDpGYudtw/exec';
-    const FREE_TRIES = 2;
-    const STORE_KEY = 'tacotac_uses';
 
     const tones = {
       classe: { emoji:'🎩', label:'Classe', fox:'assets/fox_classe.png' },
@@ -316,27 +323,38 @@
     let imageDataUrl = null;
     let replies = null; // { classe:[..], drole:[..], spicy:[..] }
 
-    // ══════════════ QUOTA ══════════════
-    function usesLeft() {
-      const used = parseInt(localStorage.getItem(STORE_KEY) || '0', 10);
-      return Math.max(0, FREE_TRIES - used);
-    }
-    function bumpUses() {
-      const used = parseInt(localStorage.getItem(STORE_KEY) || '0', 10);
-      localStorage.setItem(STORE_KEY, String(used + 1));
+    // ══════════════ QUOTA (piloté par le serveur) ══════════════
+    // Le serveur est la SEULE source de vérité. Le navigateur ne compte plus rien
+    // (localStorage était contournable en navigation privée). On garde juste un
+    // cache local `quota` pour l'affichage, rafraîchi à chaque réponse serveur.
+    let quota = { remaining: null, limit: null, isPremium: false };
+
+    function applyQuota(q) {
+      if (q) quota = q;
       renderQuota();
     }
+    function usesLeft() {
+      return quota.remaining == null ? 1 : quota.remaining; // tant qu'on sait pas, on laisse tenter (le serveur tranchera)
+    }
     function renderQuota() {
-      const left = usesLeft();
       const q = document.getElementById('quota');
-      q.textContent = left > 0 ? (left + ' essai' + (left > 1 ? 's' : '') + ' restant' + (left > 1 ? 's' : '')) : 'Essais épuisés';
+      if (quota.isPremium) {
+        q.textContent = 'Accès illimité ✨';
+        q.style.color = '#FF7A33';
+        q.style.borderColor = 'rgba(255,92,0,.4)';
+        return;
+      }
+      const left = quota.remaining;
+      if (left == null) { q.textContent = '…'; return; }
+      q.textContent = left > 0
+        ? (left + ' analyse' + (left > 1 ? 's' : '') + ' restante' + (left > 1 ? 's' : '') + " aujourd'hui")
+        : "Analyses du jour épuisées";
       q.style.color = left > 0 ? '#8a8580' : '#FF7A33';
       q.style.borderColor = left > 0 ? '#2a2a2a' : 'rgba(255,92,0,.4)';
     }
-    // débloque si déjà inscrit à la waitlist
-    if (localStorage.getItem('tacotac_unlocked') === '1') {
-      localStorage.setItem(STORE_KEY, '0');
-    }
+
+    // Au chargement : on demande l'état réel au serveur (pose aussi le cookie device_id).
+    fetch('/api/me').then(r => r.json()).then(applyQuota).catch(() => renderQuota());
     renderQuota();
 
     // ══════════════ NAV ══════════════
@@ -404,13 +422,20 @@
 
       const minDelay=new Promise(r=>setTimeout(r,1800)); // garde l'anim visible
 
+      let blocked=false;
       try{
         const [resp]=await Promise.all([
           fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:imageDataUrl,tone:selectedTone})}),
           minDelay,
         ]);
         const data=await resp.json();
-        replies=data.replies;
+        if(resp.status===402){ // quota épuisé → paywall
+          blocked=true;
+          if(data.quota)applyQuota(data.quota);
+        }else{
+          replies=data.replies;
+          if(data.quota)applyQuota(data.quota); // maj du compteur depuis le serveur
+        }
       }catch(e){
         replies=null; // showResults gèrera le fallback
       }
@@ -418,7 +443,8 @@
       cancelAnimationFrame(raf);
       clearInterval(stepTimer);
       barFill.style.width='100%';
-      bumpUses();
+
+      if(blocked){ go(1); openGate(); return; } // on ramène à l'upload et on ouvre le paywall
       setTimeout(runReflexion,300);
     }
 
@@ -483,28 +509,49 @@
 
     // ══════════════ GATE / PAYWALL ══════════════
     const gate=document.getElementById('gate');
-    function openGate(){gate.classList.add('show');}
+    function openGate(){if(quota.isPremium)return;gate.classList.add('show');}
     document.getElementById('gateClose').addEventListener('click',()=>gate.classList.remove('show'));
-    document.getElementById('gateForm').addEventListener('submit',async e=>{
-      e.preventDefault();
-      const email=document.getElementById('gateEmail').value;
-      const btn=e.target.querySelector('button');btn.textContent='Envoi…';btn.disabled=true;
-      try{
-        const p=new URLSearchParams({email,source:'app-gate',timestamp:new Date().toISOString()});
-        await fetch(WAITLIST_WEBHOOK+'?'+p.toString(),{method:'GET',mode:'no-cors'});
-      }catch(e){}
-      localStorage.setItem('tacotac_unlocked','1');
-      localStorage.setItem(STORE_KEY,'0');
-      renderQuota();
-      e.target.style.display='none';
-      document.getElementById('gateSuccess').style.display='block';
-      setTimeout(()=>{gate.classList.remove('show');btn.disabled=false;btn.textContent="Débloquer l'accès 🚀";e.target.style.display='flex';document.getElementById('gateSuccess').style.display='none';},2200);
+
+    // Clic sur une offre → création de la session Stripe → redirection vers le checkout
+    document.querySelectorAll('.plan-btn').forEach(btn=>{
+      btn.addEventListener('click',async()=>{
+        const plan=btn.dataset.plan;
+        const err=document.getElementById('gateError');err.style.display='none';
+        const label=btn.innerHTML;btn.style.opacity='.6';btn.style.pointerEvents='none';
+        try{
+          const r=await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({plan})});
+          const data=await r.json();
+          if(data.url){window.location.href=data.url;return;} // → Stripe Checkout
+          throw new Error(data.error||'Erreur');
+        }catch(e){
+          err.textContent="Oups, le paiement n'a pas pu démarrer. Réessaie.";err.style.display='block';
+          btn.style.opacity='1';btn.style.pointerEvents='auto';btn.innerHTML=label;
+        }
+      });
     });
+
+    // Retour depuis Stripe : ?paid=1 → on confirme et on débloque l'accès illimité
+    (async function handlePaymentReturn(){
+      const params=new URLSearchParams(location.search);
+      if(params.get('paid')==='1'){
+        try{
+          const sid=params.get('session_id');
+          const r=await fetch('/api/checkout/confirm'+(sid?('?session_id='+encodeURIComponent(sid)):''));
+          const st=await r.json();applyQuota(st);
+        }catch(e){}
+        if(quota.isPremium){
+          gate.classList.remove('show');
+          alert('🎉 Bienvenue en Premium ! Analyses illimitées débloquées.');
+        }
+        history.replaceState({},'',location.pathname); // nettoie l'URL
+      }
+    })();
 
     // ══════════════ LANCEMENT ══════════════
     analyzeBtn.addEventListener('click',()=>{
       if(!hasImage)return;
-      if(usesLeft()<=0){openGate();return;}
+      // pré-check pour éviter une analyse inutile ; le serveur reste l'arbitre final
+      if(!quota.isPremium && usesLeft()<=0){openGate();return;}
       runAnalyse();
     });
   </script>
