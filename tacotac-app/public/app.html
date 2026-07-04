@@ -301,6 +301,22 @@
         </div>
 
         <p style="color:#56524e;font-size:11.5px;margin:14px 0 0;">🔒 Paiement sécurisé par Stripe · annulable à tout moment</p>
+
+        <!-- Bonus email : +2 analyses gratuites (1 fois par email et par appareil) -->
+        <div id="bonusWrap" style="display:none;">
+          <div style="display:flex;align-items:center;gap:10px;margin:16px 0 12px;">
+            <span style="flex:1;height:1px;background:#2a2a2a;"></span>
+            <span style="color:#56524e;font-size:11.5px;">ou</span>
+            <span style="flex:1;height:1px;background:#2a2a2a;"></span>
+          </div>
+          <p style="color:#8a8580;font-size:13px;margin:0 0 10px;">🎁 Ton email = <span style="color:#FF7A33;font-weight:600;">+2 analyses offertes</span>, tout de suite</p>
+          <form id="bonusForm" style="display:flex;gap:8px;">
+            <input class="gate-input" id="bonusEmail" type="email" required placeholder="ton@email.fr" autocomplete="email" style="flex:1;min-width:0;">
+            <button type="submit" style="flex-shrink:0;padding:0 18px;background:rgba(255,92,0,.15);border:1.5px solid rgba(255,92,0,.4);color:#FF7A33;font-family:inherit;font-weight:700;font-size:14px;border-radius:14px;cursor:pointer;">+2</button>
+          </form>
+          <div id="bonusMsg" style="display:none;font-size:12.5px;margin-top:10px;"></div>
+        </div>
+
         <div id="gateError" style="display:none;color:#ff6b5c;font-size:12.5px;margin-top:10px;"></div>
         <button id="gateClose" style="margin-top:12px;background:none;border:none;color:#56524e;font-family:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline;">Revenir plus tard</button>
       </div>
@@ -509,8 +525,54 @@
 
     // ══════════════ GATE / PAYWALL ══════════════
     const gate=document.getElementById('gate');
-    function openGate(){if(quota.isPremium)return;gate.classList.add('show');}
+    function openGate(){
+      if(quota.isPremium)return;
+      // le bonus email n'est proposé que s'il n'a pas déjà été pris sur cet appareil
+      document.getElementById('bonusWrap').style.display = quota.emailBonusClaimed ? 'none' : 'block';
+      gate.classList.add('show');
+    }
     document.getElementById('gateClose').addEventListener('click',()=>gate.classList.remove('show'));
+
+    // Bonus email : +2 analyses (vérifié côté serveur : 1 fois par email ET par appareil)
+    document.getElementById('bonusForm').addEventListener('submit',async e=>{
+      e.preventDefault();
+      const msg=document.getElementById('bonusMsg');
+      const btn=e.target.querySelector('button');btn.disabled=true;btn.textContent='…';
+      try{
+        const r=await fetch('/api/bonus-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:document.getElementById('bonusEmail').value})});
+        const data=await r.json();
+        if(data.ok){
+          if(data.status)applyQuota(data.status);
+          e.target.style.display='none';
+          msg.style.color='#5fce86';msg.textContent='🎉 +2 analyses ajoutées ! Go.';msg.style.display='block';
+          setTimeout(()=>{gate.classList.remove('show');},1400);
+        }else{
+          if(data.status)applyQuota(data.status);
+          msg.style.color='#ff6b5c';msg.textContent=data.error||'Impossible d\'ajouter le bonus.';msg.style.display='block';
+          btn.disabled=false;btn.textContent='+2';
+        }
+      }catch(err){
+        msg.style.color='#ff6b5c';msg.textContent='Erreur réseau, réessaie.';msg.style.display='block';
+        btn.disabled=false;btn.textContent='+2';
+      }
+    });
+
+    // Code founder dans l'URL (?founder=CODE) : accès illimité pour les premiers inscrits
+    (async function handleFounder(){
+      const code=new URLSearchParams(location.search).get('founder');
+      if(!code)return;
+      try{
+        const r=await fetch('/api/founder/claim',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})});
+        const data=await r.json();
+        if(data.ok){
+          if(data.status)applyQuota(data.status);
+          alert('🦊 Bienvenue, membre fondateur ! Ton accès illimité est activé sur cet appareil.');
+        }else{
+          alert(data.error||'Code invalide.');
+        }
+      }catch(e){}
+      history.replaceState({},'',location.pathname);
+    })();
 
     // Clic sur une offre → création de la session Stripe → redirection vers le checkout
     document.querySelectorAll('.plan-btn').forEach(btn=>{

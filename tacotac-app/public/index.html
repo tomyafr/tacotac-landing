@@ -55,7 +55,7 @@
     <div style="max-width:460px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:11px 18px;background:rgba(23,18,14,0.88);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,0.08);">
       <span style="display:flex;align-items:center;gap:9px;font-family:'Clash Display',sans-serif;font-weight:600;font-size:16px;color:#F4EEE2;letter-spacing:-0.01em;">
         <img src="assets/fox_full.png" alt="" style="width:26px;height:26px;object-fit:contain;">
-        Tacotac <span style="font-size:9px;opacity:0.35;font-weight:400;letter-spacing:0;margin-left:2px;">v1.2</span>
+        Tacotac <span style="font-size:9px;opacity:0.35;font-weight:400;letter-spacing:0;margin-left:2px;">v1.3</span>
       </span>
       <a href="/app" class="js-cta" style="background:#FF5A1F;color:#fff;font-weight:600;font-size:13px;padding:9px 16px;border-radius:11px;text-decoration:none;">Essayer</a>
     </div>
@@ -327,8 +327,53 @@
       </div>
     </section>
 
+    <!-- ════════ PRICING ════════ -->
+    <section id="tt-pricing" style="background:#F4EEE2;padding:56px 24px;">
+      <p data-reveal style="text-align:center;font-size:11px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:#C4400F;margin:0 0 10px;">Tarifs</p>
+      <h2 data-reveal style="font-family:'Clash Display',sans-serif;font-weight:600;font-size:clamp(30px,8vw,36px);letter-spacing:-0.02em;color:#17120E;text-align:center;margin:0 0 8px;">Le prix d'un verre.<br>Des dates en plus.</h2>
+      <p data-reveal style="text-align:center;color:#8A7F70;font-size:14px;margin:0 0 30px;">Commence gratuit. Passe Premium quand t'es accro.</p>
+
+      <div style="display:flex;flex-direction:column;gap:14px;max-width:360px;margin:0 auto;">
+
+        <!-- Gratuit -->
+        <div data-reveal style="background:#FBF7EF;border:1px solid rgba(23,18,14,0.10);border-radius:20px;padding:20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div>
+            <p style="margin:0;font-weight:600;font-size:15px;color:#17120E;">Découverte</p>
+            <p style="margin:3px 0 0;color:#8A7F70;font-size:12.5px;">3 analyses/jour · sans inscription</p>
+          </div>
+          <a href="/app" style="flex-shrink:0;background:rgba(23,18,14,0.08);color:#17120E;font-weight:600;font-size:13.5px;padding:10px 16px;border-radius:11px;text-decoration:none;">0€ · Essayer</a>
+        </div>
+
+        <!-- Mensuel (mis en avant) -->
+        <div data-reveal style="position:relative;background:#17120E;border-radius:22px;padding:24px 20px;box-shadow:0 18px 44px rgba(23,18,14,0.28);">
+          <span style="position:absolute;top:-11px;left:20px;background:#FF5A1F;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:0.08em;padding:5px 11px;border-radius:20px;">LE PLUS CHOISI</span>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;">
+            <p style="margin:0;font-weight:600;font-size:16px;color:#F4EEE2;">Premium Mensuel</p>
+            <p style="margin:0;color:#F4EEE2;"><span style="font-family:'Clash Display',sans-serif;font-weight:700;font-size:28px;">9,99€</span><span style="color:#9C9082;font-size:12.5px;"> /mois</span></p>
+          </div>
+          <ul style="list-style:none;margin:0 0 16px;padding:0;color:#B5ABA0;font-size:13px;line-height:2;">
+            <li><span style="color:#FF7A45;">✓</span> Analyses <span style="color:#F4EEE2;font-weight:600;">illimitées</span>, tous les jours</li>
+            <li><span style="color:#FF7A45;">✓</span> Les 3 tons : classe, drôle, spicy</li>
+            <li><span style="color:#FF7A45;">✓</span> ≈ 0,33€/jour — moins qu'un café</li>
+          </ul>
+          <button class="lp-plan" data-plan="monthly" style="width:100%;padding:14px;background:#FF5A1F;color:#fff;font-family:'General Sans',sans-serif;font-weight:600;font-size:15px;border:none;border-radius:12px;cursor:pointer;box-shadow:0 6px 18px rgba(216,67,14,0.4);">Passer Premium →</button>
+        </div>
+
+        <!-- Hebdo -->
+        <div data-reveal style="background:#FBF7EF;border:1px solid rgba(23,18,14,0.10);border-radius:20px;padding:20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div>
+            <p style="margin:0;font-weight:600;font-size:15px;color:#17120E;">Premium Hebdo</p>
+            <p style="margin:3px 0 0;color:#8A7F70;font-size:12.5px;">illimité · parfait pour un rush</p>
+          </div>
+          <button class="lp-plan" data-plan="weekly" style="flex-shrink:0;background:rgba(216,67,14,0.10);border:1.5px solid rgba(216,67,14,0.35);color:#C4400F;font-weight:700;font-size:13.5px;padding:10px 16px;border-radius:11px;cursor:pointer;font-family:'General Sans',sans-serif;">4,99€ /sem</button>
+        </div>
+
+      </div>
+      <p data-reveal style="text-align:center;color:#8A7F70;font-size:12px;margin:18px 0 0;">🔒 Paiement sécurisé Stripe · Sans engagement · Annulable en 2 clics</p>
+    </section>
+
     <!-- ════════ FAQ ════════ -->
-    <section style="background:#F4EEE2;padding:56px 24px;">
+    <section style="background:#F4EEE2;padding:56px 24px;border-top:1px solid rgba(23,18,14,0.07);">
       <h2 data-reveal style="font-family:'Clash Display',sans-serif;font-weight:600;font-size:clamp(28px,7vw,34px);letter-spacing:-0.02em;color:#17120E;text-align:center;margin:0;">Questions fréquentes</h2>
       <div style="display:flex;flex-direction:column;gap:10px;max-width:400px;margin:30px auto 0;">
         <div class="tt-faq" style="background:#FBF7EF;border:1px solid rgba(23,18,14,0.10);border-radius:14px;overflow:hidden;transition:border-color .25s;">
@@ -390,7 +435,7 @@
     <!-- ════════ FOOTER ════════ -->
     <footer style="background:#17120E;text-align:center;padding:34px 24px;">
       <img src="assets/fox_full.png" alt="" style="width:44px;margin:0 auto;display:block;opacity:0.85;">
-      <p style="color:#5C5348;font-size:12px;margin:12px 0 0;">© 2026 Tacotac · Fait avec soin en France · <span style="opacity:0.5">v1.2</span></p>
+      <p style="color:#5C5348;font-size:12px;margin:12px 0 0;">© 2026 Tacotac · Fait avec soin en France · <span style="opacity:0.5">v1.3</span></p>
     </footer>
 
   </div>
@@ -634,6 +679,25 @@
     /* ════════ GA · clics CTA ════════ */
     document.querySelectorAll('.js-cta').forEach(el => {
       el.addEventListener('click', () => { try { gtag('event', 'clic_cta', { event_category: 'engagement' }); } catch(e) {} });
+    });
+
+    /* ════════ PRICING · paiement direct depuis la LP ════════ */
+    document.querySelectorAll('.lp-plan').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const plan = btn.dataset.plan;
+        try { gtag('event', 'clic_pricing_' + plan, { event_category: 'conversion' }); } catch(e) {}
+        const label = btn.textContent;
+        btn.disabled = true; btn.style.opacity = '.6'; btn.textContent = 'Un instant…';
+        try {
+          const r = await fetch('/api/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plan }) });
+          const data = await r.json();
+          if (data.url) { window.location.href = data.url; return; }
+          throw new Error(data.error || 'checkout');
+        } catch (e) {
+          // si le paiement ne démarre pas, on envoie vers l'app (le paywall y re-proposera)
+          window.location.href = '/app';
+        }
+      });
     });
   </script>
 

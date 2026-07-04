@@ -15,7 +15,7 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import OpenAI from 'openai';
 import Stripe from 'stripe';
-import { consumeQuota, getStatus, activatePremium, syncSubscription, deactivatePremium } from './db.js';
+import { consumeQuota, getStatus, activatePremium, syncSubscription, deactivatePremium, claimEmailBonus, claimFounderCode, seedFounderCodes } from './db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -311,6 +311,44 @@ function isValidDataUrl(dataUrl) {
 app.get('/api/me', (req, res) => {
   const deviceId = attachDevice(req, res);
   res.json(getStatus(deviceId));
+});
+
+// ── Bonus email : +2 analyses (1 fois par email, 1 fois par appareil) ──
+const WAITLIST_WEBHOOK = 'https://script.google.com/macros/s/AKfycbzuCip2KWPlPw7kudrsvP2DuZ94-W6yw6aJ7c_HiSFZysXaPfsvG57uq6lhDsDpGYudtw/exec';
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const bonusLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false });
+
+app.post('/api/bonus-email', bonusLimiter, (req, res) => {
+  const deviceId = attachDevice(req, res);
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  if (!EMAIL_RE.test(email)) {
+    return res.status(400).json({ ok: false, error: 'Entre un email valide.' });
+  }
+  const result = claimEmailBonus(deviceId, email);
+  if (!result.ok) {
+    const msg = result.reason === 'email_already_used'
+      ? 'Cet email a déjà été utilisé pour un bonus.'
+      : 'Tu as déjà récupéré ton bonus sur cet appareil.';
+    return res.status(409).json({ ok: false, error: msg, status: getStatus(deviceId) });
+  }
+  // Envoi vers le Google Sheet (côté serveur, non bloquant : le bonus est déjà accordé)
+  const p = new URLSearchParams({ email, source: 'app-bonus', timestamp: new Date().toISOString() });
+  fetch(`${WAITLIST_WEBHOOK}?${p}`).catch((e) => console.error('[bonus] webhook sheet:', e?.message));
+  res.json({ ok: true, credits: result.credits, status: getStatus(deviceId) });
+});
+
+// ── Codes founders : accès illimité pour les tout premiers inscrits ──
+if (process.env.FOUNDER_CODES) {
+  seedFounderCodes(process.env.FOUNDER_CODES.split(','));
+}
+app.post('/api/founder/claim', (req, res) => {
+  const deviceId = attachDevice(req, res);
+  const result = claimFounderCode(deviceId, req.body?.code);
+  if (!result.ok) {
+    const msg = result.reason === 'already_used' ? 'Ce code a déjà été utilisé.' : 'Code invalide.';
+    return res.status(400).json({ ok: false, error: msg });
+  }
+  res.json({ ok: true, status: getStatus(deviceId) });
 });
 
 // ── Créer une session de paiement Stripe (abonnement) ───────────

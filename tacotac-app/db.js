@@ -49,8 +49,22 @@ db.exec(`
     count INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (ip, day)
   );
+  CREATE TABLE IF NOT EXISTS bonus_emails (
+    email      TEXT PRIMARY KEY,                          -- normalisé (lowercase/trim) → 1 bonus par email, à vie
+    device_id  TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS founder_codes (
+    code    TEXT PRIMARY KEY,                             -- codes cadeaux des 4 premiers inscrits
+    used_by TEXT,                                         -- device_id qui l'a utilisé (1 seule fois)
+    used_at INTEGER
+  );
   CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 `);
+
+// Migration douce pour la base prod existante (ALTER échoue si la colonne existe déjà → on ignore)
+try { db.exec("ALTER TABLE users ADD COLUMN bonus_remaining INTEGER NOT NULL DEFAULT 0"); } catch { /* déjà migré */ }
+try { db.exec("ALTER TABLE users ADD COLUMN email_bonus_claimed INTEGER NOT NULL DEFAULT 0"); } catch { /* déjà migré */ }
 
 // ── Jour courant en Europe/Paris (le quota se remet à zéro à minuit FR) ──
 export function parisDay(d = new Date()) {
@@ -114,18 +128,22 @@ function ipUsageToday(ip) {
 }
 
 // État sans consommer (pour /api/me et l'affichage du quota).
+// `remaining` inclut les crédits bonus (email) pour que le front affiche un seul chiffre.
 export function getStatus(deviceId) {
   const user = getOrCreateUser(deviceId);
   const plan = effectivePlan(user);
   const limit = dailyLimitFor(plan);
   const used = usageToday(user.device_id);
+  const bonus = user.bonus_remaining || 0;
   return {
     deviceId: user.device_id,
     plan,
     used,
     limit,
-    remaining: Math.max(0, limit - used),
+    bonus,
+    remaining: Math.max(0, limit - used) + bonus,
     isPremium: plan === 'premium' || plan === 'founder',
+    emailBonusClaimed: Boolean(user.email_bonus_claimed),
   };
 }
 
@@ -140,23 +158,74 @@ export function consumeQuota(deviceId, ip) {
   const isPremium = plan === 'premium' || plan === 'founder';
   const limit = dailyLimitFor(plan);
   const used = usageToday(user.device_id);
+  const bonus = user.bonus_remaining || 0;
 
   const blocked = (reason) => ({
     allowed: false, reason, deviceId: user.device_id, plan, used, limit, remaining: 0, isPremium,
+    emailBonusClaimed: Boolean(user.email_bonus_claimed),
   });
 
-  // Plafond par appareil (tous les plans)
-  if (used >= limit) return blocked('device');
-
-  // Plafond par IP (gratuit uniquement) : bloque le contournement navigation privée
+  // Plafond par IP (gratuit uniquement) : bloque le contournement navigation privée.
+  // S'applique aussi aux crédits bonus (sinon le bonus devient une faille).
   if (!isPremium && ip && ipUsageToday(ip) >= IP_FREE_DAILY_LIMIT) return blocked('ip');
+
+  const overDaily = used >= limit;
+  // Plafond par appareil : au-delà du quota du jour, on pioche dans les crédits bonus (email)
+  if (overDaily && bonus <= 0) return blocked('device');
 
   qUpsertUsage.run(user.device_id, parisDay());
   if (!isPremium && ip) qUpsertIpUsage.run(ip, parisDay());
+  let bonusLeft = bonus;
+  if (overDaily) {
+    bonusLeft = bonus - 1;
+    qSetBonus.run(bonusLeft, user.device_id);
+  }
 
   const newUsed = used + 1;
   return { allowed: true, deviceId: user.device_id, plan, used: newUsed, limit,
-           remaining: Math.max(0, limit - newUsed), isPremium };
+           remaining: Math.max(0, limit - newUsed) + bonusLeft, isPremium,
+           emailBonusClaimed: Boolean(user.email_bonus_claimed) };
+}
+
+// ── Bonus email : +2 analyses si email jamais utilisé (1 fois par email ET par appareil) ──
+export const EMAIL_BONUS_CREDITS = 2;
+const qGetBonusEmail = db.prepare('SELECT email FROM bonus_emails WHERE email = ?');
+const qInsertBonusEmail = db.prepare('INSERT INTO bonus_emails (email, device_id, created_at) VALUES (?, ?, ?)');
+const qSetBonus = db.prepare('UPDATE users SET bonus_remaining = ? WHERE device_id = ?');
+const qClaimBonus = db.prepare(`
+  UPDATE users SET bonus_remaining = bonus_remaining + ?, email_bonus_claimed = 1, email = COALESCE(email, ?)
+   WHERE device_id = ?
+`);
+
+export function claimEmailBonus(deviceId, rawEmail) {
+  const email = String(rawEmail || '').trim().toLowerCase();
+  const user = getOrCreateUser(deviceId);
+  if (user.email_bonus_claimed) return { ok: false, reason: 'device_already_claimed' };
+  if (qGetBonusEmail.get(email))  return { ok: false, reason: 'email_already_used' };
+  qInsertBonusEmail.run(email, user.device_id, Math.floor(Date.now() / 1000));
+  qClaimBonus.run(EMAIL_BONUS_CREDITS, email, user.device_id);
+  return { ok: true, credits: EMAIL_BONUS_CREDITS };
+}
+
+// ── Codes founders (4 premiers inscrits : illimité gratuit, promesse tenue) ──
+const qGetFounderCode = db.prepare('SELECT * FROM founder_codes WHERE code = ?');
+const qSeedFounderCode = db.prepare('INSERT OR IGNORE INTO founder_codes (code) VALUES (?)');
+const qUseFounderCode = db.prepare('UPDATE founder_codes SET used_by = ?, used_at = ? WHERE code = ? AND used_by IS NULL');
+const qSetFounder = db.prepare("UPDATE users SET plan = 'founder' WHERE device_id = ?");
+
+export function seedFounderCodes(codes) {
+  for (const c of codes) if (c && c.trim()) qSeedFounderCode.run(c.trim().toUpperCase());
+}
+
+export function claimFounderCode(deviceId, rawCode) {
+  const code = String(rawCode || '').trim().toUpperCase();
+  const row = qGetFounderCode.get(code);
+  if (!row) return { ok: false, reason: 'invalid' };
+  const user = getOrCreateUser(deviceId);
+  if (row.used_by && row.used_by !== user.device_id) return { ok: false, reason: 'already_used' };
+  if (!row.used_by) qUseFounderCode.run(user.device_id, Math.floor(Date.now() / 1000), code);
+  qSetFounder.run(user.device_id);
+  return { ok: true };
 }
 
 // ══════════════════════════════════════════════════════════════
