@@ -32,7 +32,9 @@ app.set('trust proxy', 1);
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
   : null;
-const PRICES = { weekly: process.env.STRIPE_PRICE_WEEKLY, monthly: process.env.STRIPE_PRICE_MONTHLY };
+const PRICES = { weekly: process.env.STRIPE_PRICE_WEEKLY, monthly: process.env.STRIPE_PRICE_MONTHLY, annual: process.env.STRIPE_PRICE_ANNUAL };
+// Essai gratuit : le mensuel et l'annuel démarrent par 3 jours offerts (l'hebdo reste direct)
+const TRIAL_DAYS = { monthly: 3, annual: 3 };
 
 // ⚠️ Le webhook Stripe DOIT recevoir le corps BRUT (non parsé) pour vérifier la signature.
 // On le déclare donc AVANT express.json().
@@ -86,8 +88,9 @@ function subEnd(sub) {
 }
 
 // Active le premium à partir d'une Checkout Session payée (utilisé par le webhook ET la confirmation au retour).
+// `no_payment_required` = session d'essai gratuit (trial) : valide aussi.
 async function activateFromSession(session) {
-  if (!session || session.payment_status !== 'paid') return null;
+  if (!session || !['paid', 'no_payment_required'].includes(session.payment_status)) return null;
   const deviceId = session.client_reference_id || session.metadata?.device_id;
   if (!deviceId) return null;
   let expiresAt = null;
@@ -211,6 +214,35 @@ const REPLY_FUNCTION = {
     },
   },
 };
+
+// ── Tons PREMIUM exclusifs (en plus des 3 de base) ──────────────
+const PREMIUM_TONES = {
+  romantique: '3 relances ton ROMANTIQUE (sincère, attentionné, un peu poète mais jamais niais), envoyées PAR le client À la cible.',
+  sexto: '3 relances ton SEXTO (très chaud, sensuel, suggestif et explicite dans la tension mais avec du style — pour une conv où l\'alchimie est déjà là), envoyées PAR le client À la cible.',
+  mystere: '3 relances ton MYSTÉRIEUX (détaché, intriguant, qui en dit peu et donne envie d\'en savoir plus), envoyées PAR le client À la cible.',
+};
+
+// Schéma d'appel : les premium reçoivent 6 tons, les gratuits 3.
+function replyFunctionFor(premium) {
+  if (!premium) return REPLY_FUNCTION;
+  const f = JSON.parse(JSON.stringify(REPLY_FUNCTION));
+  for (const [tone, description] of Object.entries(PREMIUM_TONES)) {
+    f.function.parameters.properties[tone] = { type: 'array', description, items: { type: 'string' } };
+    f.function.parameters.required.push(tone);
+  }
+  f.function.description = "Renvoie 3 relances par ton (6 tons) que LE CLIENT (bulles à droite) envoie à la CIBLE (bulles à gauche), en réponse au dernier message de la cible.";
+  return f;
+}
+
+// Instruction supplémentaire pour les premium : le SYSTEM_PROMPT ne décrit que les
+// 3 tons de base, il faut expliciter les 3 tons exclusifs sinon le modèle les ignore.
+const PREMIUM_TONES_INSTRUCTION = `
+
+CLIENT PREMIUM — en PLUS des 3 tons de base, tu DOIS remplir 3 tons exclusifs (3 relances chacun, mêmes règles de style et de longueur que les autres) :
+- "romantique" : sincère, attentionné, un peu poète mais jamais niais ni cliché.
+- "sexto" : très chaud, tension sensuelle assumée et suggestive, avec du style — jamais cru au point d'être vulgaire, et UNIQUEMENT dans l'énergie de la conv.
+- "mystere" : détaché, intriguant, qui en dit peu et donne envie d'en savoir plus.
+Ces 6 champs sont TOUS obligatoires : classe, drole, spicy, romantique, sexto, mystere.`;
 
 const SYSTEM_PROMPT = `Tu es Tacotac, un coach de séduction français redoutable. Tu écris les répliques À LA PLACE de ton client pour qu'il séduise la personne avec qui il parle (Tinder, Hinge, Bumble, Fruitz, Instagram, Snap…).
 
@@ -624,7 +656,7 @@ app.post('/api/checkout', async (req, res) => {
     if (!stripe) return res.status(500).json({ error: 'Paiement indisponible.' });
     const deviceId = attachDevice(req, res);
     attachAccount(req); // si connecté : email pré-rempli au checkout + abo lié au compte
-    const plan = req.body?.plan === 'monthly' ? 'monthly' : 'weekly';
+    const plan = ['monthly', 'annual', 'weekly'].includes(req.body?.plan) ? req.body.plan : 'weekly';
     const price = PRICES[plan];
     if (!price) return res.status(500).json({ error: 'Offre indisponible.' });
 
@@ -644,7 +676,10 @@ app.post('/api/checkout', async (req, res) => {
       line_items: [{ price, quantity: 1 }],
       client_reference_id: deviceId,             // relie le paiement à l'appareil
       ...(req.account ? { customer_email: req.account.email } : {}),
-      subscription_data: { metadata: { device_id: deviceId, account_email: req.account?.email || '' } },
+      subscription_data: {
+        metadata: { device_id: deviceId, account_email: req.account?.email || '' },
+        ...(TRIAL_DAYS[plan] ? { trial_period_days: TRIAL_DAYS[plan] } : {}),
+      },
       ...(discounts ? { discounts } : { allow_promotion_codes: true }),
       success_url: `${PUBLIC_URL}/app?paid=1&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${PUBLIC_URL}/app?canceled=1`,
@@ -710,12 +745,12 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
         {
           role: 'user',
           content: [
-            { type: 'text', text: "Voici le screenshot de ma conv. RAPPEL : les bulles à DROITE (colorées) c'est MOI, ton client — les bulles à GAUCHE (grises) c'est la personne que je veux séduire. Écris 3 relances par ton que MOI j'envoie à cette personne, en répondant à son DERNIER message (dernière bulle à gauche). Ne réponds jamais à ma place comme si j'étais la personne de gauche." + buildProfileContext(req.body?.profile) },
+            { type: 'text', text: "Voici le screenshot de ma conv. RAPPEL : les bulles à DROITE (colorées) c'est MOI, ton client — les bulles à GAUCHE (grises) c'est la personne que je veux séduire. Écris 3 relances par ton que MOI j'envoie à cette personne, en répondant à son DERNIER message (dernière bulle à gauche). Ne réponds jamais à ma place comme si j'étais la personne de gauche." + (quota.isPremium ? PREMIUM_TONES_INSTRUCTION : '') + buildProfileContext(req.body?.profile) },
             { type: 'image_url', image_url: { url: dataUrl } },
           ],
         },
       ],
-      tools: [REPLY_FUNCTION],
+      tools: [replyFunctionFor(quota.isPremium)],
       tool_choice: { type: 'function', function: { name: 'proposer_repliques' } },
     });
 
@@ -731,6 +766,12 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
       drole: clean(out.drole).length ? clean(out.drole) : FALLBACK.drole,
       spicy: clean(out.spicy).length ? clean(out.spicy) : FALLBACK.spicy,
     };
+    if (quota.isPremium) {
+      for (const tone of Object.keys(PREMIUM_TONES)) {
+        const list = clean(out[tone]);
+        if (list.length) replies[tone] = list; // pas de fallback : le ton n'apparaît que si généré
+      }
+    }
 
     res.json({ replies, source: 'ai', quota });
   } catch (err) {

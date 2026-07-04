@@ -8,6 +8,16 @@
   <meta name="theme-color" content="#0E0E0E">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌮</text></svg>">
 
+  <!-- Google Analytics : tunnel de conversion (app_open → analyze → paywall → plan → checkout) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-14KLWFZXYY"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-14KLWFZXYY');
+    function track(ev, params){ try { gtag('event', ev, params || {}); } catch(e) {} }
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -107,6 +117,16 @@
     .bar-track{width:100%;height:10px;border-radius:100px;background:#1c1c1c;overflow:hidden;border:1px solid #232323}
     .bar-fill{height:100%;width:0%;border-radius:100px;background:linear-gradient(90deg,#FF7A2E,#FF5C00);box-shadow:0 0 16px rgba(255,92,0,.6);transition:width .2s linear}
     .quota{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:#8a8580;border:1px solid #2a2a2a;border-radius:20px;padding:5px 11px}
+
+    /* ── Tons premium (verrouillés pour les gratuits) ── */
+    .pill .plock{display:none;font-size:10px;margin-left:2px;}
+    .pill.locked{opacity:.55;}
+    .pill.locked .plock{display:inline;}
+    .pill.tone-premium:not(.locked) .pl{background:linear-gradient(90deg,#FF7A2E,#FFB56B);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:700;}
+
+    /* ── Toast (alerte quota, infos) ── */
+    .toast{position:absolute;left:50%;bottom:88px;transform:translateX(-50%) translateY(16px);z-index:90;background:#1c1c1c;border:1px solid rgba(255,92,0,.45);color:#fff;font:600 13px 'Space Grotesk',sans-serif;padding:11px 18px;border-radius:99px;box-shadow:0 12px 34px rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;white-space:nowrap;}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
     /* ── Panneau latéral Personnalisation ── */
     .prefs-overlay{position:absolute;inset:0;z-index:70;background:rgba(8,8,8,.55);backdrop-filter:blur(3px);opacity:0;visibility:hidden;transition:opacity .25s;}
@@ -277,6 +297,9 @@
           <button class="pill" data-tone="classe"><span class="pe">🎩</span><span class="pl">Classe</span></button>
           <button class="pill active" data-tone="drole"><span class="pe">😂</span><span class="pl">Drôle</span></button>
           <button class="pill" data-tone="spicy"><span class="pe">🌶️</span><span class="pl">Spicy</span></button>
+          <button class="pill tone-premium" data-tone="romantique"><span class="pe">🌹</span><span class="pl">Romantique</span><span class="plock">🔒</span></button>
+          <button class="pill tone-premium" data-tone="sexto"><span class="pe">😈</span><span class="pl">Sexto</span><span class="plock">🔒</span></button>
+          <button class="pill tone-premium" data-tone="mystere"><span class="pe">🎭</span><span class="pl">Mystère</span><span class="plock">🔒</span></button>
         </div>
       </div>
 
@@ -299,6 +322,10 @@
       </div>
 
       <button class="copy-cta" id="copyBtn"><span id="copyIcon" style="font-size:16px;">📋</span> <span id="copyText">Copier la réponse</span></button>
+      <!-- Upsell au moment chaud : juste après une victoire (copie d'une réplique) -->
+      <button id="copyUpsell" style="display:none;width:100%;margin-top:10px;background:rgba(255,92,0,.08);border:1px solid rgba(255,92,0,.3);color:#B5ABA0;font-family:inherit;font-size:12.5px;border-radius:14px;padding:11px 14px;cursor:pointer;line-height:1.45;">
+        🦊 Elle t'a plu ? Les Premium en ont <span style="color:#FF7A33;font-weight:700;">en illimité</span> + les tons secrets 😈 — <span style="color:#FF7A33;font-weight:700;text-decoration:underline;">essaie 3 jours gratuits</span>
+      </button>
       <button class="btn-secondary" id="resetBtn" style="margin-top:12px;">🔄 Nouvelle analyse</button>
     </section>
 
@@ -405,24 +432,44 @@
       <div class="gate-card">
         <div style="font-size:40px;margin-bottom:6px;">🦊🔒</div>
         <div class="display" id="gateTitle" style="color:#fff;font-size:24px;line-height:1.1;">Passe en Premium 🌮</div>
-        <p id="gateSub" style="color:#8a8580;font-size:14px;margin:10px 0 18px;line-height:1.5;">T'as cramé tes analyses gratuites du jour. Débloque les <span style="color:#FF7A33;font-weight:600;">analyses illimitées</span>, tout de suite.</p>
+        <p id="gateSub" style="color:#8a8580;font-size:14px;margin:10px 0 14px;line-height:1.5;">T'as cramé tes analyses gratuites du jour. Débloque les <span style="color:#FF7A33;font-weight:600;">analyses illimitées</span>, tout de suite.</p>
         <div id="promoBanner" style="display:none;background:rgba(58,163,90,.12);border:1px solid rgba(58,163,90,.4);border-radius:12px;padding:10px 12px;margin:0 0 14px;color:#5fce86;font-size:13px;font-weight:600;">🎁 -10% appliqué sur le Mensuel</div>
 
+        <!-- Ce que Premium débloque -->
+        <div style="text-align:left;background:#0d0d0d;border:1px solid #232323;border-radius:16px;padding:14px 16px;margin:0 0 14px;">
+          <div style="color:#B5ABA0;font-size:13px;line-height:2.05;">
+            <div><span style="color:#FF7A33;">✓</span> Analyses <span style="color:#fff;font-weight:700;">illimitées</span>, tous les jours</div>
+            <div><span style="color:#FF7A33;">✓</span> Tons secrets : <span style="color:#fff;font-weight:600;">🌹 Romantique · 😈 Sexto · 🎭 Mystère</span></div>
+            <div><span style="color:#FF7A33;">✓</span> Renard <span style="color:#fff;font-weight:600;">personnalisé</span> (ton âge, ton objectif…)</div>
+            <div><span style="color:#FF7A33;">✓</span> Sur <span style="color:#fff;font-weight:600;">tous tes appareils</span> avec ton compte</div>
+          </div>
+        </div>
+
         <div style="display:flex;flex-direction:column;gap:10px;">
-          <!-- Offre mensuelle (mise en avant) -->
-          <button class="plan-btn" data-plan="monthly" style="position:relative;height:60px;border:none;border-radius:16px;cursor:pointer;background:linear-gradient(90deg,#FF5C00,#FF8A3D);color:#fff;font-family:inherit;font-weight:700;display:flex;align-items:center;justify-content:space-between;padding:0 18px;">
-            <span style="font-size:16px;">Mensuel</span>
-            <span style="font-size:16px;">9,99€<span style="font-weight:500;font-size:12px;opacity:.85;"> /mois</span></span>
-            <span style="position:absolute;top:-9px;right:14px;background:#111;color:#FF9A55;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;border:1px solid rgba(255,138,61,.5);">MEILLEUR PRIX</span>
+          <!-- Mensuel : mis en avant avec essai gratuit -->
+          <button class="plan-btn" data-plan="monthly" style="position:relative;border:none;border-radius:16px;cursor:pointer;background:linear-gradient(90deg,#FF5C00,#FF8A3D);color:#fff;font-family:inherit;font-weight:700;padding:13px 18px;text-align:left;">
+            <span style="position:absolute;top:-9px;right:14px;background:#111;color:#FF9A55;font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;border:1px solid rgba(255,138,61,.5);letter-spacing:.4px;">3 JOURS GRATUITS</span>
+            <span style="display:flex;align-items:center;justify-content:space-between;">
+              <span style="font-size:16px;">Mensuel</span>
+              <span style="font-size:16px;">9,99€<span style="font-weight:500;font-size:12px;opacity:.85;"> /mois</span></span>
+            </span>
+            <span style="display:block;font-weight:500;font-size:11.5px;opacity:.85;margin-top:2px;">Essaie 3 jours gratuitement, annule quand tu veux</span>
           </button>
-          <!-- Offre hebdo -->
-          <button class="plan-btn" data-plan="weekly" style="height:56px;border:1.5px solid #2a2a2a;border-radius:16px;cursor:pointer;background:#0d0d0d;color:#fff;font-family:inherit;font-weight:600;display:flex;align-items:center;justify-content:space-between;padding:0 18px;">
+          <!-- Annuel : l'ancrage prix -->
+          <button class="plan-btn" data-plan="annual" style="position:relative;border:1.5px solid rgba(255,92,0,.35);border-radius:16px;cursor:pointer;background:#0d0d0d;color:#fff;font-family:inherit;font-weight:600;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;">
+            <span style="position:absolute;top:-9px;right:14px;background:rgba(94,206,134,.15);color:#5fce86;font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;border:1px solid rgba(94,206,134,.4);">-42%</span>
+            <span style="font-size:15px;">Annuel</span>
+            <span style="font-size:15px;">69,99€<span style="font-weight:500;font-size:12px;color:#8a8580;"> /an · ≈5,83€/mois</span></span>
+          </button>
+          <!-- Hebdo -->
+          <button class="plan-btn" data-plan="weekly" style="border:1.5px solid #2a2a2a;border-radius:16px;cursor:pointer;background:#0d0d0d;color:#fff;font-family:inherit;font-weight:600;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;">
             <span style="font-size:15px;">Hebdo</span>
             <span style="font-size:15px;">4,99€<span style="font-weight:500;font-size:12px;color:#8a8580;"> /semaine</span></span>
           </button>
         </div>
 
-        <p style="color:#56524e;font-size:11.5px;margin:14px 0 0;">🔒 Paiement sécurisé par Stripe · annulable à tout moment</p>
+        <p style="color:#8a8580;font-size:12px;margin:12px 0 0;">🛡️ <span style="color:#B5ABA0;font-weight:600;">Satisfait ou remboursé 7 jours</span> · 🔒 Stripe · annulable en 2 clics</p>
+        <p style="color:#56524e;font-size:11.5px;margin:6px 0 0;">⭐ Déjà 1 200+ dragueurs assistés</p>
 
         <!-- Bonus email : +2 analyses gratuites (1 fois par email et par appareil) -->
         <div id="bonusWrap" style="display:none;">
@@ -452,10 +499,22 @@
     const WAITLIST_WEBHOOK = 'https://script.google.com/macros/s/AKfycbzuCip2KWPlPw7kudrsvP2DuZ94-W6yw6aJ7c_HiSFZysXaPfsvG57uq6lhDsDpGYudtw/exec';
 
     const tones = {
-      classe: { emoji:'🎩', label:'Classe', fox:'assets/fox_classe.png' },
-      drole:  { emoji:'😂', label:'Drôle',  fox:'assets/fox_chill.png' },
-      spicy:  { emoji:'🌶️', label:'Spicy',  fox:'assets/fox_spicy.png' },
+      classe:     { emoji:'🎩', label:'Classe',     fox:'assets/fox_classe.png' },
+      drole:      { emoji:'😂', label:'Drôle',      fox:'assets/fox_chill.png' },
+      spicy:      { emoji:'🌶️', label:'Spicy',      fox:'assets/fox_spicy.png' },
+      romantique: { emoji:'🌹', label:'Romantique', fox:'assets/fox_classe.png', premium:true },
+      sexto:      { emoji:'😈', label:'Sexto',      fox:'assets/fox_spicy.png',  premium:true },
+      mystere:    { emoji:'🎭', label:'Mystère',    fox:'assets/fox_chill.png',  premium:true },
     };
+
+    // Toast générique (alerte quota, infos rapides)
+    let toastTimer=null;
+    function toast(msg,ms){
+      let t=document.getElementById('toast');
+      if(!t){t=document.createElement('div');t.id='toast';t.className='toast';document.querySelector('.phone').appendChild(t);}
+      t.textContent=msg;t.classList.add('show');
+      clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),ms||3200);
+    }
     let selectedTone = 'drole';
     let variant = 0;
     let hasImage = false;
@@ -477,6 +536,7 @@
       renderQuota();
       updatePrefsAccess();
       renderAccountBtn();
+      updateLockedPills();
     }
     function renderAccountBtn() {
       const b = document.getElementById('accountBtn');
@@ -544,6 +604,7 @@
     const barFill=document.getElementById('barFill');
 
     async function runAnalyse(){
+      track('analyze_start');
       go(2);
       let i=0;stepEl.textContent=steps[0];
       const stepTimer=setInterval(()=>{
@@ -579,6 +640,9 @@
         }else{
           replies=data.replies;
           if(data.quota)applyQuota(data.quota); // maj du compteur depuis le serveur
+          track('analyze_done',{source:data.source||'?'});
+          // moment chaud : préviens AVANT le mur (le paywall ne sera pas une surprise)
+          if(!quota.isPremium&&quota.remaining===1){setTimeout(()=>toast('⚠️ Plus qu\'1 analyse gratuite aujourd\'hui'),2600);track('quota_last_warning');}
         }
       }catch(e){
         replies=null; // showResults gèrera le fallback
@@ -613,7 +677,11 @@
     const copyText=document.getElementById('copyText');
     const toneBadge=document.getElementById('toneBadge');
 
-    function currentList(){const src=replies&&replies[selectedTone]&&replies[selectedTone].length?replies:FALLBACK;return src[selectedTone];}
+    function currentList(){
+      if(replies&&replies[selectedTone]&&replies[selectedTone].length)return replies[selectedTone];
+      if(!FALLBACK[selectedTone])selectedTone='drole'; // ton premium sans données → repli sûr
+      return FALLBACK[selectedTone];
+    }
     function renderResult(animateFox){
       const t=tones[selectedTone];const list=currentList();
       curEmoji.textContent=t.emoji;curLabel.textContent=t.label;
@@ -625,10 +693,22 @@
     }
     function resetCopy(){copyBtn.classList.remove('done');copyIcon.textContent='📋';copyText.textContent='Copier la réponse';}
 
+    // Verrouillage des tons premium selon le plan
+    function updateLockedPills(){
+      pillGrid.querySelectorAll('.pill.tone-premium').forEach(p=>{
+        p.classList.toggle('locked',!quota.isPremium);
+      });
+    }
     pillGrid.querySelectorAll('.pill').forEach(p=>{
       p.addEventListener('click',()=>{
+        if(p.classList.contains('locked')){openGate('tone');return;} // ton premium → paywall
+        const t=p.dataset.tone;
+        // ton premium demandé mais absent de cette analyse (faite avant l'upgrade / fallback)
+        if(tones[t].premium&&(!replies||!replies[t]||!replies[t].length)){
+          toast('✨ Relance une analyse pour générer ce ton');return;
+        }
         pillGrid.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
-        p.classList.add('active');selectedTone=p.dataset.tone;variant=0;renderResult(true);
+        p.classList.add('active');selectedTone=t;variant=0;renderResult(true);
       });
     });
     refaireBtn.addEventListener('click',()=>{const list=currentList();variant=(variant+1)%list.length;renderResult(true);});
@@ -637,7 +717,11 @@
       try{await navigator.clipboard.writeText(txt);}catch{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);}
       copyBtn.classList.add('done');copyIcon.textContent='✅';copyText.textContent='Copié !';
       clearTimeout(copyBtn._t);copyBtn._t=setTimeout(resetCopy,1800);
+      track('copy_reply',{tone:selectedTone});
+      // upsell au pic d'émotion (une seule fois par session, jamais pour les premium)
+      if(!quota.isPremium&&!window._upsellShown){window._upsellShown=true;document.getElementById('copyUpsell').style.display='block';}
     });
+    document.getElementById('copyUpsell').addEventListener('click',()=>{track('upsell_click',{from:'copy'});openGate();});
 
     function showResults(){
       pillGrid.querySelectorAll('.pill').forEach(p=>p.classList.toggle('active',p.dataset.tone===selectedTone));
@@ -715,15 +799,19 @@
       if(context==='prefs'){
         title.textContent='Désolé, c\'est du Premium 🔒';
         sub.innerHTML='Personnaliser le renard (âge, objectif, instructions perso…) est réservé aux membres <span style="color:#FF7A33;font-weight:600;">Premium</span>. Débloque tout, tout de suite.';
+      }else if(context==='tone'){
+        title.textContent='Les tons secrets 😈';
+        sub.innerHTML='<span style="color:#FF7A33;font-weight:600;">🌹 Romantique · 😈 Sexto · 🎭 Mystère</span> — les répliques les plus puissantes du renard sont réservées aux Premium.';
       }else{
         title.textContent='Passe en Premium 🌮';
         sub.innerHTML='T\'as cramé tes analyses gratuites du jour. Débloque les <span style="color:#FF7A33;font-weight:600;">analyses illimitées</span>, tout de suite.';
       }
       // le bonus email (+2 analyses) n'a pas de sens dans le contexte "perso" → on le cache
-      const showBonus = context!=='prefs' && !quota.emailBonusClaimed;
+      const showBonus = context!=='prefs' && context!=='tone' && !quota.emailBonusClaimed;
       document.getElementById('bonusWrap').style.display = showBonus ? 'block' : 'none';
       document.getElementById('promoBanner').style.display = promoCode ? 'block' : 'none';
       gate.classList.add('show');
+      track('paywall_view',{context:context||'quota'});
     }
 
     // Accès à la personnalisation : réservé au Premium (grisé + cadenas sinon)
@@ -791,6 +879,7 @@
     document.querySelectorAll('.plan-btn').forEach(btn=>{
       btn.addEventListener('click',async()=>{
         const plan=btn.dataset.plan;
+        track('plan_click',{plan});
         const err=document.getElementById('gateError');err.style.display='none';
         const label=btn.innerHTML;btn.style.opacity='.6';btn.style.pointerEvents='none';
         try{
