@@ -123,8 +123,15 @@
     .prefs-ta{width:100%;background:#0d0d0d;border:1.5px solid #2a2a2a;color:#fff;border-radius:14px;padding:12px 14px;font:500 13.5px 'Space Grotesk',sans-serif;outline:none;resize:none;min-height:84px;transition:border-color .2s;}
     .prefs-ta:focus{border-color:#FF5C00;}
     .prefs-ta::placeholder{color:#56524e;}
-    .prefs-open{width:100%;margin-top:12px;background:#141414;border:1.5px dashed #2f2f2f;color:#8a8580;font:600 13px 'Space Grotesk',sans-serif;border-radius:14px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;transition:border-color .2s;}
+    .prefs-open{width:100%;margin-top:12px;background:#141414;border:1.5px dashed #2f2f2f;color:#8a8580;font:600 13px 'Space Grotesk',sans-serif;border-radius:14px;padding:13px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;transition:border-color .2s,opacity .2s;}
     .prefs-open:hover{border-color:rgba(255,92,0,.4);}
+    .prefs-open.locked{opacity:.5;border-style:solid;border-color:#242424;}
+    .prefs-open.locked #prefsSummary{color:#FF7A33;}
+
+    /* Bouton d'analyse : version imposante + pulse d'attention quand actif */
+    .cta-big{height:66px;font-size:19px;font-weight:800;border-radius:20px;box-shadow:0 16px 40px -8px rgba(255,92,0,.7);}
+    .cta-big:not(:disabled){animation:ctaPulse 2.4s ease-in-out infinite;}
+    @keyframes ctaPulse{0%,100%{box-shadow:0 14px 34px -10px rgba(255,92,0,.55);}50%{box-shadow:0 18px 50px -6px rgba(255,92,0,.95);}}
 
     /* ── Paywall / email gate ── */
     .gate-overlay{position:absolute;inset:0;z-index:80;background:rgba(8,8,8,.82);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:24px}
@@ -175,22 +182,12 @@
         <img id="dzPreview" class="dz-preview" style="display:none;" alt="Aperçu de ta capture">
       </div>
 
-      <div style="margin-top:16px;position:relative;z-index:2;">
-        <div style="color:#6e6a66;font-size:11px;letter-spacing:.6px;text-transform:uppercase;font-weight:600;margin-bottom:9px;">Choisis ton ton</div>
-        <div class="tone-track" id="toneTrack">
-          <span class="tone-glider" id="toneGlider" style="transform:translateX(100%);"></span>
-          <button class="tone-btn" data-tone="classe" data-index="0">🎩 Classe</button>
-          <button class="tone-btn active" data-tone="drole" data-index="1">😂 Drôle</button>
-          <button class="tone-btn" data-tone="spicy" data-index="2">🌶️ Spicy</button>
-        </div>
-      </div>
-
-      <button class="prefs-open" id="prefsOpen" style="position:relative;z-index:2;">
-        <span>⚙️ Personnaliser le renard</span>
-        <span id="prefsSummary" style="color:#56524e;font-weight:500;font-size:11.5px;text-align:right;">réponses plus précises</span>
+      <button class="prefs-open" id="prefsOpen" style="position:relative;z-index:2;margin-top:20px;">
+        <span id="prefsOpenLabel">⚙️ Personnaliser le renard</span>
+        <span id="prefsSummary" style="color:#56524e;font-weight:500;font-size:11.5px;text-align:right;">réponses sur-mesure</span>
       </button>
 
-      <button class="cta" id="analyzeBtn" style="margin-top:14px;position:relative;z-index:2;" disabled>Analyser avec Tacotac <span style="font-size:18px;">⚡</span></button>
+      <button class="cta cta-big" id="analyzeBtn" style="margin-top:16px;position:relative;z-index:2;" disabled>Analyser ma conv <span style="font-size:21px;">⚡</span></button>
       <div style="display:flex;align-items:center;justify-content:center;gap:7px;color:#6e6a66;font-size:11.5px;margin-top:12px;position:relative;z-index:2;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6e6a66" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
         Analyse privée · rien n'est stocké
@@ -365,8 +362,8 @@
     <div class="gate-overlay" id="gate">
       <div class="gate-card">
         <div style="font-size:40px;margin-bottom:6px;">🦊🔒</div>
-        <div class="display" style="color:#fff;font-size:24px;line-height:1.1;">Passe en Premium 🌮</div>
-        <p style="color:#8a8580;font-size:14px;margin:10px 0 18px;line-height:1.5;">T'as cramé tes analyses gratuites du jour. Débloque les <span style="color:#FF7A33;font-weight:600;">analyses illimitées</span>, tout de suite.</p>
+        <div class="display" id="gateTitle" style="color:#fff;font-size:24px;line-height:1.1;">Passe en Premium 🌮</div>
+        <p id="gateSub" style="color:#8a8580;font-size:14px;margin:10px 0 18px;line-height:1.5;">T'as cramé tes analyses gratuites du jour. Débloque les <span style="color:#FF7A33;font-weight:600;">analyses illimitées</span>, tout de suite.</p>
         <div id="promoBanner" style="display:none;background:rgba(58,163,90,.12);border:1px solid rgba(58,163,90,.4);border-radius:12px;padding:10px 12px;margin:0 0 14px;color:#5fce86;font-size:13px;font-weight:600;">🎁 -10% appliqué sur le Mensuel</div>
 
         <div style="display:flex;flex-direction:column;gap:10px;">
@@ -431,6 +428,7 @@
     function applyQuota(q) {
       if (q) quota = q;
       renderQuota();
+      updatePrefsAccess();
     }
     function usesLeft() {
       return quota.remaining == null ? 1 : quota.remaining; // tant qu'on sait pas, on laisse tenter (le serveur tranchera)
@@ -483,15 +481,8 @@
       reader.readAsDataURL(file);
     }
 
-    const glider=document.getElementById('toneGlider');
-    document.querySelectorAll('#toneTrack .tone-btn').forEach(btn=>{
-      btn.addEventListener('click',()=>{
-        document.querySelectorAll('#toneTrack .tone-btn').forEach(b=>b.classList.remove('active'));
-        btn.classList.add('active');
-        glider.style.transform=`translateX(${btn.dataset.index*100}%)`;
-        selectedTone=btn.dataset.tone;
-      });
-    });
+    // (Le choix du ton en amont a été retiré : l'analyse renvoie toujours les 3 tons,
+    //  l'utilisateur bascule entre eux sur l'écran de résultats.)
 
     // ══════════════ ÉCRAN 2 — ANALYSE (vrai appel IA) ══════════════
     const steps=['Lecture du contexte…','Analyse du ton…','Détection du vibe…','Génération des réponses…'];
@@ -634,7 +625,10 @@
     }
     function savePrefs(){try{localStorage.setItem(PREFS_KEY,JSON.stringify(prefs));}catch(e){}}
 
-    document.getElementById('prefsOpen').addEventListener('click',()=>prefsOverlay.classList.add('show'));
+    document.getElementById('prefsOpen').addEventListener('click',()=>{
+      if(!quota.isPremium){ openGate('prefs'); return; }  // réservé Premium
+      prefsOverlay.classList.add('show');
+    });
     document.getElementById('prefsClose').addEventListener('click',()=>{savePrefs();prefsOverlay.classList.remove('show');});
     prefsOverlay.addEventListener('click',e=>{if(e.target===prefsOverlay){savePrefs();prefsOverlay.classList.remove('show');}});
     document.getElementById('prefsSave').addEventListener('click',()=>{savePrefs();prefsOverlay.classList.remove('show');});
@@ -661,12 +655,36 @@
     const gate=document.getElementById('gate');
     // Code promo cadeau (?promo=CODE venant de l'email -10%)
     let promoCode=new URLSearchParams(location.search).get('promo')||null;
-    function openGate(){
+    function openGate(context){
       if(quota.isPremium)return;
-      // le bonus email n'est proposé que s'il n'a pas déjà été pris sur cet appareil
-      document.getElementById('bonusWrap').style.display = quota.emailBonusClaimed ? 'none' : 'block';
+      const title=document.getElementById('gateTitle'), sub=document.getElementById('gateSub');
+      if(context==='prefs'){
+        title.textContent='Désolé, c\'est du Premium 🔒';
+        sub.innerHTML='Personnaliser le renard (âge, objectif, instructions perso…) est réservé aux membres <span style="color:#FF7A33;font-weight:600;">Premium</span>. Débloque tout, tout de suite.';
+      }else{
+        title.textContent='Passe en Premium 🌮';
+        sub.innerHTML='T\'as cramé tes analyses gratuites du jour. Débloque les <span style="color:#FF7A33;font-weight:600;">analyses illimitées</span>, tout de suite.';
+      }
+      // le bonus email (+2 analyses) n'a pas de sens dans le contexte "perso" → on le cache
+      const showBonus = context!=='prefs' && !quota.emailBonusClaimed;
+      document.getElementById('bonusWrap').style.display = showBonus ? 'block' : 'none';
       document.getElementById('promoBanner').style.display = promoCode ? 'block' : 'none';
       gate.classList.add('show');
+    }
+
+    // Accès à la personnalisation : réservé au Premium (grisé + cadenas sinon)
+    function updatePrefsAccess(){
+      const btn=document.getElementById('prefsOpen');
+      const label=document.getElementById('prefsOpenLabel');
+      if(quota.isPremium){
+        btn.classList.remove('locked');
+        label.textContent='⚙️ Personnaliser le renard';
+        renderPrefs(); // remet le résumé du profil
+      }else{
+        btn.classList.add('locked');
+        label.innerHTML='⚙️ Personnaliser le renard';
+        document.getElementById('prefsSummary').textContent='🔒 Premium';
+      }
     }
     document.getElementById('gateClose').addEventListener('click',()=>gate.classList.remove('show'));
 
