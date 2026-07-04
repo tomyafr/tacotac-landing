@@ -367,6 +367,7 @@
         <div style="font-size:40px;margin-bottom:6px;">🦊🔒</div>
         <div class="display" style="color:#fff;font-size:24px;line-height:1.1;">Passe en Premium 🌮</div>
         <p style="color:#8a8580;font-size:14px;margin:10px 0 18px;line-height:1.5;">T'as cramé tes analyses gratuites du jour. Débloque les <span style="color:#FF7A33;font-weight:600;">analyses illimitées</span>, tout de suite.</p>
+        <div id="promoBanner" style="display:none;background:rgba(58,163,90,.12);border:1px solid rgba(58,163,90,.4);border-radius:12px;padding:10px 12px;margin:0 0 14px;color:#5fce86;font-size:13px;font-weight:600;">🎁 -10% appliqué sur le Mensuel</div>
 
         <div style="display:flex;flex-direction:column;gap:10px;">
           <!-- Offre mensuelle (mise en avant) -->
@@ -658,10 +659,13 @@
 
     // ══════════════ GATE / PAYWALL ══════════════
     const gate=document.getElementById('gate');
+    // Code promo cadeau (?promo=CODE venant de l'email -10%)
+    let promoCode=new URLSearchParams(location.search).get('promo')||null;
     function openGate(){
       if(quota.isPremium)return;
       // le bonus email n'est proposé que s'il n'a pas déjà été pris sur cet appareil
       document.getElementById('bonusWrap').style.display = quota.emailBonusClaimed ? 'none' : 'block';
+      document.getElementById('promoBanner').style.display = promoCode ? 'block' : 'none';
       gate.classList.add('show');
     }
     document.getElementById('gateClose').addEventListener('click',()=>gate.classList.remove('show'));
@@ -707,6 +711,9 @@
       history.replaceState({},'',location.pathname);
     })();
 
+    // Arrivée via le lien cadeau -10% : on ouvre direct le paywall (promo pré-appliquée)
+    if(promoCode){(function waitQuota(){ if(quota.remaining!=null){ openGate(); } else setTimeout(waitQuota,150); })();}
+
     // Clic sur une offre → création de la session Stripe → redirection vers le checkout
     document.querySelectorAll('.plan-btn').forEach(btn=>{
       btn.addEventListener('click',async()=>{
@@ -714,7 +721,7 @@
         const err=document.getElementById('gateError');err.style.display='none';
         const label=btn.innerHTML;btn.style.opacity='.6';btn.style.pointerEvents='none';
         try{
-          const r=await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({plan})});
+          const r=await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({plan,promo:promoCode})});
           const data=await r.json();
           if(data.url){window.location.href=data.url;return;} // → Stripe Checkout
           throw new Error(data.error||'Erreur');

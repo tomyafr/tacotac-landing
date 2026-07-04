@@ -15,7 +15,7 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import OpenAI from 'openai';
 import Stripe from 'stripe';
-import { consumeQuota, getStatus, activatePremium, syncSubscription, deactivatePremium, claimEmailBonus, claimFounderCode, seedFounderCodes } from './db.js';
+import { consumeQuota, getStatus, activatePremium, syncSubscription, deactivatePremium, claimEmailBonus, claimFounderCode, seedFounderCodes, reserveGiftEmail, setGiftPromo, releaseGiftEmail } from './db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -26,7 +26,11 @@ const PUBLIC_URL = process.env.PUBLIC_URL || `http://localhost:${PORT}`;
 app.set('trust proxy', 1);
 
 // ── Client Stripe ───────────────────────────────────────────────
-const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+// apiVersion figée : le défaut du SDK vise une version bleeding-edge qui change
+// la forme de certains endpoints (ex. promotion_codes). On épingle une version stable.
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
+  : null;
 const PRICES = { weekly: process.env.STRIPE_PRICE_WEEKLY, monthly: process.env.STRIPE_PRICE_MONTHLY };
 
 // ⚠️ Le webhook Stripe DOIT recevoir le corps BRUT (non parsé) pour vérifier la signature.
@@ -392,6 +396,78 @@ app.post('/api/founder/claim', (req, res) => {
   res.json({ ok: true, status: getStatus(deviceId) });
 });
 
+// ── Envoi d'email via Resend (transactionnel) ───────────────────
+async function sendEmail({ to, subject, html }) {
+  const key = process.env.RESEND_API_KEY;
+  if (!key || key.includes('a_remplir')) {
+    console.warn('[email] RESEND_API_KEY absente → email non envoyé à', to);
+    return false;
+  }
+  try {
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: process.env.GIFT_FROM_EMAIL || 'Tacotac <onboarding@resend.dev>', to, subject, html }),
+    });
+    if (!r.ok) { console.error('[email] resend', r.status, await r.text().catch(() => '')); return false; }
+    return true;
+  } catch (e) {
+    console.error('[email] resend exception', e?.message);
+    return false;
+  }
+}
+
+function giftEmailHtml(code, link) {
+  return `<div style="max-width:460px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;background:#17120E;border-radius:20px;padding:32px 26px;color:#F4EEE2;">
+    <div style="font-size:34px;text-align:center;margin-bottom:8px;">🦊</div>
+    <h1 style="font-size:23px;margin:0 0 6px;text-align:center;color:#fff;">Ton cadeau : <span style="color:#FF7A45;">-10%</span></h1>
+    <p style="color:#B5ABA0;font-size:15px;line-height:1.55;text-align:center;margin:0 0 22px;">Merci d'avoir rejoint Tacotac. Voici ton code de réduction sur le forfait <b style="color:#fff;">Mensuel</b> — valable <b style="color:#FF7A45;">24h seulement</b>.</p>
+    <div style="background:#0d0d0d;border:1.5px dashed rgba(255,122,69,.5);border-radius:14px;padding:16px;text-align:center;margin:0 0 22px;">
+      <div style="color:#8A7F70;font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Ton code</div>
+      <div style="font-size:26px;font-weight:800;letter-spacing:2px;color:#FF7A45;">${code}</div>
+    </div>
+    <a href="${link}" style="display:block;text-align:center;background:#FF5A1F;color:#fff;text-decoration:none;font-weight:700;font-size:16px;padding:15px;border-radius:12px;">J'en profite maintenant →</a>
+    <p style="color:#7A7062;font-size:12px;text-align:center;margin:18px 0 0;line-height:1.5;">Le code est déjà pré-rempli via le bouton. Sinon, saisis-le au paiement.<br>Tacotac · coach dating IA</p>
+  </div>`;
+}
+
+// ── Cadeau -10% contre email : code promo Stripe unique (24h) + Sheet + mail ──
+app.post('/api/gift-email', bonusLimiter, async (req, res) => {
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  if (!EMAIL_RE.test(email)) return res.status(400).json({ ok: false, error: 'Entre un email valide.' });
+
+  const reserve = reserveGiftEmail(email);
+  if (!reserve.isNew) return res.status(409).json({ ok: false, error: 'Cet email a déjà reçu son code 😉' });
+
+  // Sheet (comme avant, non bloquant)
+  const p = new URLSearchParams({ email, source: 'lp-gift', timestamp: new Date().toISOString() });
+  fetch(`${WAITLIST_WEBHOOK}?${p}`).catch((e) => console.error('[gift] sheet', e?.message));
+
+  // Code promo Stripe : -10% mensuel, 24h, 1 seule utilisation
+  let code = null;
+  try {
+    if (!stripe || !process.env.STRIPE_WELCOME_COUPON) throw new Error('stripe/coupon non configuré');
+    const promo = await stripe.promotionCodes.create({
+      coupon: process.env.STRIPE_WELCOME_COUPON,
+      max_redemptions: 1,
+      expires_at: Math.floor(Date.now() / 1000) + 24 * 3600,
+      metadata: { email },
+    });
+    code = promo.code;
+    setGiftPromo(email, code);
+  } catch (e) {
+    console.error('[gift] promo', e?.message);
+    releaseGiftEmail(email); // libère pour un nouvel essai
+    return res.status(500).json({ ok: false, error: 'Impossible de générer ton code, réessaie.' });
+  }
+
+  const link = `${PUBLIC_URL}/app?promo=${encodeURIComponent(code)}`;
+  const sent = await sendEmail({ to: email, subject: '🎁 Ton code -10% Tacotac (valable 24h)', html: giftEmailHtml(code, link) });
+
+  // Si l'email n'a pas pu partir (Resend non configuré), on affiche le code à l'écran en secours.
+  res.json({ ok: true, emailSent: sent, code: sent ? undefined : code });
+});
+
 // ── Créer une session de paiement Stripe (abonnement) ───────────
 app.post('/api/checkout', async (req, res) => {
   try {
@@ -401,12 +477,23 @@ app.post('/api/checkout', async (req, res) => {
     const price = PRICES[plan];
     if (!price) return res.status(500).json({ error: 'Offre indisponible.' });
 
+    // Code promo optionnel (cadeau -10%) : on le pré-applique s'il est valide.
+    // Stripe interdit d'avoir à la fois `discounts` et `allow_promotion_codes`.
+    let discounts;
+    const promoCode = String(req.body?.promo || '').trim();
+    if (promoCode) {
+      try {
+        const list = await stripe.promotionCodes.list({ code: promoCode, active: true, limit: 1 });
+        if (list.data[0]) discounts = [{ promotion_code: list.data[0].id }];
+      } catch (e) { console.error('[checkout] promo lookup', e?.message); }
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       line_items: [{ price, quantity: 1 }],
       client_reference_id: deviceId,             // relie le paiement à l'appareil
       subscription_data: { metadata: { device_id: deviceId } },
-      allow_promotion_codes: true,
+      ...(discounts ? { discounts } : { allow_promotion_codes: true }),
       success_url: `${PUBLIC_URL}/app?paid=1&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${PUBLIC_URL}/app?canceled=1`,
     });

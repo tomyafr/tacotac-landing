@@ -59,6 +59,11 @@ db.exec(`
     used_by TEXT,                                         -- device_id qui l'a utilisé (1 seule fois)
     used_at INTEGER
   );
+  CREATE TABLE IF NOT EXISTS gift_emails (
+    email      TEXT PRIMARY KEY,                          -- 1 cadeau -10% par email (à vie)
+    promo_code TEXT,                                      -- code Stripe généré et envoyé par mail
+    created_at INTEGER NOT NULL
+  );
   CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 `);
 
@@ -212,6 +217,25 @@ const qGetFounderCode = db.prepare('SELECT * FROM founder_codes WHERE code = ?')
 const qSeedFounderCode = db.prepare('INSERT OR IGNORE INTO founder_codes (code) VALUES (?)');
 const qUseFounderCode = db.prepare('UPDATE founder_codes SET used_by = ?, used_at = ? WHERE code = ? AND used_by IS NULL');
 const qSetFounder = db.prepare("UPDATE users SET plan = 'founder' WHERE device_id = ?");
+
+// ── Cadeau email -10% : anti-doublon (1 code par email, à vie) ──
+const qGetGiftEmail = db.prepare('SELECT * FROM gift_emails WHERE email = ?');
+const qInsertGiftEmail = db.prepare('INSERT INTO gift_emails (email, promo_code, created_at) VALUES (?, ?, ?)');
+
+// Réserve l'email s'il est nouveau. Renvoie {isNew:true} si on peut lui donner un cadeau.
+export function reserveGiftEmail(rawEmail) {
+  const email = String(rawEmail || '').trim().toLowerCase();
+  if (qGetGiftEmail.get(email)) return { isNew: false, email };
+  qInsertGiftEmail.run(email, null, Math.floor(Date.now() / 1000));
+  return { isNew: true, email };
+}
+// Mémorise le code promo généré (ou libère la réservation si l'envoi a échoué).
+export function setGiftPromo(email, code) {
+  db.prepare('UPDATE gift_emails SET promo_code = ? WHERE email = ?').run(code, String(email).trim().toLowerCase());
+}
+export function releaseGiftEmail(email) {
+  db.prepare('DELETE FROM gift_emails WHERE email = ? AND promo_code IS NULL').run(String(email).trim().toLowerCase());
+}
 
 export function seedFounderCodes(codes) {
   for (const c of codes) if (c && c.trim()) qSeedFounderCode.run(c.trim().toUpperCase());
