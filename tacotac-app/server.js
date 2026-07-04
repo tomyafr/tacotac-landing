@@ -10,12 +10,13 @@ import 'dotenv/config';
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import OpenAI from 'openai';
 import Stripe from 'stripe';
-import { consumeQuota, getStatus, activatePremium, syncSubscription, deactivatePremium, claimEmailBonus, claimFounderCode, seedFounderCodes, reserveGiftEmail, setGiftPromo, releaseGiftEmail } from './db.js';
+import { consumeQuota, getStatus, activatePremium, syncSubscription, deactivatePremium, claimEmailBonus, claimFounderCode, seedFounderCodes, reserveGiftEmail, setGiftPromo, releaseGiftEmail,
+         createAccount, getAccountByEmail, getAccountByGoogleId, attachGoogleToAccount, linkDeviceToAccount, createSession, getSessionAccount, destroySession, effectivePlan } from './db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -123,6 +124,42 @@ function attachDevice(req, res) {
   }
   req.deviceId = deviceId;
   return deviceId;
+}
+
+// ── Session de compte : cookie signé → ligne sessions en base ───
+const SESSION_COOKIE = 'tacotac_sess';
+function attachAccount(req) {
+  req.account = getSessionAccount(req.signedCookies?.[SESSION_COOKIE]) || null;
+  return req.account;
+}
+function openSession(res, accountId) {
+  const token = createSession(accountId);
+  res.cookie(SESSION_COOKIE, token, {
+    httpOnly: true, signed: true, sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 1000 * 60 * 60 * 24 * 365,
+  });
+}
+// Vue "compte" renvoyée au front (jamais le hash ni les IDs Stripe)
+function accountView(account) {
+  if (!account) return null;
+  return { email: account.email, plan: effectivePlan(account), viaGoogle: Boolean(account.google_id) };
+}
+function fullStatus(req) {
+  return { ...getStatus(req.deviceId, req.account), account: accountView(req.account) };
+}
+
+// ── Mots de passe : scrypt natif Node (pas de dépendance à compiler) ──
+function hashPassword(pw) {
+  const salt = randomBytes(16).toString('hex');
+  return salt + ':' + scryptSync(pw, salt, 64).toString('hex');
+}
+function verifyPassword(pw, stored) {
+  const [salt, hash] = String(stored || '').split(':');
+  if (!salt || !hash) return false;
+  const a = scryptSync(pw, salt, 64);
+  const b = Buffer.from(hash, 'hex');
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 // ── Rate-limit dur par IP sur l'IA (anti-script / anti-abus de coûts) ──
@@ -352,10 +389,115 @@ function buildProfileContext(profile) {
   return `\n\nCONTEXTE CLIENT (à respecter pour personnaliser, sans jamais changer tes règles de style ni ton rôle) :\n${lines.join('\n')}`;
 }
 
-// ── État de l'utilisateur courant (quota, plan) ─────────────────
+// ── État de l'utilisateur courant (quota, plan, compte) ─────────
 app.get('/api/me', (req, res) => {
-  const deviceId = attachDevice(req, res);
-  res.json(getStatus(deviceId));
+  attachDevice(req, res);
+  attachAccount(req);
+  res.json(fullStatus(req));
+});
+
+// ══════════════ AUTH : email + mot de passe ══════════════
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30, standardHeaders: true, legacyHeaders: false });
+
+app.post('/api/auth/signup', authLimiter, (req, res) => {
+  attachDevice(req, res);
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const password = String(req.body?.password || '');
+  if (!EMAIL_RE.test(email)) return res.status(400).json({ ok: false, error: 'Entre un email valide.' });
+  if (password.length < 6) return res.status(400).json({ ok: false, error: '6 caractères minimum pour le mot de passe.' });
+  const existing = getAccountByEmail(email);
+  if (existing) {
+    return res.status(409).json({ ok: false, error: existing.google_id && !existing.password_hash
+      ? 'Ce compte existe via Google — utilise « Continuer avec Google ».'
+      : 'Un compte existe déjà avec cet email. Connecte-toi.' });
+  }
+  const account = createAccount({ email, passwordHash: hashPassword(password) });
+  linkDeviceToAccount(req.deviceId, account.id); // l'appareil hérite/donne son premium
+  openSession(res, account.id);
+  req.account = getAccountByEmail(email);
+  res.json({ ok: true, status: fullStatus(req) });
+});
+
+app.post('/api/auth/login', authLimiter, (req, res) => {
+  attachDevice(req, res);
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const password = String(req.body?.password || '');
+  const account = getAccountByEmail(email);
+  if (!account) return res.status(401).json({ ok: false, error: 'Aucun compte avec cet email.' });
+  if (!account.password_hash) return res.status(401).json({ ok: false, error: 'Ce compte utilise Google — clique « Continuer avec Google ».' });
+  if (!verifyPassword(password, account.password_hash)) return res.status(401).json({ ok: false, error: 'Mot de passe incorrect.' });
+  linkDeviceToAccount(req.deviceId, account.id);
+  openSession(res, account.id);
+  req.account = getAccountByEmail(email);
+  res.json({ ok: true, status: fullStatus(req) });
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  attachDevice(req, res);
+  destroySession(req.signedCookies?.[SESSION_COOKIE]);
+  res.clearCookie(SESSION_COOKIE);
+  req.account = null;
+  res.json({ ok: true, status: fullStatus(req) });
+});
+
+// ══════════════ AUTH : Google OAuth (activé si les clés sont dans .env) ══════════════
+const GOOGLE_ENABLED = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+const GOOGLE_REDIRECT = `${PUBLIC_URL}/api/auth/google/callback`;
+
+app.get('/api/auth/config', (req, res) => res.json({ google: GOOGLE_ENABLED }));
+
+app.get('/api/auth/google', (req, res) => {
+  if (!GOOGLE_ENABLED) return res.redirect('/app');
+  const state = randomUUID();
+  res.cookie('tt_oauth_state', state, { httpOnly: true, signed: true, sameSite: 'lax', maxAge: 10 * 60 * 1000, secure: process.env.NODE_ENV === 'production' });
+  const u = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+  u.searchParams.set('client_id', process.env.GOOGLE_CLIENT_ID);
+  u.searchParams.set('redirect_uri', GOOGLE_REDIRECT);
+  u.searchParams.set('response_type', 'code');
+  u.searchParams.set('scope', 'openid email');
+  u.searchParams.set('state', state);
+  u.searchParams.set('prompt', 'select_account');
+  res.redirect(u.toString());
+});
+
+app.get('/api/auth/google/callback', async (req, res) => {
+  try {
+    if (!GOOGLE_ENABLED) return res.redirect('/app');
+    attachDevice(req, res);
+    const { code, state } = req.query;
+    if (!code || !state || state !== req.signedCookies?.tt_oauth_state) return res.redirect('/app?auth_err=1');
+    res.clearCookie('tt_oauth_state');
+
+    // Échange code → tokens (directement auprès de Google, en TLS)
+    const tokenResp = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code, client_id: process.env.GOOGLE_CLIENT_ID, client_secret: process.env.GOOGLE_CLIENT_SECRET,
+        redirect_uri: GOOGLE_REDIRECT, grant_type: 'authorization_code',
+      }),
+    });
+    const tokens = await tokenResp.json();
+    if (!tokens.id_token) { console.error('[google] pas d\'id_token', tokens.error || ''); return res.redirect('/app?auth_err=1'); }
+    // id_token reçu directement de Google → on peut lire le payload sans re-vérifier la signature
+    const payload = JSON.parse(Buffer.from(tokens.id_token.split('.')[1], 'base64url').toString('utf8'));
+    const email = String(payload.email || '').toLowerCase();
+    const googleId = String(payload.sub || '');
+    if (!email || !googleId) return res.redirect('/app?auth_err=1');
+
+    let account = getAccountByGoogleId(googleId);
+    if (!account) {
+      const byEmail = getAccountByEmail(email);
+      if (byEmail) { attachGoogleToAccount(byEmail.id, googleId); account = getAccountByEmail(email); } // relie Google au compte mdp existant
+      else account = createAccount({ email, googleId });
+    }
+    linkDeviceToAccount(req.deviceId, account.id);
+    openSession(res, account.id);
+    res.redirect('/app?login=1');
+  } catch (e) {
+    console.error('[google] callback:', e?.message);
+    res.redirect('/app?auth_err=1');
+  }
 });
 
 // ── Bonus email : +2 analyses (1 fois par email, 1 fois par appareil) ──
@@ -473,6 +615,7 @@ app.post('/api/checkout', async (req, res) => {
   try {
     if (!stripe) return res.status(500).json({ error: 'Paiement indisponible.' });
     const deviceId = attachDevice(req, res);
+    attachAccount(req); // si connecté : email pré-rempli au checkout + abo lié au compte
     const plan = req.body?.plan === 'monthly' ? 'monthly' : 'weekly';
     const price = PRICES[plan];
     if (!price) return res.status(500).json({ error: 'Offre indisponible.' });
@@ -492,7 +635,8 @@ app.post('/api/checkout', async (req, res) => {
       mode: 'subscription',
       line_items: [{ price, quantity: 1 }],
       client_reference_id: deviceId,             // relie le paiement à l'appareil
-      subscription_data: { metadata: { device_id: deviceId } },
+      ...(req.account ? { customer_email: req.account.email } : {}),
+      subscription_data: { metadata: { device_id: deviceId, account_email: req.account?.email || '' } },
       ...(discounts ? { discounts } : { allow_promotion_codes: true }),
       success_url: `${PUBLIC_URL}/app?paid=1&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${PUBLIC_URL}/app?canceled=1`,
@@ -517,7 +661,8 @@ app.get('/api/checkout/confirm', async (req, res) => {
         await activateFromSession(session);
       }
     }
-    res.json(getStatus(deviceId));
+    attachAccount(req);
+    res.json(fullStatus(req));
   } catch (err) {
     console.error('[confirm] erreur:', err?.message || err);
     res.status(500).json({ ok: false });
@@ -528,6 +673,7 @@ app.get('/api/checkout/confirm', async (req, res) => {
 app.post('/api/analyze', analyzeLimiter, async (req, res) => {
   try {
     const deviceId = attachDevice(req, res);
+    attachAccount(req); // un compte premium connecté = illimité, même sur un appareil vierge
 
     const dataUrl = req.body?.image;
     if (!isValidDataUrl(dataUrl)) {
@@ -535,7 +681,7 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
     }
 
     // ── QUOTA (côté serveur, seule source de vérité) ──
-    const quota = consumeQuota(deviceId, req.ip);
+    const quota = consumeQuota(deviceId, req.ip, req.account);
     if (!quota.allowed) {
       let error = "T'as utilisé tes analyses gratuites du jour.";
       if (quota.isPremium) error = "Limite quotidienne atteinte, reviens demain.";

@@ -159,7 +159,10 @@
             <div style="color:#fff;font-size:22px;font-weight:700;letter-spacing:-.5px;">Tacotac</div>
           </a>
         </div>
-        <div class="quota" id="quota">…</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="quota" id="quota">…</div>
+          <button id="accountBtn" title="Mon compte" style="width:34px;height:34px;border-radius:50%;background:#141414;border:1.5px solid #2a2a2a;color:#8a8580;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .2s;">👤</button>
+        </div>
       </div>
 
       <div style="margin-top:26px;position:relative;z-index:2;">
@@ -299,6 +302,45 @@
       <button class="btn-secondary" id="resetBtn" style="margin-top:12px;">🔄 Nouvelle analyse</button>
     </section>
 
+    <!-- ═══════════════ COMPTE (connexion / inscription) ═══════════════ -->
+    <div class="gate-overlay" id="auth">
+      <div class="gate-card" style="text-align:left;">
+
+        <!-- Vue déconnecté -->
+        <div id="authOut">
+          <div class="display" style="color:#fff;font-size:23px;line-height:1.1;text-align:center;">Ton compte 🦊</div>
+          <p style="color:#8a8580;font-size:13.5px;margin:8px 0 16px;line-height:1.5;text-align:center;">Retrouve ton Premium et tes réglages sur <span style="color:#FF7A33;font-weight:600;">tous tes appareils</span>.</p>
+
+          <a id="googleBtn" href="/api/auth/google" style="display:none;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px;background:#fff;color:#1f1f1f;font-weight:700;font-size:14.5px;border-radius:14px;text-decoration:none;">
+            <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.7l6.2 5.2C36.9 40.4 44 36 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+            Continuer avec Google
+          </a>
+          <div id="googleSep" style="display:none;align-items:center;gap:10px;margin:14px 0;">
+            <span style="flex:1;height:1px;background:#2a2a2a;"></span><span style="color:#56524e;font-size:11.5px;">ou par email</span><span style="flex:1;height:1px;background:#2a2a2a;"></span>
+          </div>
+
+          <form id="authForm" style="display:flex;flex-direction:column;gap:10px;">
+            <input class="gate-input" id="authEmail" type="email" required placeholder="ton@email.fr" autocomplete="email">
+            <input class="gate-input" id="authPass" type="password" required minlength="6" placeholder="Mot de passe" autocomplete="current-password">
+            <button type="submit" class="cta" id="authSubmit" style="height:50px;font-size:15px;">Se connecter</button>
+          </form>
+          <div id="authErr" style="display:none;color:#ff6b5c;font-size:12.5px;margin-top:10px;text-align:center;"></div>
+          <button id="authSwitch" style="width:100%;margin-top:12px;background:none;border:none;color:#8a8580;font-family:inherit;font-size:13px;cursor:pointer;">Pas encore de compte ? <span style="color:#FF7A33;font-weight:600;">Inscris-toi</span></button>
+        </div>
+
+        <!-- Vue connecté -->
+        <div id="authIn" style="display:none;text-align:center;">
+          <div style="font-size:38px;margin-bottom:6px;">🦊</div>
+          <div class="display" style="color:#fff;font-size:22px;line-height:1.1;">Connecté</div>
+          <p id="authWho" style="color:#8a8580;font-size:14px;margin:8px 0 4px;word-break:break-all;"></p>
+          <div id="authPlan" style="display:inline-block;margin:6px 0 16px;padding:6px 14px;border-radius:99px;font-size:12.5px;font-weight:700;"></div>
+          <button id="authLogout" style="width:100%;padding:13px;background:#141414;border:1.5px solid #2a2a2a;color:#8a8580;font-family:inherit;font-weight:600;font-size:14px;border-radius:14px;cursor:pointer;">Se déconnecter</button>
+        </div>
+
+        <button id="authClose" style="display:block;margin:14px auto 0;background:none;border:none;color:#56524e;font-family:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline;">Fermer</button>
+      </div>
+    </div>
+
     <!-- ═══════════════ PANNEAU PERSONNALISATION ═══════════════ -->
     <div class="prefs-overlay" id="prefs">
       <div class="prefs-panel">
@@ -398,7 +440,8 @@
         </div>
 
         <div id="gateError" style="display:none;color:#ff6b5c;font-size:12.5px;margin-top:10px;"></div>
-        <button id="gateClose" style="margin-top:12px;background:none;border:none;color:#56524e;font-family:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline;">Revenir plus tard</button>
+        <button id="gateLogin" style="margin-top:12px;background:none;border:none;color:#8a8580;font-family:inherit;font-size:13px;cursor:pointer;">Déjà Premium ? <span style="color:#FF7A33;font-weight:600;text-decoration:underline;">Connecte-toi</span></button>
+        <button id="gateClose" style="margin-top:4px;background:none;border:none;color:#56524e;font-family:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline;">Revenir plus tard</button>
       </div>
     </div>
 
@@ -425,10 +468,21 @@
     // cache local `quota` pour l'affichage, rafraîchi à chaque réponse serveur.
     let quota = { remaining: null, limit: null, isPremium: false };
 
+    let currentAccount = null; // {email, plan, viaGoogle} ou null
     function applyQuota(q) {
-      if (q) quota = q;
+      if (q) {
+        quota = q;
+        if ('account' in q) currentAccount = q.account;
+      }
       renderQuota();
       updatePrefsAccess();
+      renderAccountBtn();
+    }
+    function renderAccountBtn() {
+      const b = document.getElementById('accountBtn');
+      if (!b) return;
+      if (currentAccount) { b.style.borderColor = 'rgba(255,92,0,.55)'; b.style.color = '#FF7A33'; }
+      else { b.style.borderColor = '#2a2a2a'; b.style.color = '#8a8580'; }
     }
     function usesLeft() {
       return quota.remaining == null ? 1 : quota.remaining; // tant qu'on sait pas, on laisse tenter (le serveur tranchera)
@@ -687,6 +741,7 @@
       }
     }
     document.getElementById('gateClose').addEventListener('click',()=>gate.classList.remove('show'));
+    document.getElementById('gateLogin').addEventListener('click',()=>{gate.classList.remove('show');openAuth();});
 
     // Bonus email : +2 analyses (vérifié côté serveur : 1 fois par email ET par appareil)
     document.getElementById('bonusForm').addEventListener('submit',async e=>{
@@ -764,6 +819,74 @@
           alert('🎉 Bienvenue en Premium ! Analyses illimitées débloquées.');
         }
         history.replaceState({},'',location.pathname); // nettoie l'URL
+      }
+    })();
+
+    // ══════════════ COMPTE (connexion / inscription) ══════════════
+    const authOverlay=document.getElementById('auth');
+    let authMode='login'; // 'login' | 'signup'
+
+    function renderAuth(){
+      const inV=document.getElementById('authIn'), outV=document.getElementById('authOut');
+      if(currentAccount){
+        outV.style.display='none';inV.style.display='block';
+        document.getElementById('authWho').textContent=currentAccount.email+(currentAccount.viaGoogle?' · via Google':'');
+        const planEl=document.getElementById('authPlan');
+        const isP=currentAccount.plan==='premium'||currentAccount.plan==='founder';
+        planEl.textContent=currentAccount.plan==='founder'?'⭐ Fondateur — illimité':(isP?'✨ Premium — illimité':'Gratuit — 3 analyses/jour');
+        planEl.style.background=isP?'rgba(255,92,0,.15)':'rgba(255,255,255,.06)';
+        planEl.style.color=isP?'#FF7A33':'#8a8580';
+        planEl.style.border=isP?'1px solid rgba(255,92,0,.4)':'1px solid #2a2a2a';
+      }else{
+        inV.style.display='none';outV.style.display='block';
+        const isLogin=authMode==='login';
+        document.getElementById('authSubmit').textContent=isLogin?'Se connecter':'Créer mon compte';
+        document.getElementById('authSwitch').innerHTML=isLogin
+          ?'Pas encore de compte ? <span style="color:#FF7A33;font-weight:600;">Inscris-toi</span>'
+          :'Déjà un compte ? <span style="color:#FF7A33;font-weight:600;">Connecte-toi</span>';
+        document.getElementById('authPass').autocomplete=isLogin?'current-password':'new-password';
+      }
+    }
+    function openAuth(){document.getElementById('authErr').style.display='none';renderAuth();authOverlay.classList.add('show');}
+    document.getElementById('accountBtn').addEventListener('click',openAuth);
+    document.getElementById('authClose').addEventListener('click',()=>authOverlay.classList.remove('show'));
+    document.getElementById('authSwitch').addEventListener('click',()=>{authMode=(authMode==='login')?'signup':'login';document.getElementById('authErr').style.display='none';renderAuth();});
+
+    // bouton Google affiché seulement si configuré côté serveur
+    fetch('/api/auth/config').then(r=>r.json()).then(c=>{
+      if(c.google){document.getElementById('googleBtn').style.display='flex';document.getElementById('googleSep').style.display='flex';}
+    }).catch(()=>{});
+
+    document.getElementById('authForm').addEventListener('submit',async e=>{
+      e.preventDefault();
+      const err=document.getElementById('authErr');err.style.display='none';
+      const btn=document.getElementById('authSubmit');const o=btn.textContent;btn.disabled=true;btn.textContent='…';
+      try{
+        const r=await fetch('/api/auth/'+(authMode==='login'?'login':'signup'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:document.getElementById('authEmail').value,password:document.getElementById('authPass').value})});
+        const d=await r.json();
+        if(d.ok){
+          applyQuota(d.status);
+          renderAuth();
+          setTimeout(()=>authOverlay.classList.remove('show'),900);
+        }else{err.textContent=d.error||'Erreur, réessaie.';err.style.display='block';}
+      }catch(ex){err.textContent='Erreur réseau, réessaie.';err.style.display='block';}
+      btn.disabled=false;btn.textContent=o;
+    });
+
+    document.getElementById('authLogout').addEventListener('click',async()=>{
+      try{const d=await (await fetch('/api/auth/logout',{method:'POST'})).json();applyQuota(d.status);}catch(e){}
+      renderAuth();
+    });
+
+    // Retour Google : ?login=1 (succès) / ?auth_err=1 (échec)
+    (function handleAuthReturn(){
+      const p=new URLSearchParams(location.search);
+      if(p.get('login')==='1'){
+        fetch('/api/me').then(r=>r.json()).then(st=>{applyQuota(st);openAuth();}).catch(()=>{});
+        history.replaceState({},'',location.pathname);
+      }else if(p.get('auth_err')==='1'){
+        alert('La connexion Google a échoué, réessaie.');
+        history.replaceState({},'',location.pathname);
       }
     })();
 

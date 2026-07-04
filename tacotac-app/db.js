@@ -64,12 +64,30 @@ db.exec(`
     promo_code TEXT,                                      -- code Stripe généré et envoyé par mail
     created_at INTEGER NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS accounts (
+    id                     INTEGER PRIMARY KEY AUTOINCREMENT,
+    email                  TEXT UNIQUE NOT NULL,          -- normalisé lowercase
+    password_hash          TEXT,                          -- scrypt "salt:hash" (NULL si compte Google)
+    google_id              TEXT UNIQUE,                   -- sub Google (NULL si compte mdp)
+    plan                   TEXT NOT NULL DEFAULT 'free',  -- free | premium | founder
+    stripe_customer_id     TEXT,
+    stripe_subscription_id TEXT,
+    plan_expires_at        INTEGER,
+    created_at             INTEGER NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS sessions (
+    token      TEXT PRIMARY KEY,                          -- aléatoire, dans un cookie signé httpOnly
+    account_id INTEGER NOT NULL,
+    created_at INTEGER NOT NULL,
+    expires_at INTEGER NOT NULL
+  );
   CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 `);
 
 // Migration douce pour la base prod existante (ALTER échoue si la colonne existe déjà → on ignore)
 try { db.exec("ALTER TABLE users ADD COLUMN bonus_remaining INTEGER NOT NULL DEFAULT 0"); } catch { /* déjà migré */ }
 try { db.exec("ALTER TABLE users ADD COLUMN email_bonus_claimed INTEGER NOT NULL DEFAULT 0"); } catch { /* déjà migré */ }
+try { db.exec("ALTER TABLE users ADD COLUMN account_id INTEGER"); } catch { /* déjà migré */ }
 
 // ── Jour courant en Europe/Paris (le quota se remet à zéro à minuit FR) ──
 export function parisDay(d = new Date()) {
@@ -105,6 +123,7 @@ export function getOrCreateUser(deviceId) {
 }
 
 // Plan "réel" à l'instant T (un premium expiré redevient gratuit).
+// Marche pour une ligne `users` (appareil) comme pour une ligne `accounts` (compte).
 export function effectivePlan(user) {
   if (!user) return 'free';
   if (user.plan === 'founder') return 'founder';
@@ -113,6 +132,14 @@ export function effectivePlan(user) {
     return 'free'; // abonnement expiré
   }
   return 'free';
+}
+
+// Le meilleur des deux mondes : un compte premium sur un appareil vierge = premium.
+const PLAN_RANK = { free: 0, premium: 1, founder: 2 };
+function resolvePlan(user, account) {
+  const devicePlan = effectivePlan(user);
+  const accountPlan = effectivePlan(account);
+  return PLAN_RANK[accountPlan] > PLAN_RANK[devicePlan] ? accountPlan : devicePlan;
 }
 
 export function dailyLimitFor(plan) {
@@ -134,9 +161,10 @@ function ipUsageToday(ip) {
 
 // État sans consommer (pour /api/me et l'affichage du quota).
 // `remaining` inclut les crédits bonus (email) pour que le front affiche un seul chiffre.
-export function getStatus(deviceId) {
+// `account` (optionnel) = ligne accounts si l'utilisateur est connecté : son plan prime s'il est meilleur.
+export function getStatus(deviceId, account = null) {
   const user = getOrCreateUser(deviceId);
-  const plan = effectivePlan(user);
+  const plan = resolvePlan(user, account);
   const limit = dailyLimitFor(plan);
   const used = usageToday(user.device_id);
   const bonus = user.bonus_remaining || 0;
@@ -157,9 +185,9 @@ export function getStatus(deviceId) {
 // possible entre la lecture du compteur et son incrément.
 // `ip` sert de garde-fou anti-abus pour le tier gratuit (le cookie change en
 // navigation privée, pas l'IP). Les abonnés ne sont pas concernés par le plafond IP.
-export function consumeQuota(deviceId, ip) {
+export function consumeQuota(deviceId, ip, account = null) {
   const user = getOrCreateUser(deviceId);
-  const plan = effectivePlan(user);
+  const plan = resolvePlan(user, account);
   const isPremium = plan === 'premium' || plan === 'founder';
   const limit = dailyLimitFor(plan);
   const used = usageToday(user.device_id);
@@ -280,10 +308,15 @@ export function getUserByEmail(email) {
 }
 
 // Active le premium sur l'appareil qui a payé (device_id issu du client_reference_id Stripe).
+// Si l'appareil est relié à un compte, le compte devient premium aussi (→ tous ses appareils).
 export function activatePremium({ deviceId, email, customerId, subscriptionId, expiresAt }) {
   getOrCreateUser(deviceId); // garantit la ligne
   qSetPremium.run(email || null, customerId || null, subscriptionId || null, expiresAt || null, deviceId);
-  return qGetUser.get(deviceId);
+  const user = qGetUser.get(deviceId);
+  if (user?.account_id) {
+    qAccUpgrade.run('premium', customerId || null, subscriptionId || null, expiresAt || null, user.account_id);
+  }
+  return user;
 }
 
 // Met à jour un abonnement existant (renouvellement, changement de statut) via le customer Stripe.
@@ -292,13 +325,79 @@ export function syncSubscription({ customerId, subscriptionId, status, expiresAt
   const active = status === 'active' || status === 'trialing' || status === 'past_due';
   const plan = active ? 'premium' : 'free';
   const res = qSyncByCustomer.run(plan, subscriptionId || null, active ? (expiresAt || null) : null, customerId);
+  // même traitement pour les comptes rattachés à ce customer Stripe (founder jamais rétrogradé)
+  db.prepare("UPDATE accounts SET plan = ?, stripe_subscription_id = ?, plan_expires_at = ? WHERE stripe_customer_id = ? AND plan != 'founder'")
+    .run(plan, subscriptionId || null, active ? (expiresAt || null) : null, customerId);
   return res.changes > 0;
 }
 
 // Repasse en gratuit quand l'abonnement est annulé/supprimé.
 export function deactivatePremium(customerId) {
   const res = qDowngradeCustomer.run(customerId);
+  db.prepare("UPDATE accounts SET plan = 'free', plan_expires_at = NULL WHERE stripe_customer_id = ? AND plan != 'founder'")
+    .run(customerId);
   return res.changes > 0;
 }
+
+// ══════════════════════════════════════════════════════════════
+//  COMPTES (email+mdp ou Google) & SESSIONS
+// ══════════════════════════════════════════════════════════════
+const SESSION_DAYS = 365;
+const qAccByEmail  = db.prepare('SELECT * FROM accounts WHERE email = ?');
+const qAccByGoogle = db.prepare('SELECT * FROM accounts WHERE google_id = ?');
+const qAccById     = db.prepare('SELECT * FROM accounts WHERE id = ?');
+const qInsertAcc   = db.prepare('INSERT INTO accounts (email, password_hash, google_id, created_at) VALUES (?, ?, ?, ?)');
+const qLinkGoogle  = db.prepare('UPDATE accounts SET google_id = ? WHERE id = ?');
+const qLinkDevice  = db.prepare('UPDATE users SET account_id = ? WHERE device_id = ?');
+const qAccUpgrade  = db.prepare(`
+  UPDATE accounts SET plan = ?, stripe_customer_id = COALESCE(?, stripe_customer_id),
+         stripe_subscription_id = COALESCE(?, stripe_subscription_id), plan_expires_at = ?
+   WHERE id = ?
+`);
+const qInsertSession = db.prepare('INSERT INTO sessions (token, account_id, created_at, expires_at) VALUES (?, ?, ?, ?)');
+const qGetSession    = db.prepare('SELECT * FROM sessions WHERE token = ?');
+const qDelSession    = db.prepare('DELETE FROM sessions WHERE token = ?');
+
+export function getAccountByEmail(email) { return qAccByEmail.get(String(email || '').trim().toLowerCase()); }
+export function getAccountByGoogleId(gid) { return gid ? qAccByGoogle.get(String(gid)) : undefined; }
+export function getAccountById(id) { return id ? qAccById.get(id) : undefined; }
+
+export function createAccount({ email, passwordHash = null, googleId = null }) {
+  const norm = String(email || '').trim().toLowerCase();
+  qInsertAcc.run(norm, passwordHash, googleId, Math.floor(Date.now() / 1000));
+  return qAccByEmail.get(norm);
+}
+export function attachGoogleToAccount(accountId, googleId) { qLinkGoogle.run(String(googleId), accountId); }
+
+// Relie l'appareil courant au compte. Si l'appareil avait déjà un premium/founder
+// (payé avant de créer le compte), le compte en HÉRITE → il le retrouvera partout.
+export function linkDeviceToAccount(deviceId, accountId) {
+  const user = getOrCreateUser(deviceId);
+  qLinkDevice.run(accountId, user.device_id);
+  const acc = qAccById.get(accountId);
+  const devicePlan = effectivePlan(user);
+  if ((devicePlan === 'premium' || devicePlan === 'founder') &&
+      PLAN_RANK[devicePlan] > PLAN_RANK[effectivePlan(acc)]) {
+    qAccUpgrade.run(devicePlan, user.stripe_customer_id, user.stripe_subscription_id,
+                    user.plan_expires_at || null, accountId);
+  }
+  return qAccById.get(accountId);
+}
+
+// ── Sessions (cookie signé côté serveur + ligne en base = révocable) ──
+export function createSession(accountId) {
+  const token = randomUUID() + randomUUID().replace(/-/g, '');
+  const now = Math.floor(Date.now() / 1000);
+  qInsertSession.run(token, accountId, now, now + SESSION_DAYS * 86400);
+  return token;
+}
+export function getSessionAccount(token) {
+  if (!token) return null;
+  const s = qGetSession.get(token);
+  if (!s) return null;
+  if (s.expires_at * 1000 < Date.now()) { qDelSession.run(token); return null; }
+  return qAccById.get(s.account_id) || null;
+}
+export function destroySession(token) { if (token) qDelSession.run(token); }
 
 export default db;
