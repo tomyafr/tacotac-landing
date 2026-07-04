@@ -369,15 +369,12 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
     }
 
     // ── QUOTA (côté serveur, seule source de vérité) ──
-    const quota = consumeQuota(deviceId);
+    const quota = consumeQuota(deviceId, req.ip);
     if (!quota.allowed) {
-      return res.status(402).json({
-        error: quota.isPremium
-          ? "Limite quotidienne atteinte, reviens demain."
-          : "T'as utilisé tes analyses gratuites du jour.",
-        code: 'quota_exceeded',
-        quota,
-      });
+      let error = "T'as utilisé tes analyses gratuites du jour.";
+      if (quota.isPremium) error = "Limite quotidienne atteinte, reviens demain.";
+      else if (quota.reason === 'ip') error = "Limite gratuite atteinte pour aujourd'hui. Passe en Premium pour continuer.";
+      return res.status(402).json({ error, code: 'quota_exceeded', quota });
     }
 
     if (!process.env.OPENAI_API_KEY) {

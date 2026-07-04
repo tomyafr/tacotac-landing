@@ -13,9 +13,14 @@ import { randomUUID } from 'node:crypto';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // ── Réglages produit (freemium) ─────────────────────────────────
-export const FREE_DAILY_LIMIT = 3;      // gratuit : 3 analyses / jour
+export const FREE_DAILY_LIMIT = 3;      // gratuit : 3 analyses / jour / appareil
 export const PREMIUM_DAILY_LIMIT = 50;  // abonné : "illimité" mais garde-fou anti-script
 export const FOUNDER_DAILY_LIMIT = 200; // 4 premiers inscrits : illimité de fait
+// Garde-fou anti-abus : plafond gratuit par IP/jour. Empêche de repartir à zéro en
+// navigation privée / en vidant les cookies (le cookie change mais pas l'IP).
+// Volontairement généreux (≈ FREE×3) pour ne pas bloquer plusieurs vrais users
+// derrière une même box/réseau mobile. À baisser si besoin.
+export const IP_FREE_DAILY_LIMIT = 10;
 
 // ── Ouverture de la base (1 fichier, créé au 1er lancement) ─────
 const db = new DatabaseSync(path.join(__dirname, 'tacotac.db'));
@@ -38,6 +43,12 @@ db.exec(`
     count     INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (device_id, day)
   );
+  CREATE TABLE IF NOT EXISTS ip_usage (
+    ip    TEXT NOT NULL,
+    day   TEXT NOT NULL,                                  -- 'YYYY-MM-DD' (Europe/Paris)
+    count INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (ip, day)
+  );
   CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 `);
 
@@ -54,6 +65,11 @@ const qGetUsage  = db.prepare('SELECT count FROM usage WHERE device_id = ? AND d
 const qUpsertUsage = db.prepare(`
   INSERT INTO usage (device_id, day, count) VALUES (?, ?, 1)
   ON CONFLICT(device_id, day) DO UPDATE SET count = count + 1
+`);
+const qGetIpUsage  = db.prepare('SELECT count FROM ip_usage WHERE ip = ? AND day = ?');
+const qUpsertIpUsage = db.prepare(`
+  INSERT INTO ip_usage (ip, day, count) VALUES (?, ?, 1)
+  ON CONFLICT(ip, day) DO UPDATE SET count = count + 1
 `);
 
 // ── Helpers ─────────────────────────────────────────────────────
@@ -91,6 +107,12 @@ function usageToday(deviceId) {
   return row ? row.count : 0;
 }
 
+function ipUsageToday(ip) {
+  if (!ip) return 0;
+  const row = qGetIpUsage.get(ip, parisDay());
+  return row ? row.count : 0;
+}
+
 // État sans consommer (pour /api/me et l'affichage du quota).
 export function getStatus(deviceId) {
   const user = getOrCreateUser(deviceId);
@@ -110,21 +132,31 @@ export function getStatus(deviceId) {
 // Vérifie le quota ET consomme 1 crédit si autorisé.
 // Atomique de fait : Node mono-thread + DatabaseSync synchrone => aucun entrelacement
 // possible entre la lecture du compteur et son incrément.
-export function consumeQuota(deviceId) {
+// `ip` sert de garde-fou anti-abus pour le tier gratuit (le cookie change en
+// navigation privée, pas l'IP). Les abonnés ne sont pas concernés par le plafond IP.
+export function consumeQuota(deviceId, ip) {
   const user = getOrCreateUser(deviceId);
   const plan = effectivePlan(user);
+  const isPremium = plan === 'premium' || plan === 'founder';
   const limit = dailyLimitFor(plan);
   const used = usageToday(user.device_id);
 
-  if (used >= limit) {
-    return { allowed: false, deviceId: user.device_id, plan, used, limit, remaining: 0,
-             isPremium: plan === 'premium' || plan === 'founder' };
-  }
+  const blocked = (reason) => ({
+    allowed: false, reason, deviceId: user.device_id, plan, used, limit, remaining: 0, isPremium,
+  });
+
+  // Plafond par appareil (tous les plans)
+  if (used >= limit) return blocked('device');
+
+  // Plafond par IP (gratuit uniquement) : bloque le contournement navigation privée
+  if (!isPremium && ip && ipUsageToday(ip) >= IP_FREE_DAILY_LIMIT) return blocked('ip');
+
   qUpsertUsage.run(user.device_id, parisDay());
+  if (!isPremium && ip) qUpsertIpUsage.run(ip, parisDay());
+
   const newUsed = used + 1;
   return { allowed: true, deviceId: user.device_id, plan, used: newUsed, limit,
-           remaining: Math.max(0, limit - newUsed),
-           isPremium: plan === 'premium' || plan === 'founder' };
+           remaining: Math.max(0, limit - newUsed), isPremium };
 }
 
 // ══════════════════════════════════════════════════════════════
