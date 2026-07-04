@@ -413,6 +413,7 @@ app.post('/api/auth/signup', authLimiter, (req, res) => {
   }
   const account = createAccount({ email, passwordHash: hashPassword(password) });
   linkDeviceToAccount(req.deviceId, account.id); // l'appareil hérite/donne son premium
+  pushToSheet(email, 'account-email');           // nouveau compte → Sheet (marketing)
   openSession(res, account.id);
   req.account = getAccountByEmail(email);
   res.json({ ok: true, status: fullStatus(req) });
@@ -489,7 +490,7 @@ app.get('/api/auth/google/callback', async (req, res) => {
     if (!account) {
       const byEmail = getAccountByEmail(email);
       if (byEmail) { attachGoogleToAccount(byEmail.id, googleId); account = getAccountByEmail(email); } // relie Google au compte mdp existant
-      else account = createAccount({ email, googleId });
+      else { account = createAccount({ email, googleId }); pushToSheet(email, 'account-google'); } // nouveau compte Google → Sheet
     }
     linkDeviceToAccount(req.deviceId, account.id);
     openSession(res, account.id);
@@ -503,6 +504,13 @@ app.get('/api/auth/google/callback', async (req, res) => {
 // ── Bonus email : +2 analyses (1 fois par email, 1 fois par appareil) ──
 const WAITLIST_WEBHOOK = 'https://script.google.com/macros/s/AKfycbzuCip2KWPlPw7kudrsvP2DuZ94-W6yw6aJ7c_HiSFZysXaPfsvG57uq6lhDsDpGYudtw/exec';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+// Envoi non bloquant d'un email vers le Google Sheet (collecte marketing).
+function pushToSheet(email, source) {
+  if (!email) return;
+  const p = new URLSearchParams({ email, source, timestamp: new Date().toISOString() });
+  fetch(`${WAITLIST_WEBHOOK}?${p}`).catch((e) => console.error('[sheet]', source, e?.message));
+}
 const bonusLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false });
 
 app.post('/api/bonus-email', bonusLimiter, (req, res) => {
