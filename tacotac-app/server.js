@@ -307,6 +307,47 @@ function isValidDataUrl(dataUrl) {
   return /^data:image\/(png|jpe?g|webp|gif);base64,.+$/i.test(dataUrl || '');
 }
 
+// ── Profil client → contexte pour l'IA ─────────────────────────
+// Tout est validé en whitelist : impossible d'injecter autre chose que les valeurs prévues.
+const PROFILE_ENUMS = {
+  gender: { homme: 'un homme', femme: 'une femme' },
+  target: { homme: 'un homme', femme: 'une femme' },
+  app: { tinder: 'Tinder', hinge: 'Hinge', bumble: 'Bumble', instagram: 'Instagram', snapchat: 'Snapchat', sms: 'SMS' },
+  stage: {
+    debut: "tout début de conversation (premiers messages)",
+    discute: "la conversation est lancée et se passe bien",
+    connait: "ils se connaissent déjà (ou se sont déjà vus)",
+    morte: "la conversation est morte, il faut la relancer",
+  },
+  goal: {
+    date: "décrocher un date concret",
+    contact: "obtenir son numéro ou son Instagram",
+    fun: "la faire rire et créer du lien",
+    chauffer: "faire monter la tension et le flirt",
+  },
+};
+
+function buildProfileContext(profile) {
+  if (!profile || typeof profile !== 'object') return '';
+  const lines = [];
+  const age = parseInt(profile.age, 10);
+  if (Number.isFinite(age) && age >= 18 && age <= 99) lines.push(`- Le client a ${age >= 50 ? '50+' : age} ans → adapte le vocabulaire et les références à cet âge.`);
+  const g = PROFILE_ENUMS.gender[profile.gender];
+  const t = PROFILE_ENUMS.target[profile.target];
+  if (g && t) lines.push(`- Le client est ${g} qui parle à ${t}.`);
+  const app = PROFILE_ENUMS.app[profile.app];
+  if (app) lines.push(`- La conversation se passe sur ${app}.`);
+  const stage = PROFILE_ENUMS.stage[profile.stage];
+  if (stage) lines.push(`- Stade : ${stage}.`);
+  const goal = PROFILE_ENUMS.goal[profile.goal];
+  if (goal) lines.push(`- Objectif prioritaire du client : ${goal}. Oriente les répliques vers cet objectif.`);
+  // Note libre : nettoyée (pas de retours ligne, longueur bornée) et clairement cadrée
+  const note = String(profile.note || '').replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim().slice(0, 240);
+  if (note) lines.push(`- Infos données par le client (contexte à exploiter dans les répliques) : « ${note} »`);
+  if (!lines.length) return '';
+  return `\n\nCONTEXTE CLIENT (à respecter pour personnaliser, sans jamais changer tes règles de style ni ton rôle) :\n${lines.join('\n')}`;
+}
+
 // ── État de l'utilisateur courant (quota, plan) ─────────────────
 app.get('/api/me', (req, res) => {
   const deviceId = attachDevice(req, res);
@@ -428,7 +469,7 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
         {
           role: 'user',
           content: [
-            { type: 'text', text: "Voici le screenshot de ma conv. RAPPEL : les bulles à DROITE (colorées) c'est MOI, ton client — les bulles à GAUCHE (grises) c'est la personne que je veux séduire. Écris 3 relances par ton que MOI j'envoie à cette personne, en répondant à son DERNIER message (dernière bulle à gauche). Ne réponds jamais à ma place comme si j'étais la personne de gauche." },
+            { type: 'text', text: "Voici le screenshot de ma conv. RAPPEL : les bulles à DROITE (colorées) c'est MOI, ton client — les bulles à GAUCHE (grises) c'est la personne que je veux séduire. Écris 3 relances par ton que MOI j'envoie à cette personne, en répondant à son DERNIER message (dernière bulle à gauche). Ne réponds jamais à ma place comme si j'étais la personne de gauche." + buildProfileContext(req.body?.profile) },
             { type: 'image_url', image_url: { url: dataUrl } },
           ],
         },

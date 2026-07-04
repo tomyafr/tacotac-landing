@@ -108,6 +108,24 @@
     .bar-fill{height:100%;width:0%;border-radius:100px;background:linear-gradient(90deg,#FF7A2E,#FF5C00);box-shadow:0 0 16px rgba(255,92,0,.6);transition:width .2s linear}
     .quota{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:#8a8580;border:1px solid #2a2a2a;border-radius:20px;padding:5px 11px}
 
+    /* ── Panneau latéral Personnalisation ── */
+    .prefs-overlay{position:absolute;inset:0;z-index:70;background:rgba(8,8,8,.55);backdrop-filter:blur(3px);opacity:0;visibility:hidden;transition:opacity .25s;}
+    .prefs-overlay.show{opacity:1;visibility:visible;}
+    .prefs-panel{position:absolute;top:0;right:0;bottom:0;width:86%;max-width:340px;background:linear-gradient(180deg,#161616,#0e0e0e);border-left:1px solid #2a2a2a;padding:22px 18px 26px;overflow-y:auto;transform:translateX(100%);transition:transform .32s cubic-bezier(.22,.68,0,1.05);}
+    .prefs-overlay.show .prefs-panel{transform:translateX(0);}
+    .prefs-label{color:#6e6a66;font-size:11px;letter-spacing:.6px;text-transform:uppercase;font-weight:600;margin:18px 0 9px;}
+    .chips{display:flex;flex-wrap:wrap;gap:7px;}
+    .chip{background:#141414;border:1.5px solid #2a2a2a;color:#8a8580;font:600 12.5px 'Space Grotesk',sans-serif;border-radius:999px;padding:8px 13px;cursor:pointer;transition:all .15s;}
+    .chip.on{background:rgba(255,92,0,.14);border-color:rgba(255,92,0,.55);color:#FF7A33;}
+    .prefs-range{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:99px;background:#2a2a2a;outline:none;}
+    .prefs-range::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:#FF5C00;border:3px solid #111;box-shadow:0 2px 10px rgba(255,92,0,.5);cursor:pointer;}
+    .prefs-range::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#FF5C00;border:3px solid #111;cursor:pointer;}
+    .prefs-ta{width:100%;background:#0d0d0d;border:1.5px solid #2a2a2a;color:#fff;border-radius:14px;padding:12px 14px;font:500 13.5px 'Space Grotesk',sans-serif;outline:none;resize:none;min-height:84px;transition:border-color .2s;}
+    .prefs-ta:focus{border-color:#FF5C00;}
+    .prefs-ta::placeholder{color:#56524e;}
+    .prefs-open{width:100%;margin-top:12px;background:#141414;border:1.5px dashed #2f2f2f;color:#8a8580;font:600 13px 'Space Grotesk',sans-serif;border-radius:14px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;transition:border-color .2s;}
+    .prefs-open:hover{border-color:rgba(255,92,0,.4);}
+
     /* ── Paywall / email gate ── */
     .gate-overlay{position:absolute;inset:0;z-index:80;background:rgba(8,8,8,.82);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:24px}
     .gate-overlay.show{display:flex}
@@ -167,7 +185,12 @@
         </div>
       </div>
 
-      <button class="cta" id="analyzeBtn" style="margin-top:16px;position:relative;z-index:2;" disabled>Analyser avec Tacotac <span style="font-size:18px;">⚡</span></button>
+      <button class="prefs-open" id="prefsOpen" style="position:relative;z-index:2;">
+        <span>⚙️ Personnaliser le renard</span>
+        <span id="prefsSummary" style="color:#56524e;font-weight:500;font-size:11.5px;text-align:right;">réponses plus précises</span>
+      </button>
+
+      <button class="cta" id="analyzeBtn" style="margin-top:14px;position:relative;z-index:2;" disabled>Analyser avec Tacotac <span style="font-size:18px;">⚡</span></button>
       <div style="display:flex;align-items:center;justify-content:center;gap:7px;color:#6e6a66;font-size:11.5px;margin-top:12px;position:relative;z-index:2;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6e6a66" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
         Analyse privée · rien n'est stocké
@@ -278,6 +301,65 @@
       <button class="copy-cta" id="copyBtn"><span id="copyIcon" style="font-size:16px;">📋</span> <span id="copyText">Copier la réponse</span></button>
       <button class="btn-secondary" id="resetBtn" style="margin-top:12px;">🔄 Nouvelle analyse</button>
     </section>
+
+    <!-- ═══════════════ PANNEAU PERSONNALISATION ═══════════════ -->
+    <div class="prefs-overlay" id="prefs">
+      <div class="prefs-panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <div style="color:#fff;font-size:19px;font-weight:700;letter-spacing:-.3px;">Personnalise 🦊</div>
+          <button id="prefsClose" style="background:rgba(255,255,255,.06);border:none;color:#8a8580;width:32px;height:32px;border-radius:50%;font-size:14px;cursor:pointer;">✕</button>
+        </div>
+        <p style="color:#6e6a66;font-size:12.5px;margin:4px 0 0;line-height:1.45;">Plus le renard te connaît, plus ses répliques te ressemblent.</p>
+
+        <div class="prefs-label">Ton âge · <span id="ageVal" style="color:#FF7A33;">22 ans</span></div>
+        <input type="range" class="prefs-range" id="prefAge" min="18" max="50" step="1" value="22">
+
+        <div class="prefs-label">Je suis</div>
+        <div class="chips" data-pref="gender">
+          <button class="chip on" data-val="homme">Un homme</button>
+          <button class="chip" data-val="femme">Une femme</button>
+        </div>
+
+        <div class="prefs-label">Je parle à</div>
+        <div class="chips" data-pref="target">
+          <button class="chip on" data-val="femme">Une femme</button>
+          <button class="chip" data-val="homme">Un homme</button>
+        </div>
+
+        <div class="prefs-label">L'appli</div>
+        <div class="chips" data-pref="app">
+          <button class="chip" data-val="tinder">Tinder</button>
+          <button class="chip" data-val="hinge">Hinge</button>
+          <button class="chip" data-val="bumble">Bumble</button>
+          <button class="chip" data-val="instagram">Insta</button>
+          <button class="chip" data-val="snapchat">Snap</button>
+          <button class="chip" data-val="sms">SMS</button>
+        </div>
+
+        <div class="prefs-label">Où t'en es</div>
+        <div class="chips" data-pref="stage">
+          <button class="chip" data-val="debut">Début de conv</button>
+          <button class="chip" data-val="discute">Ça discute bien</button>
+          <button class="chip" data-val="connait">On se connaît</button>
+          <button class="chip" data-val="morte">Conv morte à relancer</button>
+        </div>
+
+        <div class="prefs-label">Ton objectif</div>
+        <div class="chips" data-pref="goal">
+          <button class="chip" data-val="date">Décrocher un date</button>
+          <button class="chip" data-val="contact">Avoir son num / insta</button>
+          <button class="chip" data-val="fun">La faire marrer</button>
+          <button class="chip" data-val="chauffer">Faire monter la tension</button>
+        </div>
+
+        <div class="prefs-label">Instructions au renard</div>
+        <textarea class="prefs-ta" id="prefNote" maxlength="240" placeholder="Ex : elle fait de l'escalade, on s'est déjà vus une fois, elle me chambre sur mon accent du sud…"></textarea>
+        <div style="text-align:right;color:#56524e;font-size:11px;margin-top:4px;"><span id="noteCount">0</span>/240</div>
+
+        <button class="cta" id="prefsSave" style="margin-top:14px;height:50px;font-size:15px;">Enregistrer ✓</button>
+        <button id="prefsReset" style="width:100%;margin-top:10px;background:none;border:none;color:#56524e;font-family:inherit;font-size:12px;cursor:pointer;text-decoration:underline;">Tout réinitialiser</button>
+      </div>
+    </div>
 
     <!-- ═══════════════ PAYWALL / EMAIL GATE ═══════════════ -->
     <div class="gate-overlay" id="gate">
@@ -441,7 +523,7 @@
       let blocked=false;
       try{
         const [resp]=await Promise.all([
-          fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:imageDataUrl,tone:selectedTone})}),
+          fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:imageDataUrl,tone:selectedTone,profile:prefs})}),
           minDelay,
         ]);
         const data=await resp.json();
@@ -522,6 +604,57 @@
       dzPreview.src='';dzPreview.style.display='none';dzEmpty.style.display='flex';dropzone.classList.remove('has-img');
       go(1);
     });
+
+    // ══════════════ PERSONNALISATION (profil envoyé à l'IA) ══════════════
+    const PREFS_KEY='tacotac_prefs';
+    const defaultPrefs={age:22,gender:'homme',target:'femme',app:null,stage:null,goal:null,note:''};
+    let prefs={...defaultPrefs};
+    try{const saved=JSON.parse(localStorage.getItem(PREFS_KEY)||'null');if(saved)prefs={...defaultPrefs,...saved};}catch(e){}
+
+    const prefsOverlay=document.getElementById('prefs');
+    const ageInput=document.getElementById('prefAge');
+    const noteInput=document.getElementById('prefNote');
+
+    function renderPrefs(){
+      ageInput.value=prefs.age;
+      document.getElementById('ageVal').textContent=(prefs.age>=50?'50+':prefs.age)+' ans';
+      noteInput.value=prefs.note||'';
+      document.getElementById('noteCount').textContent=(prefs.note||'').length;
+      document.querySelectorAll('.chips[data-pref]').forEach(group=>{
+        const key=group.dataset.pref;
+        group.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.val===prefs[key]));
+      });
+      // résumé sur le bouton d'ouverture
+      const bits=[];
+      bits.push((prefs.age>=50?'50+':prefs.age)+' ans');
+      if(prefs.goal){const g={date:'objectif date',contact:'objectif num',fun:'objectif fun',chauffer:'objectif 🌶️'};bits.push(g[prefs.goal]);}
+      if(prefs.note)bits.push('note ✓');
+      document.getElementById('prefsSummary').textContent=bits.join(' · ');
+    }
+    function savePrefs(){try{localStorage.setItem(PREFS_KEY,JSON.stringify(prefs));}catch(e){}}
+
+    document.getElementById('prefsOpen').addEventListener('click',()=>prefsOverlay.classList.add('show'));
+    document.getElementById('prefsClose').addEventListener('click',()=>{savePrefs();prefsOverlay.classList.remove('show');});
+    prefsOverlay.addEventListener('click',e=>{if(e.target===prefsOverlay){savePrefs();prefsOverlay.classList.remove('show');}});
+    document.getElementById('prefsSave').addEventListener('click',()=>{savePrefs();prefsOverlay.classList.remove('show');});
+    document.getElementById('prefsReset').addEventListener('click',()=>{prefs={...defaultPrefs};savePrefs();renderPrefs();});
+
+    ageInput.addEventListener('input',()=>{prefs.age=parseInt(ageInput.value,10);document.getElementById('ageVal').textContent=(prefs.age>=50?'50+':prefs.age)+' ans';});
+    ageInput.addEventListener('change',()=>renderPrefs());
+    noteInput.addEventListener('input',()=>{prefs.note=noteInput.value.slice(0,240);document.getElementById('noteCount').textContent=prefs.note.length;});
+
+    // chips : sélection unique par groupe ; re-cliquer désélectionne (sauf genre/cible)
+    document.querySelectorAll('.chips[data-pref]').forEach(group=>{
+      const key=group.dataset.pref;
+      group.querySelectorAll('.chip').forEach(chip=>{
+        chip.addEventListener('click',()=>{
+          const required=(key==='gender'||key==='target');
+          prefs[key]=(prefs[key]===chip.dataset.val&&!required)?null:chip.dataset.val;
+          renderPrefs();
+        });
+      });
+    });
+    renderPrefs();
 
     // ══════════════ GATE / PAYWALL ══════════════
     const gate=document.getElementById('gate');
