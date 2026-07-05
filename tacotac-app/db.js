@@ -14,7 +14,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // ── Réglages produit (freemium) ─────────────────────────────────
 export const FREE_DAILY_LIMIT = 3;      // gratuit : 3 analyses / jour / appareil
-export const PREMIUM_DAILY_LIMIT = 50;  // abonné : "illimité" mais garde-fou anti-script
+export const PREMIUM_DAILY_LIMIT = 25;  // abonné : "illimité" mais garde-fou anti-script (coût réel : voir tacotac-monetisation)
 export const FOUNDER_DAILY_LIMIT = 200; // 4 premiers inscrits : illimité de fait
 // Garde-fou anti-abus : plafond gratuit par IP/jour. Empêche de repartir à zéro en
 // navigation privée / en vidant les cookies (le cookie change mais pas l'IP).

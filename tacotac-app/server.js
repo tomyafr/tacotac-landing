@@ -186,6 +186,11 @@ const REPLY_FUNCTION = {
   function: {
     name: 'proposer_repliques',
     description: "Renvoie 3 relances par ton que LE CLIENT (bulles à droite) envoie à la CIBLE (bulles à gauche), en réponse au dernier message de la cible.",
+    // strict:true = Structured Outputs OpenAI → le JSON respecte le schéma à 100%
+    // (types corrects, tous les champs requis présents). Sans ça, un champ mal
+    // formaté (ex: "drole" pas en array) tombe silencieusement sur le FALLBACK
+    // codé en dur tout en gardant source:'ai' — indétectable sans ce garde-fou.
+    strict: true,
     parameters: {
       type: 'object',
       properties: {
@@ -202,23 +207,31 @@ const REPLY_FUNCTION = {
           type: 'string',
           description: "ÉTAPE 3 — Conclusion en 1 phrase : si le dernier message est à GAUCHE, c'est la CIBLE qui a parlé → tes répliques y RÉPONDENT du point de vue du client. S'il est à DROITE, c'est le CLIENT qui a parlé en dernier → tes répliques sont une RELANCE (elle n'a pas répondu). Décris aussi le vibe de la conv.",
         },
+        brouillons: {
+          type: 'string',
+          description: "ÉTAPE 4 — BROUILLON BRUT (avant filtrage). Liste 4 à 6 répliques candidates courtes, ton premier instinct SANS te censurer : '1) ... 2) ... 3) ...'. Une ligne par brouillon, pas de blabla autour. Ce champ n'est jamais montré au client.",
+        },
+        critique: {
+          type: 'string',
+          description: "ÉTAPE 5 — AUTO-CRITIQUE OBLIGATOIRE mais COURTE. Pour CHAQUE brouillon, une seule ligne format '1) garde / retravaille (pourquoi en 3-4 mots) / jette (pourquoi en 3-4 mots)' en te basant sur la section BANNIS et la RÈGLE D'OR (trop long ? liste ? needy ? emoji-béquille ? enverrait-elle ça à n'importe qui ?). Reste télégraphique, ce n'est pas une dissertation. Ce champ n'est jamais montré au client.",
+        },
         classe: {
           type: 'array',
-          description: '3 relances ton CLASSE (posé, sûr de lui, charmeur élégant), envoyées PAR le client À la cible.',
+          description: 'VERSION FINALE ET POLIE (après l\'étape 5, jamais une copie brute d\'un brouillon) — 3 relances ton CLASSE (posé, sûr de lui, charmeur élégant), envoyées PAR le client À la cible.',
           items: { type: 'string' },
         },
         drole: {
           type: 'array',
-          description: '3 relances ton DRÔLE (chambreur, autodérision, punchline), envoyées PAR le client À la cible.',
+          description: 'VERSION FINALE ET POLIE (après l\'étape 5, jamais une copie brute d\'un brouillon) — 3 relances ton DRÔLE (chambreur, autodérision, punchline), envoyées PAR le client À la cible.',
           items: { type: 'string' },
         },
         spicy: {
           type: 'array',
-          description: '3 relances ton SPICY (audacieux, taquin, flirt assumé, jamais vulgaire), envoyées PAR le client À la cible.',
+          description: 'VERSION FINALE ET POLIE (après l\'étape 5, jamais une copie brute d\'un brouillon) — 3 relances ton SPICY (audacieux, taquin, flirt assumé, jamais vulgaire), envoyées PAR le client À la cible.',
           items: { type: 'string' },
         },
       },
-      required: ['dernier_message', 'dernier_message_cote', 'analyse', 'classe', 'drole', 'spicy'],
+      required: ['dernier_message', 'dernier_message_cote', 'analyse', 'brouillons', 'critique', 'classe', 'drole', 'spicy'],
       additionalProperties: false,
     },
   },
@@ -226,9 +239,9 @@ const REPLY_FUNCTION = {
 
 // ── Tons PREMIUM exclusifs (en plus des 3 de base) ──────────────
 const PREMIUM_TONES = {
-  romantique: '3 relances ton ROMANTIQUE (sincère, attentionné, un peu poète mais jamais niais), envoyées PAR le client À la cible.',
-  sexto: '3 relances ton SEXTO (très chaud, sensuel, suggestif et explicite dans la tension mais avec du style — pour une conv où l\'alchimie est déjà là), envoyées PAR le client À la cible.',
-  mystere: '3 relances ton MYSTÉRIEUX (détaché, intriguant, qui en dit peu et donne envie d\'en savoir plus), envoyées PAR le client À la cible.',
+  romantique: 'VERSION FINALE ET POLIE (après l\'étape 5, jamais une copie brute d\'un brouillon) — 3 relances ton ROMANTIQUE (sincère, attentionné, un peu poète mais jamais niais), envoyées PAR le client À la cible.',
+  sexto: 'VERSION FINALE ET POLIE (après l\'étape 5, jamais une copie brute d\'un brouillon) — 3 relances ton SEXTO (très chaud, sensuel, suggestif et explicite dans la tension mais avec du style — pour une conv où l\'alchimie est déjà là), envoyées PAR le client À la cible.',
+  mystere: 'VERSION FINALE ET POLIE (après l\'étape 5, jamais une copie brute d\'un brouillon) — 3 relances ton MYSTÉRIEUX (détaché, intriguant, qui en dit peu et donne envie d\'en savoir plus), envoyées PAR le client À la cible.',
 };
 
 // Schéma d'appel : les premium reçoivent 6 tons, les gratuits 3.
@@ -363,15 +376,21 @@ BANNIS ABSOLUMENT — CE QUI TUE UNE RÉPLIQUE
 • Le spicy timide qui est juste un compliment + 🔥.
 
 ═══════════════════════════════════════════════
-PROCESS MENTAL AVANT DE RÉPONDRE
+PROCESS EN 2 TEMPS — BROUILLON PUIS CRITIQUE (OBLIGATOIRE)
 ═══════════════════════════════════════════════
-1. Qui a dit quoi ? (dernière bulle à gauche = à quoi je réponds)
-2. Quel est le truc précis dans son message sur lequel je peux rebondir ?
-3. Pour chaque ton : est-ce que ma réplique est COURTE, ANCRÉE dans ce qu'elle a dit, et est-ce qu'un vrai mec l'enverrait ?
-4. Est-ce que je pourrais envoyer cette réplique à n'importe quelle fille ? Si oui → recommence.
-5. Est-ce que j'ai collé un emoji pour compenser ? Si oui → enlève-le et refais la phrase.
+Tu ne sors JAMAIS ton premier jet directement dans les répliques finales. Le champ "brouillons" et le champ "critique" de la fonction ne sont pas optionnels — ce sont de vraies étapes de travail, pas une formalité à bâcler en une ligne.
 
-Chaque réplique doit être DIFFÉRENTE des deux autres du même ton, ancrée dans ce qu'elle vient de dire, et donner envie de répondre direct.
+ÉTAPE BROUILLON : écris 4 à 6 répliques candidates courtes, ton instinct brut, sans te retenir. C'est normal qu'un brouillon soit raté, trop long, ou générique à ce stade — c'est un premier jet, pas encore le résultat.
+
+ÉTAPE CRITIQUE (reste télégraphique, une ligne par brouillon) : relis CHAQUE brouillon et juge-le sans complaisance sur :
+1. Est-ce COURT et est-ce que ça S'ARRÊTE, ou ça explique/justifie trop ?
+2. Est-ce que ça liste des options, une métaphore forcée, une formule bannie (cf. section BANNIS) ?
+3. Est-ce needy, ou est-ce qu'un emoji compense une phrase faible ?
+4. Est-ce que je pourrais envoyer ça à N'IMPORTE QUELLE fille ? Si oui, ce brouillon est nul — soit tu le réécris pour l'ancrer précisément dans SON dernier message, soit tu le jettes.
+
+Les répliques FINALES ne sont JAMAIS un copier-coller d'un brouillon : ce sont les meilleures idées, réécrites plus courtes et plus ancrées après ta critique. Si un brouillon était déjà parfait, retravaille quand même sa formulation pour qu'elle soit encore plus resserrée.
+
+Chaque réplique finale doit être DIFFÉRENTE des deux autres du même ton, ancrée dans ce qu'elle vient de dire, et donner envie de répondre direct.
 
 Réponds UNIQUEMENT via la fonction proposer_repliques.`;
 
@@ -763,7 +782,7 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
 
     const completion = await openai.chat.completions.create({
       model: MODEL,
-      max_tokens: 1024,
+      max_tokens: 2200, // brouillons + critique + jusqu'à 6 tons → plus de sortie qu'avant
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         {
@@ -785,11 +804,13 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
     try { out = JSON.parse(call.function.arguments); } catch { out = {}; }
 
     const clean = (arr) => (Array.isArray(arr) ? arr.filter((s) => typeof s === 'string' && s.trim()).slice(0, 3) : []);
-    const replies = {
-      classe: clean(out.classe).length ? clean(out.classe) : FALLBACK.classe,
-      drole: clean(out.drole).length ? clean(out.drole) : FALLBACK.drole,
-      spicy: clean(out.spicy).length ? clean(out.spicy) : FALLBACK.spicy,
+    const withFallback = (tone) => {
+      const c = clean(out[tone]);
+      if (c.length) return c;
+      console.warn(`[analyze] champ "${tone}" mal formé malgré strict:true → repli sur FALLBACK`, JSON.stringify(out[tone]));
+      return FALLBACK[tone];
     };
+    const replies = { classe: withFallback('classe'), drole: withFallback('drole'), spicy: withFallback('spicy') };
     if (quota.isPremium) {
       for (const tone of Object.keys(PREMIUM_TONES)) {
         const list = clean(out[tone]);
@@ -800,7 +821,7 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
     res.json({
       replies, source: 'ai', quota,
       // hors prod : expose la lecture de l'IA pour vérifier l'attribution des rôles
-      ...(process.env.NODE_ENV !== 'production' ? { debug: { dernier_message: out.dernier_message, cote: out.dernier_message_cote, analyse: out.analyse } } : {}),
+      ...(process.env.NODE_ENV !== 'production' ? { debug: { dernier_message: out.dernier_message, cote: out.dernier_message_cote, analyse: out.analyse, brouillons: out.brouillons, critique: out.critique } } : {}),
     });
   } catch (err) {
     console.error('[analyze] erreur:', err?.message || err);

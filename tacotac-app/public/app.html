@@ -602,7 +602,7 @@
     //  l'utilisateur bascule entre eux sur l'écran de résultats.)
 
     // ══════════════ ÉCRAN 2 — ANALYSE (vrai appel IA) ══════════════
-    const steps=['Lecture du contexte…','Analyse du ton…','Détection du vibe…','Génération des réponses…'];
+    const steps=['Lecture du contexte…','Analyse du ton…','Détection du vibe…','Génération de plusieurs pistes…','Le renard élimine les mauvaises…','Dernière relecture…'];
     const stepEl=document.getElementById('analyseStep');
     const barFill=document.getElementById('barFill');
 
@@ -641,7 +641,9 @@
       const start=performance.now();
       let raf;
       function tick(now){
-        const p=Math.min((now-start)/2500,1);
+        // le brouillon+critique fait tourner l'IA plus longtemps (~8-14s) qu'avant :
+        // on étale la montée pour que la barre ne reste pas figée à 92% trop longtemps
+        const p=Math.min((now-start)/11000,1);
         const pct=Math.min(92,Math.round(p*92));
         barFill.style.width=pct+'%';
         if(p<1)raf=requestAnimationFrame(tick);
