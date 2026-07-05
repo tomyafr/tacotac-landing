@@ -189,9 +189,18 @@ const REPLY_FUNCTION = {
     parameters: {
       type: 'object',
       properties: {
+        dernier_message: {
+          type: 'string',
+          description: "ÉTAPE 1 — Recopie MOT POUR MOT le tout dernier message de la conversation (la bulle la plus BASSE du screenshot).",
+        },
+        dernier_message_cote: {
+          type: 'string',
+          enum: ['gauche', 'droite'],
+          description: "ÉTAPE 2 — De quel côté de l'écran cette bulle est-elle collée ? 'gauche' = elle démarre au bord GAUCHE (souvent grise, avec la photo de profil à côté) → c'est la CIBLE qui parle. 'droite' = elle est collée au bord DROIT (souvent colorée : bleue, violette, verte) → c'est le CLIENT qui parle. Regarde l'ALIGNEMENT, pas le contenu.",
+        },
         analyse: {
           type: 'string',
-          description: "1 phrase pour te repérer : qui a écrit le DERNIER message (= la cible à séduire, bulles à GAUCHE/grises) et quel est le vibe. Tu écriras la réponse du côté du client (bulles à DROITE).",
+          description: "ÉTAPE 3 — Conclusion en 1 phrase : si le dernier message est à GAUCHE, c'est la CIBLE qui a parlé → tes répliques y RÉPONDENT du point de vue du client. S'il est à DROITE, c'est le CLIENT qui a parlé en dernier → tes répliques sont une RELANCE (elle n'a pas répondu). Décris aussi le vibe de la conv.",
         },
         classe: {
           type: 'array',
@@ -209,7 +218,7 @@ const REPLY_FUNCTION = {
           items: { type: 'string' },
         },
       },
-      required: ['analyse', 'classe', 'drole', 'spicy'],
+      required: ['dernier_message', 'dernier_message_cote', 'analyse', 'classe', 'drole', 'spicy'],
       additionalProperties: false,
     },
   },
@@ -251,12 +260,21 @@ Ton client est un mec français, la vingtaine, qui veut des répliques qui sonne
 ═══════════════════════════════════════════════
 COMMENT LIRE LE SCREENSHOT — NE TE TROMPE JAMAIS
 ═══════════════════════════════════════════════
-• Bulles À DROITE (bleues/colorées, bord droit) = TON CLIENT → c'est lui qui va envoyer ta réplique.
-• Bulles À GAUCHE (grises, bord gauche, souvent avec photo de profil) = LA CIBLE → la personne à séduire.
+• Bulles collées au bord DROIT (colorées : bleu iMessage/Tinder, violet Instagram, vert WhatsApp…) = TON CLIENT → c'est lui qui enverra ta réplique.
+• Bulles collées au bord GAUCHE (grises/sombres, avec la photo de profil affichée à côté) = LA CIBLE → la personne à séduire.
+• Le critère FIABLE c'est l'ALIGNEMENT (quel bord la bulle touche), jamais le contenu du message.
 
-Tu écris TOUJOURS du point de vue du client (à droite). Tu réponds au DERNIER message de la CIBLE (dernière bulle à gauche).
+PROTOCOLE OBLIGATOIRE avant d'écrire la moindre réplique :
+1. Repère la bulle LA PLUS BASSE du screenshot et recopie-la dans "dernier_message".
+2. Note son alignement dans "dernier_message_cote" (gauche/droite).
+3. Si GAUCHE → la cible vient de parler : tes répliques répondent à CE message, du point de vue du client.
+   Si DROITE → le client a parlé en dernier et elle n'a pas répondu : tes répliques sont des RELANCES naturelles (jamais needy).
 
-⛔ NE T'INVERSE JAMAIS. Si la cible dit "t'es un compte fake ??", tu n'écris PAS "je peux te prouver que je suis réelle" (ça c'est la cible qui se défend). Tu écris la relance du CLIENT qui rebondit dessus avec charme ou humour.
+Tu écris TOUJOURS du point de vue du client. JAMAIS à la place de la cible.
+
+⛔ NE T'INVERSE JAMAIS. Exemple : le client demande "tu viens d'où ?" et la cible répond "euhhh jvais pas te le dire on se connaît pas". Le dernier message est à GAUCHE → c'est ELLE qui parle. Ta réplique est celle du CLIENT qui rebondit pour la faire céder avec charme ("me dis pas que t'es du genre à garder le mystère ET à me suivre sur insta…"). Tu n'écris JAMAIS un truc comme "jvais pas te le dire, mais t'as un vibe" — ça, c'est répondre À SA PLACE à elle : interdiction absolue.
+
+⛔ Si tu n'arrives PAS à lire la conversation (image floue, pas une conv, écran vide) : mets "ILLISIBLE" dans dernier_message et génère quand même des ouvertures génériques charmantes — n'invente JAMAIS une conversation qui n'existe pas.
 
 ⛔ JAMAIS NEEDY. Zéro "pk tu réponds pas", zéro "j'ai fait quoi ?", zéro demande de validation.
 
@@ -718,6 +736,12 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
     const deviceId = attachDevice(req, res);
     attachAccount(req); // un compte premium connecté = illimité, même sur un appareil vierge
 
+    // Mur d'inscription : l'analyse est réservée aux comptes (gratuits inclus).
+    // Vérifié côté serveur → impossible à contourner en appelant l'API directement.
+    if (!req.account) {
+      return res.status(401).json({ error: 'Crée ton compte gratuit pour voir tes répliques.', code: 'auth_required' });
+    }
+
     const dataUrl = req.body?.image;
     if (!isValidDataUrl(dataUrl)) {
       return res.status(400).json({ error: 'Image manquante ou format invalide (png/jpg/webp attendu).' });
@@ -746,7 +770,7 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
           role: 'user',
           content: [
             { type: 'text', text: "Voici le screenshot de ma conv. RAPPEL : les bulles à DROITE (colorées) c'est MOI, ton client — les bulles à GAUCHE (grises) c'est la personne que je veux séduire. Écris 3 relances par ton que MOI j'envoie à cette personne, en répondant à son DERNIER message (dernière bulle à gauche). Ne réponds jamais à ma place comme si j'étais la personne de gauche." + (quota.isPremium ? PREMIUM_TONES_INSTRUCTION : '') + buildProfileContext(req.body?.profile) },
-            { type: 'image_url', image_url: { url: dataUrl } },
+            { type: 'image_url', image_url: { url: dataUrl, detail: 'high' } },
           ],
         },
       ],
@@ -773,7 +797,11 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
       }
     }
 
-    res.json({ replies, source: 'ai', quota });
+    res.json({
+      replies, source: 'ai', quota,
+      // hors prod : expose la lecture de l'IA pour vérifier l'attribution des rôles
+      ...(process.env.NODE_ENV !== 'production' ? { debug: { dernier_message: out.dernier_message, cote: out.dernier_message_cote, analyse: out.analyse } } : {}),
+    });
   } catch (err) {
     console.error('[analyze] erreur:', err?.message || err);
     // On dégrade proprement plutôt que de casser l'app

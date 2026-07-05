@@ -95,7 +95,7 @@
     .skel{border-radius:24px;background:linear-gradient(180deg,#161616,#0f0f0f);border:1px solid #232323;padding:18px}
     .skel-line{height:13px;border-radius:7px;margin-bottom:11px;background:linear-gradient(90deg,#1a1a1a 25%,#262626 50%,#1a1a1a 75%);background-size:200% 100%;animation:tt-shimmer 1.4s linear infinite}
 
-    .result-card{position:relative;border-radius:20px;background:#141414;border:1px solid #222;padding:18px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 18px 44px -28px rgba(0,0,0,.9)}
+    .result-card{position:relative;border-radius:20px;background:#141414;border:1px solid #222;padding:18px;display:flex;flex-direction:column;box-shadow:0 18px 44px -28px rgba(0,0,0,.9)}
     .bubble{position:relative;background:#1c1c1c;border:1px solid #2b2b2b;border-radius:18px;padding:15px 17px;box-shadow:0 12px 28px -18px rgba(0,0,0,.8);z-index:2}
     .bubble .lbl{color:#FF6F1F;font-size:11.5px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px}
     .bubble .reply{margin:0;color:#F0EDE8;font-size:16.5px;line-height:1.55;font-weight:500;letter-spacing:-.1px;outline:none;min-height:54px;word-break:break-word}
@@ -105,7 +105,7 @@
     .refaire{display:flex;align-items:center;gap:6px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:20px;padding:6px 11px;color:#8a8580;font-family:inherit;font-size:12px;cursor:pointer;font-weight:500;transition:background .2s,transform .15s}
     .refaire:hover{background:#222}
     .refaire:active{transform:scale(.95)}
-    .result-fox{height:150px;object-fit:contain;object-position:bottom;filter:drop-shadow(0 12px 20px rgba(0,0,0,.5));animation:tt-fox-in .4s ease both}
+    .result-fox{height:110px;object-fit:contain;object-position:bottom;filter:drop-shadow(0 12px 20px rgba(0,0,0,.5));animation:tt-fox-in .4s ease both}
 
     .copy-cta{margin-top:16px;width:100%;height:52px;border:none;border-radius:14px;font-family:inherit;font-size:15.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;transition:all .2s;color:#fff;background:#FF5C00;box-shadow:0 8px 24px -12px rgba(255,92,0,.5)}
     .copy-cta:hover{background:#FF6A14}
@@ -306,7 +306,7 @@
         </div>
       </div>
 
-      <div class="result-card" style="margin-top:16px;flex:1;position:relative;z-index:2;">
+      <div class="result-card" style="margin-top:16px;position:relative;z-index:2;">
         <div style="display:flex;align-items:center;justify-content:space-between;">
           <div style="display:flex;align-items:center;gap:7px;color:#fff;font-size:15px;font-weight:600;"><span id="curEmoji" style="font-size:18px;">😂</span> Ton <span id="curLabel">Drôle</span></div>
           <button class="refaire" id="refaireBtn">Refaire <span style="font-size:13px;">↻</span></button>
@@ -319,7 +319,7 @@
           <p class="reply" id="replyText" contenteditable="true" spellcheck="false"></p>
           <div class="tail"></div>
         </div>
-        <div style="flex:1;display:flex;align-items:flex-end;justify-content:center;min-height:130px;margin-top:4px;">
+        <div style="display:flex;align-items:flex-end;justify-content:center;margin-top:14px;">
           <img id="resultFox" class="result-fox" src="assets/fox_chill.png" alt="renard Tacotac">
         </div>
       </div>
@@ -338,8 +338,8 @@
 
         <!-- Vue déconnecté -->
         <div id="authOut">
-          <div class="display" style="color:#fff;font-size:23px;line-height:1.1;text-align:center;">Ton compte 🦊</div>
-          <p style="color:#8a8580;font-size:13.5px;margin:8px 0 16px;line-height:1.5;text-align:center;">Retrouve ton Premium et tes réglages sur <span style="color:#FF7A33;font-weight:600;">tous tes appareils</span>.</p>
+          <div class="display" id="authTitle" style="color:#fff;font-size:23px;line-height:1.1;text-align:center;">Ton compte 🦊</div>
+          <p id="authSubText" style="color:#8a8580;font-size:13.5px;margin:8px 0 16px;line-height:1.5;text-align:center;">Retrouve ton Premium et tes réglages sur <span style="color:#FF7A33;font-weight:600;">tous tes appareils</span>.</p>
 
           <a id="googleBtn" href="/api/auth/google" style="display:none;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px;background:#fff;color:#1f1f1f;font-weight:700;font-size:14.5px;border-radius:14px;text-decoration:none;">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.7l6.2 5.2C36.9 40.4 44 36 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
@@ -606,8 +606,28 @@
     const stepEl=document.getElementById('analyseStep');
     const barFill=document.getElementById('barFill');
 
+    // Mur d'inscription : on joue l'analyse (investissement + suspense) puis, à 92%,
+    // on demande le compte. L'appel IA réel n'est fait qu'APRÈS l'inscription.
+    function startTeaseAnalyse(){
+      track('analyze_tease');
+      try{sessionStorage.setItem('tt_pending_img',imageDataUrl);}catch(e){} // survit au détour Google
+      go(2);
+      let i=0;stepEl.textContent=steps[0];
+      const t=setInterval(()=>{i=(i+1)%steps.length;stepEl.style.opacity='0';setTimeout(()=>{stepEl.textContent=steps[i];stepEl.style.opacity='1';},200);},800);
+      barFill.style.width='0%';
+      const start=performance.now();
+      function tick(now){
+        const p=Math.min((now-start)/3200,1);
+        barFill.style.width=Math.round(p*92)+'%';
+        if(p<1)requestAnimationFrame(tick);
+        else{clearInterval(t);pendingAnalysis=true;openAuth('analysis');}
+      }
+      requestAnimationFrame(tick);
+    }
+
     async function runAnalyse(){
       track('analyze_start');
+      try{sessionStorage.removeItem('tt_pending_img');}catch(e){}
       go(2);
       let i=0;stepEl.textContent=steps[0];
       const stepTimer=setInterval(()=>{
@@ -630,7 +650,7 @@
 
       const minDelay=new Promise(r=>setTimeout(r,1800)); // garde l'anim visible
 
-      let blocked=false;
+      let blocked=false,authNeeded=false;
       try{
         const [resp]=await Promise.all([
           fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:imageDataUrl,tone:selectedTone,profile:prefs})}),
@@ -640,6 +660,8 @@
         if(resp.status===402){ // quota épuisé → paywall
           blocked=true;
           if(data.quota)applyQuota(data.quota);
+        }else if(resp.status===401){ // session expirée / pas de compte → mur d'inscription
+          authNeeded=true;
         }else{
           replies=data.replies;
           if(data.quota)applyQuota(data.quota); // maj du compteur depuis le serveur
@@ -655,6 +677,7 @@
       clearInterval(stepTimer);
       barFill.style.width='100%';
 
+      if(authNeeded){ pendingAnalysis=true; openAuth('analysis'); return; } // compte requis
       if(blocked){ go(1); openGate(); return; } // on ramène à l'upload et on ouvre le paywall
       setTimeout(runReflexion,300);
     }
@@ -917,8 +940,18 @@
     // ══════════════ COMPTE (connexion / inscription) ══════════════
     const authOverlay=document.getElementById('auth');
     let authMode='login'; // 'login' | 'signup'
+    let authContext=null; // null | 'analysis' (mur d'inscription avant résultats)
+    let pendingAnalysis=false; // une analyse attend que l'utilisateur crée son compte
 
     function renderAuth(){
+      const title=document.getElementById('authTitle'),sub=document.getElementById('authSubText');
+      if(authContext==='analysis'){
+        title.textContent='Tes répliques sont prêtes 🎉';
+        sub.innerHTML='Crée ton compte <span style="color:#FF7A33;font-weight:600;">gratuit</span> (10 sec) pour les découvrir — et 3 analyses offertes chaque jour.';
+      }else{
+        title.textContent='Ton compte 🦊';
+        sub.innerHTML='Retrouve ton Premium et tes réglages sur <span style="color:#FF7A33;font-weight:600;">tous tes appareils</span>.';
+      }
       const inV=document.getElementById('authIn'), outV=document.getElementById('authOut');
       if(currentAccount){
         outV.style.display='none';inV.style.display='block';
@@ -939,9 +972,18 @@
         document.getElementById('authPass').autocomplete=isLogin?'current-password':'new-password';
       }
     }
-    function openAuth(){document.getElementById('authErr').style.display='none';renderAuth();authOverlay.classList.add('show');}
+    function openAuth(context){
+      authContext=context||null;
+      if(authContext==='analysis')authMode='signup'; // le mur d'inscription démarre sur "créer un compte"
+      document.getElementById('authErr').style.display='none';
+      renderAuth();authOverlay.classList.add('show');
+      track('auth_view',{context:authContext||'header'});
+    }
     document.getElementById('accountBtn').addEventListener('click',openAuth);
-    document.getElementById('authClose').addEventListener('click',()=>authOverlay.classList.remove('show'));
+    document.getElementById('authClose').addEventListener('click',()=>{
+      authOverlay.classList.remove('show');
+      if(pendingAnalysis){pendingAnalysis=false;authContext=null;go(1);} // retour à l'upload, image conservée
+    });
     document.getElementById('authSwitch').addEventListener('click',()=>{authMode=(authMode==='login')?'signup':'login';document.getElementById('authErr').style.display='none';renderAuth();});
 
     // bouton Google affiché seulement si configuré côté serveur
@@ -959,7 +1001,11 @@
         if(d.ok){
           applyQuota(d.status);
           renderAuth();
-          setTimeout(()=>authOverlay.classList.remove('show'),900);
+          setTimeout(()=>{
+            authOverlay.classList.remove('show');
+            // une analyse attendait l'inscription → on la lance pour de vrai
+            if(pendingAnalysis){pendingAnalysis=false;authContext=null;runAnalyse();}
+          },700);
         }else{err.textContent=d.error||'Erreur, réessaie.';err.style.display='block';}
       }catch(ex){err.textContent='Erreur réseau, réessaie.';err.style.display='block';}
       btn.disabled=false;btn.textContent=o;
@@ -974,7 +1020,18 @@
     (function handleAuthReturn(){
       const p=new URLSearchParams(location.search);
       if(p.get('login')==='1'){
-        fetch('/api/me').then(r=>r.json()).then(st=>{applyQuota(st);openAuth();}).catch(()=>{});
+        fetch('/api/me').then(r=>r.json()).then(st=>{
+          applyQuota(st);
+          // une analyse attendait l'inscription (détour Google) → on restaure l'image et on la lance
+          let img=null;try{img=sessionStorage.getItem('tt_pending_img');sessionStorage.removeItem('tt_pending_img');}catch(e){}
+          if(img){
+            imageDataUrl=img;hasImage=true;
+            dzPreview.src=img;dzPreview.style.display='block';dzEmpty.style.display='none';dropzone.classList.add('has-img');analyzeBtn.disabled=false;
+            runAnalyse();
+          }else{
+            openAuth(); // montre "Connecté ✓"
+          }
+        }).catch(()=>{});
         history.replaceState({},'',location.pathname);
       }else if(p.get('auth_err')==='1'){
         alert('La connexion Google a échoué, réessaie.');
@@ -985,6 +1042,7 @@
     // ══════════════ LANCEMENT ══════════════
     analyzeBtn.addEventListener('click',()=>{
       if(!hasImage)return;
+      if(!currentAccount){startTeaseAnalyse();return;} // pas de compte → suspense puis mur d'inscription
       // pré-check pour éviter une analyse inutile ; le serveur reste l'arbitre final
       if(!quota.isPremium && usesLeft()<=0){openGate();return;}
       runAnalyse();
