@@ -58,6 +58,10 @@
     .fmt{font-size:11px;color:#6e6a66;border:1px solid #2a2a2a;border-radius:8px;padding:4px 9px}
 
     .tone-track{display:flex;gap:6px;background:rgba(255,255,255,.04);border:1px solid #1f1f1f;border-radius:100px;padding:5px;position:relative}
+    /* Switch de mode (2 options) : Répondre / 1er message */
+    #modeTrack .tone-glider{width:calc((100% - 16px)/2)}
+    #modeTrack.opener .tone-glider{transform:translateX(calc(100% + 6px))}
+    #modeTrack .tone-btn{font-size:.82rem;white-space:nowrap}
     .tone-glider{position:absolute;top:5px;bottom:5px;left:5px;width:calc((100% - 10px)/3);background:linear-gradient(150deg,#FF7A2E,#FF5C00);border-radius:100px;box-shadow:0 6px 18px rgba(255,92,0,.45);z-index:0;transition:transform .35s cubic-bezier(.34,1.3,.4,1)}
     .tone-btn{flex:1;position:relative;z-index:1;border-radius:100px;padding:11px 4px;font-size:.85rem;font-weight:600;border:none;cursor:pointer;color:#7a756f;background:transparent;font-family:inherit;transition:color .25s ease,transform .15s ease}
     .tone-btn.active{color:#fff}
@@ -203,9 +207,15 @@
         </div>
       </div>
 
-      <div style="margin-top:26px;position:relative;z-index:2;">
-        <div class="display" style="color:#fff;font-size:30px;line-height:1.1;">Balance ton <span style="color:#FF5C00;">match</span>.</div>
-        <div style="color:#8a8580;font-size:14px;margin-top:8px;line-height:1.45;">Glisse ta capture, le renard te sort 3 répliques qui font mouche.</div>
+      <div class="tone-track" id="modeTrack" style="margin-top:18px;position:relative;z-index:2;">
+        <div class="tone-glider"></div>
+        <button class="tone-btn active" data-mode="reply">💬 Répondre</button>
+        <button class="tone-btn" data-mode="opener">✨ 1er message <span id="openerLock" style="font-size:11px;">🔒</span></button>
+      </div>
+
+      <div style="margin-top:20px;position:relative;z-index:2;">
+        <div class="display" id="heroTitle" style="color:#fff;font-size:30px;line-height:1.1;">Balance ton <span style="color:#FF5C00;">match</span>.</div>
+        <div id="heroSub" style="color:#8a8580;font-size:14px;margin-top:8px;line-height:1.45;">Glisse ta capture, le renard te sort 3 répliques qui font mouche.</div>
       </div>
 
       <input type="file" id="fileInput" accept="image/*" hidden>
@@ -328,7 +338,7 @@
         </div>
         <div class="bubble" style="margin-top:16px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-            <div class="lbl" style="margin-bottom:0;">tiens répond lui ça</div>
+            <div class="lbl" id="bubbleLbl" style="margin-bottom:0;">tiens répond lui ça</div>
             <span style="font-size:13px;">✏️</span>
           </div>
           <p class="reply" id="replyText" contenteditable="true" spellcheck="false"></p>
@@ -473,6 +483,7 @@
         <div style="margin-top:26px;text-align:left;">
           <div class="pw-feat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#FF9A45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Analyses <b style="color:#fff;font-weight:700;">illimitées</b>, chaque jour</span></div>
           <div class="pw-feat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#FF9A45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Tous les <b style="color:#fff;font-weight:700;">tons secrets</b> : Romantique, Sexto, Mystère</span></div>
+          <div class="pw-feat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#FF9A45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b style="color:#fff;font-weight:700;">Générateur de 1er message</b> : son profil → l'opener parfait</span></div>
           <div class="pw-feat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#FF9A45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Renard <b style="color:#fff;font-weight:700;">personnalisé</b> : âge, objectif, style de message</span></div>
         </div>
 
@@ -575,6 +586,10 @@
       updatePrefsAccess();
       renderAccountBtn();
       updateLockedPills();
+      // switch de mode : cadenas sur "1er message" pour les gratuits + retour au mode conv si le premium saute
+      const lock=document.getElementById('openerLock');
+      if(lock)lock.style.display=quota.isPremium?'none':'inline';
+      if(!quota.isPremium&&mode==='opener')setMode('reply');
     }
     function renderAccountBtn() {
       const b = document.getElementById('accountBtn');
@@ -636,8 +651,39 @@
     // (Le choix du ton en amont a été retiré : l'analyse renvoie toujours les 3 tons,
     //  l'utilisateur bascule entre eux sur l'écran de résultats.)
 
+    // ══════════════ MODE : Répondre (conv) / 1er message (profil, premium) ══════════════
+    let mode='reply';
+    const modeTrack=document.getElementById('modeTrack');
+    function setMode(m){
+      mode=m;
+      const opener=(m==='opener');
+      modeTrack.classList.toggle('opener',opener);
+      modeTrack.querySelectorAll('.tone-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));
+      steps=opener?OPENER_STEPS:REPLY_STEPS;
+      document.getElementById('heroTitle').innerHTML=opener
+        ?'Balance son <span style="color:#FF5C00;">profil</span>.'
+        :'Balance ton <span style="color:#FF5C00;">match</span>.';
+      document.getElementById('heroSub').textContent=opener
+        ?'Glisse le screenshot de son profil (bio, photos), le renard te sort le premier message parfait.'
+        :'Glisse ta capture, le renard te sort 3 répliques qui font mouche.';
+      analyzeBtn.innerHTML=opener
+        ?'Générer mes openers <span style="font-size:21px;">⚡</span>'
+        :'Analyser ma conv <span style="font-size:21px;">⚡</span>';
+      document.getElementById('bubbleLbl').textContent=opener?'tiens envoie lui ça':'tiens répond lui ça';
+    }
+    modeTrack.querySelectorAll('.tone-btn').forEach(b=>{
+      b.addEventListener('click',()=>{
+        const m=b.dataset.mode;
+        if(m===mode)return;
+        if(m==='opener'&&!quota.isPremium){track('opener_gate');openGate('opener');return;} // premium only
+        setMode(m);track('mode_switch',{mode:m});
+      });
+    });
+
     // ══════════════ ÉCRAN 2 — ANALYSE (vrai appel IA) ══════════════
-    const steps=['Lecture du contexte…','Analyse du ton…','Détection du vibe…','Génération de plusieurs pistes…','Le renard élimine les mauvaises…','Dernière relecture…'];
+    const REPLY_STEPS=['Lecture du contexte…','Analyse du ton…','Détection du vibe…','Génération de plusieurs pistes…','Le renard élimine les mauvaises…','Dernière relecture…'];
+    const OPENER_STEPS=['Lecture du profil…','Repérage des accroches…','Détection du vibe…','Génération de plusieurs pistes…','Le renard élimine les mauvaises…','Dernière relecture…'];
+    let steps=REPLY_STEPS;
     const stepEl=document.getElementById('analyseStep');
     const barFill=document.getElementById('barFill');
 
@@ -645,7 +691,7 @@
     // on demande le compte. L'appel IA réel n'est fait qu'APRÈS l'inscription.
     function startTeaseAnalyse(){
       track('analyze_tease');
-      try{sessionStorage.setItem('tt_pending_img',imageDataUrl);}catch(e){} // survit au détour Google
+      try{sessionStorage.setItem('tt_pending_img',imageDataUrl);sessionStorage.setItem('tt_pending_mode',mode);}catch(e){} // survit au détour Google
       go(2);
       let i=0;stepEl.textContent=steps[0];
       const t=setInterval(()=>{i=(i+1)%steps.length;stepEl.style.opacity='0';setTimeout(()=>{stepEl.textContent=steps[i];stepEl.style.opacity='1';},200);},800);
@@ -661,8 +707,8 @@
     }
 
     async function runAnalyse(){
-      track('analyze_start');
-      try{sessionStorage.removeItem('tt_pending_img');}catch(e){}
+      track('analyze_start',{mode});
+      try{sessionStorage.removeItem('tt_pending_img');sessionStorage.removeItem('tt_pending_mode');}catch(e){}
       go(2);
       let i=0;stepEl.textContent=steps[0];
       const stepTimer=setInterval(()=>{
@@ -687,10 +733,10 @@
 
       const minDelay=new Promise(r=>setTimeout(r,1800)); // garde l'anim visible
 
-      let blocked=false,authNeeded=false;
+      let blocked=false,authNeeded=false,premiumNeeded=false;
       try{
         const [resp]=await Promise.all([
-          fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:imageDataUrl,tone:selectedTone,profile:prefs})}),
+          fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:imageDataUrl,tone:selectedTone,profile:prefs,mode})}),
           minDelay,
         ]);
         const data=await resp.json();
@@ -699,6 +745,8 @@
           if(data.quota)applyQuota(data.quota);
         }else if(resp.status===401){ // session expirée / pas de compte → mur d'inscription
           authNeeded=true;
+        }else if(resp.status===403){ // mode opener sans premium → paywall dédié
+          premiumNeeded=true;
         }else{
           replies=data.replies;
           if(data.quota)applyQuota(data.quota); // maj du compteur depuis le serveur
@@ -715,6 +763,7 @@
       barFill.style.width='100%';
 
       if(authNeeded){ pendingAnalysis=true; openAuth('analysis'); return; } // compte requis
+      if(premiumNeeded){ setMode('reply'); go(1); openGate('opener'); return; } // premium expiré entre-temps
       if(blocked){ go(1); openGate(); return; } // on ramène à l'upload et on ouvre le paywall
       setTimeout(runReflexion,300);
     }
@@ -781,9 +830,10 @@
         if(!imageDataUrl){toast('Relance une analyse d\'abord');return;}
         const o=refaireBtn.innerHTML; refaireBtn.style.pointerEvents='none'; refaireBtn.innerHTML='…';
         try{
-          const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:imageDataUrl,tone:selectedTone,profile:prefs})});
+          const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:imageDataUrl,tone:selectedTone,profile:prefs,mode})});
           const data=await r.json();
           if(r.status===402){ toast('Limite quotidienne atteinte, reviens demain'); }
+          else if(r.status===403){ setMode('reply'); openGate('opener'); }
           else if(data.replies){ replies=data.replies; if(data.quota)applyQuota(data.quota); variant=0; renderResult(true); track('regen'); }
           else { toast('Réessaie dans un instant'); }
         }catch(e){ toast('Erreur réseau, réessaie'); }
@@ -888,6 +938,9 @@
       }else if(context==='tone'){
         title.textContent='Les tons secrets 🔒';
         sub.innerHTML='<b style="color:#FF9A45;">Romantique · Sexto · Mystère</b> — les répliques les plus puissantes du renard sont réservées aux Premium.';
+      }else if(context==='opener'){
+        title.textContent='Générateur de 1er message 🔒';
+        sub.innerHTML='Envoie le <b style="color:#FF9A45;">profil</b> de ton match (bio, photos), le renard te sort l\'opener parfait — réservé aux membres Premium.';
       }else{
         title.textContent='Débloque tout le potentiel';
         sub.innerHTML='Personnalise ton renard, débloque les analyses illimitées et tous les tons secrets. Sans engagement.';
@@ -1068,7 +1121,8 @@
         fetch('/api/me').then(r=>r.json()).then(st=>{
           applyQuota(st);
           // une analyse attendait l'inscription (détour Google) → on restaure l'image et on la lance
-          let img=null;try{img=sessionStorage.getItem('tt_pending_img');sessionStorage.removeItem('tt_pending_img');}catch(e){}
+          let img=null,pm=null;try{img=sessionStorage.getItem('tt_pending_img');pm=sessionStorage.getItem('tt_pending_mode');sessionStorage.removeItem('tt_pending_img');sessionStorage.removeItem('tt_pending_mode');}catch(e){}
+          if(pm==='opener'&&st.isPremium)setMode('opener'); // reprend le mode choisi avant le détour Google
           if(img){
             imageDataUrl=img;hasImage=true;
             dzPreview.src=img;dzPreview.style.display='block';dzEmpty.style.display='none';dropzone.classList.add('has-img');analyzeBtn.disabled=false;

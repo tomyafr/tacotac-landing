@@ -415,6 +415,163 @@ Chaque réplique finale doit être DIFFÉRENTE des deux autres du même ton ET d
 
 Réponds UNIQUEMENT via la fonction proposer_repliques.`;
 
+// ══════════════ GÉNÉRATEUR DE 1ER MESSAGE (premium) ══════════════
+// Même pipeline que l'analyse de conv (image → IA → répliques) mais le screenshot
+// est un PROFIL (bio, photos, prompts) et la sortie = des openers, pas des relances.
+// Toujours 6 tons : le mode est réservé aux premium, donc pas de variante gratuite.
+const OPENER_FUNCTION = {
+  type: 'function',
+  function: {
+    name: 'proposer_openers',
+    description: "Renvoie 3 premiers messages par ton (6 tons) que LE CLIENT envoie à la personne dont il montre le profil (bio, photos, prompts). Aucune conversation n'a encore eu lieu.",
+    strict: true,
+    parameters: {
+      type: 'object',
+      properties: {
+        profil_lu: {
+          type: 'string',
+          description: "ÉTAPE 1 — Recopie ce que tu LIS réellement sur le profil : bio, prompts/réponses, centres d'intérêt, prénom si visible, et décris en quelques mots ce que montrent les photos. Si l'image n'est pas un profil lisible, écris 'ILLISIBLE'.",
+        },
+        accroches: {
+          type: 'string',
+          description: "ÉTAPE 2 — Liste 2 à 4 DÉTAILS PRÉCIS du profil qui méritent qu'on rebondisse dessus (une passion, une phrase de la bio, un truc visible sur une photo, une contradiction drôle). Les openers DOIVENT partir de ces détails, jamais du vide.",
+        },
+        brouillons: {
+          type: 'string',
+          description: "ÉTAPE 3 — BROUILLON BRUT (avant filtrage). Liste 4 à 6 openers candidats courts, ton premier instinct SANS te censurer : '1) ... 2) ... 3) ...'. Une ligne par brouillon. Jamais montré au client.",
+        },
+        critique: {
+          type: 'string',
+          description: "ÉTAPE 4 — AUTO-CRITIQUE COURTE. Pour CHAQUE brouillon, une ligne 'garde / retravaille (pourquoi) / jette (pourquoi)' : générique (envoyable à n'importe qui) ? compliment plat ? question d'entretien d'embauche ? PUIS un CHECK ANTI-CLONE en 1 ligne : mes tons partent-ils d'accroches/angles VRAIMENT différents ? Jamais montré au client.",
+        },
+        classe: {
+          type: 'array',
+          description: 'VERSION FINALE ET POLIE — 3 openers ton CLASSE (posé, sûr de lui, précis), ancrés dans une accroche du profil.',
+          items: { type: 'string' },
+        },
+        drole: {
+          type: 'array',
+          description: 'VERSION FINALE ET POLIE — 3 openers ton DRÔLE (chambreur, absurde précis, punchline sèche), ancrés dans une accroche du profil.',
+          items: { type: 'string' },
+        },
+        spicy: {
+          type: 'array',
+          description: 'VERSION FINALE ET POLIE — 3 openers ton SPICY (audacieux, taquin, tension assumée mais jamais vulgaire ni lourd en premier message), ancrés dans une accroche du profil.',
+          items: { type: 'string' },
+        },
+        romantique: {
+          type: 'array',
+          description: 'VERSION FINALE ET POLIE — 3 openers ton ROMANTIQUE (sincère, attentionné, un peu poète mais jamais niais), ancrés dans une accroche du profil.',
+          items: { type: 'string' },
+        },
+        sexto: {
+          type: 'array',
+          description: "VERSION FINALE ET POLIE — 3 openers ton SEXTO adapté au PREMIER message : charme frontal, sous-entendu élégant, tension immédiate mais AUCUNE vulgarité (c'est un premier contact, pas une conv chaude).",
+          items: { type: 'string' },
+        },
+        mystere: {
+          type: 'array',
+          description: "VERSION FINALE ET POLIE — 3 openers ton MYSTÉRIEUX (détaché, intriguant, qui en dit peu et donne envie de répondre pour en savoir plus), ancrés dans une accroche du profil.",
+          items: { type: 'string' },
+        },
+      },
+      required: ['profil_lu', 'accroches', 'brouillons', 'critique', 'classe', 'drole', 'spicy', 'romantique', 'sexto', 'mystere'],
+      additionalProperties: false,
+    },
+  },
+};
+
+const OPENER_SYSTEM_PROMPT = `Tu es Tacotac, un coach de séduction français redoutable. Ton client vient de MATCHER (ou repérer) quelqu'un et te montre le screenshot de son PROFIL (Tinder, Hinge, Bumble, Fruitz, Instagram…) : bio, photos, prompts. AUCUN message n'a encore été échangé. Tu écris les PREMIERS messages à sa place.
+
+Ton client est un mec français, la vingtaine, qui veut des openers qui sonnent VRAIS — pas des phrases d'IA, pas du coach YouTube 2018. Un opener doit ressembler à ce qu'un mec malin, drôle et sûr de lui enverrait vraiment en premier message.
+
+═══════════════════════════════════════════════
+COMMENT LIRE LE PROFIL
+═══════════════════════════════════════════════
+PROTOCOLE OBLIGATOIRE avant d'écrire le moindre opener :
+1. Recopie dans "profil_lu" tout ce qui est lisible : bio, prompts, intérêts, prénom, et ce que montrent les photos.
+2. Note dans "accroches" 2 à 4 détails PRÉCIS qui valent le coup (une passion, une phrase, un objet/lieu sur une photo, une contradiction marrante).
+3. CHAQUE opener final part d'UNE de ces accroches. Un opener qui pourrait être envoyé à n'importe quelle fille est NUL — c'est LA règle.
+
+⛔ Si le screenshot n'est PAS un profil lisible (image floue, écran vide, autre chose) : mets "ILLISIBLE" dans profil_lu et génère quand même des openers génériques charmants du niveau Tacotac — n'invente JAMAIS une bio qui n'existe pas.
+
+═══════════════════════════════════════════════
+LA RÈGLE D'OR DE L'OPENER
+═══════════════════════════════════════════════
+Un bon opener est COURT, CONFIANT, SPÉCIFIQUE, et il S'ARRÊTE.
+
+Il rebondit sur UN détail du profil et crée une réaction (rire, curiosité, envie de se défendre gentiment). Il ne se présente pas, ne demande pas la permission, ne complimente pas platement.
+
+⛔ BANNIS ABSOLUMENT (l'opener est jeté direct) :
+• "salut ça va ?", "hey", "coucou" et toute variante vide.
+• Les compliments génériques : "t'es trop belle", "magnifique sourire", "wow tes photos".
+• Les questions d'entretien d'embauche : "tu fais quoi dans la vie ?", "tu viens d'où ?".
+• Se présenter ("moi c'est Tom") ou expliquer pourquoi on écrit.
+• Les pavés. Un opener fait 1-2 phrases max.
+• Les métaphores forcées, les formules coach drague ("nos vibes s'accordent", "un tour guidé ?").
+• Tout emoji qui compense une phrase faible.
+
+Les BONS mouvements d'opener :
+• La FAUSSE ACCUSATION taquine : retourner un truc du profil contre elle avec le sourire ("donc tu mets 'pas là pour un plan d'un soir' mais tu matches avec moi… audacieux").
+• L'OBSERVATION absurde et précise sur UNE photo ("la 3e photo… tu tiens ce cocktail comme si c'était un trophée, respect").
+• Le FAUX DILEMME / le choix débile ("question importante avant qu'on aille plus loin : ananas sur la pizza, oui ou non ? ta bio me fait douter").
+• La SUITE DE SA BIO : répondre à sa bio comme si c'était le début d'une conv qu'elle a lancée.
+• Le DÉFI léger qui l'oblige à se positionner.
+
+═══════════════════════════════════════════════
+LES 6 TONS — CE QUI LES REND VRAIMENT DIFFÉRENTS
+═══════════════════════════════════════════════
+🎩 CLASSE — audacieux et précis, pas "poli". Il remarque UN détail pointu et le dit avec assurance, éventuellement en posant direct une mini-proposition. Jamais de flatterie molle.
+😂 DRÔLE — l'absurde précis. Il chambre un détail du profil ou balance une image chelou et spécifique, et il s'arrête. La punchline EST le message.
+🌶️ SPICY — la tension assumée dès le premier message : fausse accusation, sous-entendu élégant, défi. Jamais vulgaire, jamais lourd — elle doit sourire, pas bloquer.
+🌹 ROMANTIQUE — sincère et imagé, un détail du profil transformé en jolie phrase qui sort du lot. Jamais niais, jamais "sous les étoiles".
+😈 SEXTO (version premier message) — le plus frontal : charme direct, tension immédiate, sous-entendu clair mais AVEC du style. C'est un PREMIER contact : suggestif, jamais cru ni graphique.
+🎭 MYSTÈRE — détaché et intriguant. Il en dit peu, pique la curiosité, donne l'impression qu'il sait un truc qu'elle ignore. Elle répond pour en savoir plus.
+
+⚠️ RÈGLE ANTI-CLONE : chaque ton part d'une ACCROCHE ou d'un ANGLE différent. La même vanne/accroche dans deux tons = ÉLIMINATOIRE. Les 3 openers d'un même ton = 3 idées différentes, pas 3 formulations de la même.
+
+═══════════════════════════════════════════════
+STYLE 2025 — RYTHME, PONCTUATION, ORTHOGRAPHE
+═══════════════════════════════════════════════
+• Tout en minuscules. Aucun point final. Jamais.
+• Max 1-2 phrases courtes qui claquent.
+• Points de suspension … pour le sous-entendu. ?? ou !! ponctuellement.
+• Écriture phonétique naturelle : jsuis, jte, jsp, tsais, tkt, j'avoue, en vrai.
+• Abréviations naturelles jamais en masse : mdr/ptdr (une fois max), giga + adjectif, chelou, stylé.
+• Anglicismes intégrés OK, un seul max : vibe, crush, date, red flag.
+• EMOJIS : 0 à 1 par opener, souvent ZÉRO. Privilégie 😏 👀 😭 💀 😅. Bannis 😜 😝 😛 😇 et les salves.
+
+═══════════════════════════════════════════════
+PROCESS EN 2 TEMPS — BROUILLON PUIS CRITIQUE (OBLIGATOIRE)
+═══════════════════════════════════════════════
+Tu ne sors JAMAIS ton premier jet. "brouillons" puis "critique" sont de vraies étapes : 4-6 candidats bruts, puis une ligne de jugement par brouillon (générique ? plat ? question d'entretien ? trop long ?) + le check anti-clone. Les openers FINAUX sont les meilleures idées réécrites plus courtes et plus ancrées dans le profil.
+
+═══════════════════════════════════════════════
+FORMAT DE SORTIE — NON NÉGOCIABLE
+═══════════════════════════════════════════════
+Chacun des 6 champs de tons (classe, drole, spicy, romantique, sexto, mystere) est un TABLEAU DE 3 OPENERS. Exactement 3 par ton — jamais 1, jamais 2. 6 tons × 3 openers = 18 openers finaux au total, tous différents.
+
+Réponds UNIQUEMENT via la fonction proposer_openers.`;
+
+// Openers de secours si l'IA est indispo (génériques mais niveau Tacotac)
+const OPENER_FALLBACK = {
+  classe: [
+    "j'allais écrire un truc banal et je me suis dit que tu méritais mieux, donc : meilleur souvenir de l'année, go",
+    "ton profil est le premier qui m'a fait m'arrêter aujourd'hui, jdis ça jdis rien",
+    "on m'a dit que les meilleurs matchs commencent mal, donc : salut c'est quoi ton plat préféré ? voilà c'est fait, maintenant on peut vraiment discuter",
+  ],
+  drole: [
+    "jte préviens direct jsuis nul en openers donc fais comme si t'avais reçu un truc hyper drôle et original",
+    "match à 21h37, message à 21h39… jsuis pas du genre à jouer la montre moi 😭",
+    "bon on saute l'étape 'salut ça va' et on passe direct au débat important : l'ananas sur la pizza ??",
+  ],
+  spicy: [
+    "jsens que t'es le genre de match qui répond jamais en premier… prouve-moi que jme trompe 👀",
+    "on m'a toujours dit de me méfier des profils trop bien, et là jsuis servi",
+    "je te laisse une chance de faire meilleure première impression que moi, elle est rare celle-là",
+  ],
+};
+
 // Répliques de secours si l'IA est indispo / clé manquante (pour que la démo ne casse jamais)
 const FALLBACK = {
   classe: [
@@ -703,6 +860,7 @@ const LIFECYCLE = {
       <div style="color:#B5ABA0;font-size:14.5px;line-height:1.9;margin:0 0 14px;">
         <div>✓ Analyses <b style="color:#fff;">illimitées</b></div>
         <div>✓ Les <b style="color:#fff;">tons secrets</b> : Romantique · Sexto · Mystère</div>
+        <div>✓ Le <b style="color:#fff;">générateur de 1er message</b> : son profil → l'opener parfait</div>
         <div>✓ Le renard <b style="color:#fff;">personnalisé</b> (âge, objectif…)</div>
       </div>
       <p style="color:#B5ABA0;font-size:15px;line-height:1.6;margin:0;">Teste-le <b style="color:#fff;">3 jours gratuitement</b>, annule quand tu veux.</p>`),
@@ -848,6 +1006,13 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Image manquante ou format invalide (png/jpg/webp attendu).' });
     }
 
+    // ── Mode : 'reply' (répondre à une conv) ou 'opener' (1er message, premium) ──
+    // Vérifié AVANT de consommer le quota : un gratuit qui force l'appel ne perd pas un crédit.
+    const mode = req.body?.mode === 'opener' ? 'opener' : 'reply';
+    if (mode === 'opener' && !getStatus(deviceId, req.account).isPremium) {
+      return res.status(403).json({ error: 'Le générateur de 1er message est réservé aux Premium.', code: 'premium_required' });
+    }
+
     // ── QUOTA (côté serveur, seule source de vérité) ──
     const quota = consumeQuota(deviceId, req.ip, req.account);
     if (!quota.allowed) {
@@ -857,30 +1022,36 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
       return res.status(402).json({ error, code: 'quota_exceeded', quota });
     }
 
+    const FB = mode === 'opener' ? OPENER_FALLBACK : FALLBACK;
     if (!process.env.OPENAI_API_KEY) {
       // Pas de clé → on renvoie le fallback pour ne jamais casser la démo
-      return res.json({ replies: FALLBACK, source: 'fallback', quota });
+      return res.json({ replies: FB, source: 'fallback', quota });
     }
+
+    const isOpener = mode === 'opener';
+    const userText = isOpener
+      ? "Voici le screenshot du PROFIL de la personne que je veux aborder (bio, photos, prompts). On n'a encore RIEN échangé. Écris 3 premiers messages par ton (les 6 tons) que MOI j'envoie pour lancer la conversation, chacun ancré dans un détail précis de son profil." + buildProfileContext(req.body?.profile)
+      : "Voici le screenshot de ma conv. RAPPEL : les bulles à DROITE (colorées) c'est MOI, ton client — les bulles à GAUCHE (grises) c'est la personne que je veux séduire. Écris 3 relances par ton que MOI j'envoie à cette personne, en répondant à son DERNIER message (dernière bulle à gauche). Ne réponds jamais à ma place comme si j'étais la personne de gauche." + (quota.isPremium ? PREMIUM_TONES_INSTRUCTION : '') + buildProfileContext(req.body?.profile);
 
     const completion = await openai.chat.completions.create({
       model: MODEL,
-      max_tokens: 2200, // brouillons + critique + jusqu'à 6 tons → plus de sortie qu'avant
+      max_tokens: isOpener ? 2600 : 2200, // brouillons + critique + jusqu'à 6 tons (opener : + profil_lu/accroches)
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: isOpener ? OPENER_SYSTEM_PROMPT : SYSTEM_PROMPT },
         {
           role: 'user',
           content: [
-            { type: 'text', text: "Voici le screenshot de ma conv. RAPPEL : les bulles à DROITE (colorées) c'est MOI, ton client — les bulles à GAUCHE (grises) c'est la personne que je veux séduire. Écris 3 relances par ton que MOI j'envoie à cette personne, en répondant à son DERNIER message (dernière bulle à gauche). Ne réponds jamais à ma place comme si j'étais la personne de gauche." + (quota.isPremium ? PREMIUM_TONES_INSTRUCTION : '') + buildProfileContext(req.body?.profile) },
+            { type: 'text', text: userText },
             { type: 'image_url', image_url: { url: dataUrl, detail: 'high' } },
           ],
         },
       ],
-      tools: [replyFunctionFor(quota.isPremium)],
-      tool_choice: { type: 'function', function: { name: 'proposer_repliques' } },
+      tools: [isOpener ? OPENER_FUNCTION : replyFunctionFor(quota.isPremium)],
+      tool_choice: { type: 'function', function: { name: isOpener ? 'proposer_openers' : 'proposer_repliques' } },
     });
 
     const call = completion.choices?.[0]?.message?.tool_calls?.[0];
-    if (!call?.function?.arguments) return res.json({ replies: FALLBACK, source: 'fallback', quota });
+    if (!call?.function?.arguments) return res.json({ replies: FB, source: 'fallback', quota });
 
     let out = {};
     try { out = JSON.parse(call.function.arguments); } catch { out = {}; }
@@ -889,8 +1060,8 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
     const withFallback = (tone) => {
       const c = clean(out[tone]);
       if (c.length) return c;
-      console.warn(`[analyze] champ "${tone}" mal formé malgré strict:true → repli sur FALLBACK`, JSON.stringify(out[tone]));
-      return FALLBACK[tone];
+      console.warn(`[analyze] champ "${tone}" mal formé malgré strict:true → repli sur FALLBACK (mode ${mode})`, JSON.stringify(out[tone]));
+      return FB[tone];
     };
     const replies = { classe: withFallback('classe'), drole: withFallback('drole'), spicy: withFallback('spicy') };
     if (quota.isPremium) {
@@ -902,8 +1073,10 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
 
     res.json({
       replies, source: 'ai', quota,
-      // hors prod : expose la lecture de l'IA pour vérifier l'attribution des rôles
-      ...(process.env.NODE_ENV !== 'production' ? { debug: { dernier_message: out.dernier_message, cote: out.dernier_message_cote, analyse: out.analyse, brouillons: out.brouillons, critique: out.critique } } : {}),
+      // hors prod : expose la lecture de l'IA (rôles en mode reply, profil en mode opener)
+      ...(process.env.NODE_ENV !== 'production' ? { debug: mode === 'opener'
+        ? { profil_lu: out.profil_lu, accroches: out.accroches, brouillons: out.brouillons, critique: out.critique }
+        : { dernier_message: out.dernier_message, cote: out.dernier_message_cote, analyse: out.analyse, brouillons: out.brouillons, critique: out.critique } } : {}),
     });
   } catch (err) {
     console.error('[analyze] erreur:', err?.message || err);
