@@ -88,6 +88,10 @@ db.exec(`
 try { db.exec("ALTER TABLE users ADD COLUMN bonus_remaining INTEGER NOT NULL DEFAULT 0"); } catch { /* déjà migré */ }
 try { db.exec("ALTER TABLE users ADD COLUMN email_bonus_claimed INTEGER NOT NULL DEFAULT 0"); } catch { /* déjà migré */ }
 try { db.exec("ALTER TABLE users ADD COLUMN account_id INTEGER"); } catch { /* déjà migré */ }
+// Suivi des emails de cycle de vie (welcome / relance J+1 / J+3)
+try { db.exec("ALTER TABLE accounts ADD COLUMN welcome_sent_at INTEGER"); } catch { /* déjà migré */ }
+try { db.exec("ALTER TABLE accounts ADD COLUMN d1_sent_at INTEGER"); } catch { /* déjà migré */ }
+try { db.exec("ALTER TABLE accounts ADD COLUMN d3_sent_at INTEGER"); } catch { /* déjà migré */ }
 
 // ── Jour courant en Europe/Paris (le quota se remet à zéro à minuit FR) ──
 export function parisDay(d = new Date()) {
@@ -399,5 +403,14 @@ export function getSessionAccount(token) {
   return qAccById.get(s.account_id) || null;
 }
 export function destroySession(token) { if (token) qDelSession.run(token); }
+
+// ── Emails de cycle de vie ──────────────────────────────────────
+// Comptes gratuits récents (pour la séquence welcome / J+1 / J+3).
+const qLifecycleAccounts = db.prepare("SELECT * FROM accounts WHERE plan = 'free' AND created_at > ? ORDER BY created_at DESC LIMIT 500");
+export function accountsForLifecycle(sinceTs) { return qLifecycleAccounts.all(sinceTs); }
+export function markAccountEmail(accountId, col) {
+  if (!['welcome_sent_at', 'd1_sent_at', 'd3_sent_at'].includes(col)) return;
+  db.prepare(`UPDATE accounts SET ${col} = ? WHERE id = ?`).run(Math.floor(Date.now() / 1000), accountId);
+}
 
 export default db;

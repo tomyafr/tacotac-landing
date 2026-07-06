@@ -16,7 +16,8 @@ import rateLimit from 'express-rate-limit';
 import OpenAI from 'openai';
 import Stripe from 'stripe';
 import { consumeQuota, getStatus, activatePremium, syncSubscription, deactivatePremium, claimEmailBonus, claimFounderCode, seedFounderCodes, reserveGiftEmail, setGiftPromo, releaseGiftEmail,
-         createAccount, getAccountByEmail, getAccountByGoogleId, attachGoogleToAccount, linkDeviceToAccount, createSession, getSessionAccount, destroySession, effectivePlan } from './db.js';
+         createAccount, getAccountByEmail, getAccountByGoogleId, attachGoogleToAccount, linkDeviceToAccount, createSession, getSessionAccount, destroySession, effectivePlan,
+         accountsForLifecycle, markAccountEmail } from './db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -503,6 +504,7 @@ app.post('/api/auth/signup', authLimiter, (req, res) => {
   const account = createAccount({ email, passwordHash: hashPassword(password) });
   linkDeviceToAccount(req.deviceId, account.id); // l'appareil hérite/donne son premium
   pushToSheet(email, 'account-email');           // nouveau compte → Sheet (marketing)
+  sendLifecycleEmail(account, 'welcome').catch(() => {}); // email de bienvenue (best-effort)
   openSession(res, account.id);
   req.account = getAccountByEmail(email);
   res.json({ ok: true, status: fullStatus(req) });
@@ -579,7 +581,7 @@ app.get('/api/auth/google/callback', async (req, res) => {
     if (!account) {
       const byEmail = getAccountByEmail(email);
       if (byEmail) { attachGoogleToAccount(byEmail.id, googleId); account = getAccountByEmail(email); } // relie Google au compte mdp existant
-      else { account = createAccount({ email, googleId }); pushToSheet(email, 'account-google'); } // nouveau compte Google → Sheet
+      else { account = createAccount({ email, googleId }); pushToSheet(email, 'account-google'); sendLifecycleEmail(account, 'welcome').catch(() => {}); } // nouveau compte Google → Sheet + bienvenue
     }
     linkDeviceToAccount(req.deviceId, account.id);
     openSession(res, account.id);
@@ -669,6 +671,66 @@ function giftEmailHtml(code, link) {
     <p style="color:#7A7062;font-size:12px;text-align:center;margin:18px 0 0;line-height:1.5;">Le code est déjà pré-rempli via le bouton. Sinon, saisis-le au paiement.<br>Tacotac · coach dating IA</p>
   </div>`;
 }
+
+// ── Emails de cycle de vie (welcome / relance J+1 / J+3) ────────
+function emailShell(inner) {
+  return `<div style="max-width:460px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;background:#17120E;border-radius:20px;padding:32px 26px;color:#F4EEE2;">
+    <div style="font-size:34px;text-align:center;margin-bottom:10px;">🦊</div>${inner}
+    <a href="${PUBLIC_URL}/app" style="display:block;text-align:center;background:#FF5A1F;color:#fff;text-decoration:none;font-weight:700;font-size:16px;padding:15px;border-radius:12px;margin-top:22px;">Ouvrir Tacotac →</a>
+    <p style="color:#7A7062;font-size:11.5px;text-align:center;margin:18px 0 0;line-height:1.5;">Tacotac · ton coach dating IA<br>Tu reçois ça car tu as créé un compte sur taco-tac.app</p>
+  </div>`;
+}
+const LIFECYCLE = {
+  welcome: {
+    subject: 'Bienvenue sur Tacotac 🦊',
+    html: () => emailShell(`
+      <h1 style="font-size:22px;margin:0 0 10px;text-align:center;color:#fff;">T'es dans la place 🎉</h1>
+      <p style="color:#B5ABA0;font-size:15px;line-height:1.6;margin:0 0 16px;">Le principe est simple : t'envoies le screenshot d'une conv qui te bloque, et le renard te sort <b style="color:#fff;">3 répliques qui claquent</b> (classe, drôle, spicy) en 3 secondes.</p>
+      <p style="color:#B5ABA0;font-size:15px;line-height:1.6;margin:0 0 6px;">T'as <b style="color:#fff;">3 analyses gratuites chaque jour</b>. Et si tu veux tout casser : le <b style="color:#FF7A45;">Premium</b> débloque l'illimité, les tons secrets (Romantique, Sexto, Mystère) et le renard personnalisé — <b style="color:#fff;">essai 3 jours gratuits</b>.</p>`),
+  },
+  d1: {
+    subject: "T'as une conv qui t'attend 👀",
+    html: () => emailShell(`
+      <h1 style="font-size:22px;margin:0 0 10px;text-align:center;color:#fff;">Une conv en galère ?</h1>
+      <p style="color:#B5ABA0;font-size:15px;line-height:1.6;margin:0 0 12px;">Tes <b style="color:#fff;">3 analyses gratuites</b> se rechargent chaque jour. La prochaine fois que tu sais pas quoi répondre, laisse le renard s'en charger.</p>
+      <p style="color:#B5ABA0;font-size:15px;line-height:1.6;margin:0;">Balance ton screenshot, choisis ton ton, copie la réplique. C'est tout.</p>`),
+  },
+  d3: {
+    subject: 'Ce que tu rates en gratuit 🌶️',
+    html: () => emailShell(`
+      <h1 style="font-size:22px;margin:0 0 10px;text-align:center;color:#fff;">Passe au niveau au-dessus</h1>
+      <p style="color:#B5ABA0;font-size:15px;line-height:1.6;margin:0 0 12px;">En gratuit t'as les 3 tons de base. Le <b style="color:#FF7A45;">Premium</b>, c'est un autre monde :</p>
+      <div style="color:#B5ABA0;font-size:14.5px;line-height:1.9;margin:0 0 14px;">
+        <div>✓ Analyses <b style="color:#fff;">illimitées</b></div>
+        <div>✓ Les <b style="color:#fff;">tons secrets</b> : Romantique · Sexto · Mystère</div>
+        <div>✓ Le renard <b style="color:#fff;">personnalisé</b> (âge, objectif…)</div>
+      </div>
+      <p style="color:#B5ABA0;font-size:15px;line-height:1.6;margin:0;">Teste-le <b style="color:#fff;">3 jours gratuitement</b>, annule quand tu veux.</p>`),
+  },
+};
+
+async function sendLifecycleEmail(account, kind) {
+  const m = LIFECYCLE[kind];
+  if (!m || !account?.email) return;
+  const ok = await sendEmail({ to: account.email, subject: m.subject, html: m.html() });
+  if (ok) markAccountEmail(account.id, `${kind === 'welcome' ? 'welcome' : kind}_sent_at`);
+}
+
+// Processeur périodique : envoie le bon email selon l'âge du compte (une seule fois chacun).
+async function processLifecycle() {
+  const key = process.env.RESEND_API_KEY;
+  if (!key || key.includes('a_remplir')) return; // dormant tant que Resend n'est pas configuré
+  const now = Math.floor(Date.now() / 1000);
+  const D = 86400;
+  for (const a of accountsForLifecycle(now - 7 * D)) {
+    const age = now - a.created_at;
+    if (!a.welcome_sent_at && age < 2 * D) { await sendLifecycleEmail(a, 'welcome'); continue; }
+    if (!a.d1_sent_at && age >= 1 * D && age < 3 * D) { await sendLifecycleEmail(a, 'd1'); continue; }
+    if (!a.d3_sent_at && age >= 3 * D && age < 6 * D) { await sendLifecycleEmail(a, 'd3'); continue; }
+  }
+}
+setInterval(() => processLifecycle().catch((e) => console.error('[lifecycle]', e?.message)), 20 * 60 * 1000);
+setTimeout(() => processLifecycle().catch(() => {}), 30 * 1000);
 
 // ── Cadeau -10% contre email : code promo Stripe unique (24h) + Sheet + mail ──
 app.post('/api/gift-email', bonusLimiter, async (req, res) => {
