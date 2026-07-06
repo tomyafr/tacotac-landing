@@ -344,6 +344,19 @@
       <button id="copyUpsell" style="display:none;width:100%;margin-top:10px;background:rgba(255,92,0,.08);border:1px solid rgba(255,92,0,.3);color:#B5ABA0;font-family:inherit;font-size:12.5px;border-radius:14px;padding:11px 14px;cursor:pointer;line-height:1.45;">
         🦊 Elle t'a plu ? Les Premium en ont <span style="color:#FF7A33;font-weight:700;">en illimité</span> + les tons secrets 😈 — <span style="color:#FF7A33;font-weight:700;text-decoration:underline;">essaie 3 jours gratuits</span>
       </button>
+      <!-- Tease premium : réplique "tons secrets" floutée (gratuits uniquement) -->
+      <div id="premiumTease" style="display:none;position:relative;margin-top:12px;background:#141414;border:1px solid #262626;border-radius:16px;padding:16px;overflow:hidden;cursor:pointer;">
+        <div style="filter:blur(5px);user-select:none;pointer-events:none;">
+          <div style="color:#FF6F1F;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px;">🌶️ version sexto</div>
+          <div style="color:#F0EDE8;font-size:15.5px;line-height:1.5;">t'sais quoi jsuis presque sûr que tu fais genre d'être sage alors qu'en vrai t'attends que je propose un truc…</div>
+        </div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:rgba(14,14,14,.4);">
+          <div style="font-size:22px;">🔒</div>
+          <div style="color:#fff;font-weight:700;font-size:14px;">Débloque les tons secrets</div>
+          <div style="color:#FF7A33;font-size:12.5px;font-weight:600;">Romantique · Sexto · Mystère →</div>
+        </div>
+      </div>
+
       <button class="btn-secondary" id="resetBtn" style="margin-top:12px;">🔄 Nouvelle analyse</button>
     </section>
 
@@ -454,7 +467,7 @@
         </div>
         <div class="display" id="gateTitle" style="color:#ffffff;font-size:24px;line-height:1.1;font-weight:800;letter-spacing:-.02em;">Débloque tout le potentiel</div>
         <p id="gateSub" style="color:#9a9aa4;font-size:15px;margin:10px auto 0;max-width:320px;line-height:1.55;">Personnalise ton renard, débloque les analyses illimitées et tous les tons secrets. Sans engagement.</p>
-        <div id="promoBanner" style="display:none;background:#0f2c1e;border:1px solid rgba(52,211,153,.4);border-radius:12px;padding:10px 12px;margin:16px 0 0;color:#34d399;font-size:13px;font-weight:600;">🎁 -10% appliqué sur le Mensuel</div>
+        <div id="promoBanner" style="display:none;background:#0f2c1e;border:1px solid rgba(52,211,153,.4);border-radius:12px;padding:10px 12px;margin:16px 0 0;color:#34d399;font-size:13px;font-weight:600;">🎁 Ta réduction est appliquée sur le Mensuel</div>
 
         <!-- Features -->
         <div style="margin-top:26px;text-align:left;">
@@ -761,7 +774,25 @@
         p.classList.add('active');selectedTone=t;variant=0;renderResult(true);
       });
     });
-    refaireBtn.addEventListener('click',()=>{const list=currentList();variant=(variant+1)%list.length;renderResult(true);});
+    // Refaire : les Premium régénèrent de VRAIES nouvelles répliques (nouvel appel IA) ;
+    // les gratuits font défiler les 3 déjà générées, puis sont invités à passer Premium.
+    refaireBtn.addEventListener('click',async()=>{
+      if(quota.isPremium){
+        if(!imageDataUrl){toast('Relance une analyse d\'abord');return;}
+        const o=refaireBtn.innerHTML; refaireBtn.style.pointerEvents='none'; refaireBtn.innerHTML='…';
+        try{
+          const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:imageDataUrl,tone:selectedTone,profile:prefs})});
+          const data=await r.json();
+          if(r.status===402){ toast('Limite quotidienne atteinte, reviens demain'); }
+          else if(data.replies){ replies=data.replies; if(data.quota)applyQuota(data.quota); variant=0; renderResult(true); track('regen'); }
+          else { toast('Réessaie dans un instant'); }
+        }catch(e){ toast('Erreur réseau, réessaie'); }
+        refaireBtn.style.pointerEvents='auto'; refaireBtn.innerHTML=o;
+      }else{
+        const list=currentList(); variant=(variant+1)%list.length; renderResult(true);
+        if(variant===0){ toast('✨ Premium génère des répliques neuves à l\'infini'); track('regen_free_cap'); }
+      }
+    });
     copyBtn.addEventListener('click',async()=>{
       const txt=replyText.textContent;
       try{await navigator.clipboard.writeText(txt);}catch{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);}
@@ -773,8 +804,12 @@
     });
     document.getElementById('copyUpsell').addEventListener('click',()=>{track('upsell_click',{from:'copy'});openGate();});
 
+    // Tease premium (réplique floutée) : uniquement pour les gratuits, clic → paywall
+    document.getElementById('premiumTease').addEventListener('click',()=>{track('tease_click',{from:'results'});openGate('tone');});
+
     function showResults(){
       pillGrid.querySelectorAll('.pill').forEach(p=>p.classList.toggle('active',p.dataset.tone===selectedTone));
+      document.getElementById('premiumTease').style.display = quota.isPremium ? 'none' : 'block';
       variant=0;renderResult(true);go(4);
     }
 
