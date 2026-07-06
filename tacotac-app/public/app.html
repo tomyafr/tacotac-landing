@@ -159,8 +159,23 @@
     /* ── Paywall / email gate ── */
     .gate-overlay{position:absolute;inset:0;z-index:80;background:rgba(8,8,8,.82);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:24px}
     .gate-overlay.show{display:flex}
-    .gate-card{width:100%;max-width:400px;margin:0 auto;max-height:calc(100dvh - 48px);overflow-y:auto;background:#151515;border:1px solid #262626;border-radius:22px;padding:26px 22px;text-align:center;box-shadow:0 30px 70px -20px rgba(0,0,0,.9)}
+    .gate-card{width:100%;max-width:410px;margin:0 auto;max-height:calc(100dvh - 40px);overflow-y:auto;background:linear-gradient(180deg,#141416,#0f0f11);border:1px solid rgba(255,255,255,.09);border-radius:24px;padding:26px 22px;text-align:center;box-shadow:0 40px 90px -30px rgba(0,0,0,.95)}
     .gate-card::-webkit-scrollbar{width:0}
+
+    /* ── Paywall "Premium" (design froid, sélection + bouton continuer) ── */
+    .pw-icon{width:56px;height:56px;border-radius:18px;background:rgba(255,122,24,.1);border:1px solid rgba(255,122,24,.28);display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+    .pw-feat{display:flex;align-items:flex-start;gap:11px;text-align:left;color:#d6d6dc;font-size:13.5px;line-height:1.4;margin-bottom:12px}
+    .pw-feat svg{flex-shrink:0;margin-top:1px}
+    .plan-opt{position:relative;display:flex;align-items:center;gap:13px;width:100%;text-align:left;cursor:pointer;border-radius:16px;padding:14px 15px;background:#17171a;border:1.5px solid #2a2a2e;font-family:inherit;transition:border-color .15s,background .15s}
+    .plan-opt:hover{border-color:#3a3a40}
+    .plan-opt.sel{border-color:#FF7A18;background:#1a0d02}
+    .plan-dot{flex-shrink:0;width:20px;height:20px;border-radius:50%;border:2px solid #43434b;position:relative;transition:border-color .15s}
+    .plan-opt.sel .plan-dot{border-color:#FF7A18}
+    .plan-opt.sel .plan-dot::after{content:'';position:absolute;inset:3px;border-radius:50%;background:#FF7A18}
+    .plan-badge{position:absolute;top:-9px;right:13px;font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.3px}
+    .pw-continue{margin-top:20px;width:100%;border:none;border-radius:16px;cursor:pointer;background:linear-gradient(180deg,#FFA23D,#FF7A18);color:#1a0d02;font-family:inherit;padding:12px;transition:filter .15s,transform .15s}
+    .pw-continue:hover{filter:brightness(1.05)}
+    .pw-continue:active{transform:scale(.99)}
     .gate-input{width:100%;background:#0d0d0d;border:1.5px solid #2a2a2a;color:#fff;border-radius:14px;padding:14px 16px;font:500 15px 'Space Grotesk',sans-serif;outline:none;transition:border-color .2s}
     .gate-input:focus{border-color:#FF5C00}
     .gate-input::placeholder{color:#56524e}
@@ -433,65 +448,72 @@
     <!-- ═══════════════ PAYWALL / EMAIL GATE ═══════════════ -->
     <div class="gate-overlay" id="gate">
       <div class="gate-card">
-        <div style="font-size:40px;margin-bottom:6px;">🦊🔒</div>
-        <div class="display" id="gateTitle" style="color:#fff;font-size:24px;line-height:1.1;">Passe en Premium 🌮</div>
-        <p id="gateSub" style="color:#8a8580;font-size:14px;margin:10px 0 14px;line-height:1.5;">T'as cramé tes analyses gratuites du jour. Débloque les <span style="color:#FF7A33;font-weight:600;">analyses illimitées</span>, tout de suite.</p>
-        <div id="promoBanner" style="display:none;background:rgba(58,163,90,.12);border:1px solid rgba(58,163,90,.4);border-radius:12px;padding:10px 12px;margin:0 0 14px;color:#5fce86;font-size:13px;font-weight:600;">🎁 -10% appliqué sur le Mensuel</div>
+        <!-- Header -->
+        <div class="pw-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M7 10V8a5 5 0 0 1 10 0v2" stroke="#FF7A18" stroke-width="2" stroke-linecap="round"/><rect x="4.5" y="10" width="15" height="10" rx="3" stroke="#FF7A18" stroke-width="2"/></svg>
+        </div>
+        <div class="display" id="gateTitle" style="color:#ffffff;font-size:24px;line-height:1.1;font-weight:800;letter-spacing:-.02em;">Débloque tout le potentiel</div>
+        <p id="gateSub" style="color:#9a9aa4;font-size:15px;margin:10px auto 0;max-width:320px;line-height:1.55;">Personnalise ton renard, débloque les analyses illimitées et tous les tons secrets. Sans engagement.</p>
+        <div id="promoBanner" style="display:none;background:#0f2c1e;border:1px solid rgba(52,211,153,.4);border-radius:12px;padding:10px 12px;margin:16px 0 0;color:#34d399;font-size:13px;font-weight:600;">🎁 -10% appliqué sur le Mensuel</div>
 
-        <!-- Ce que Premium débloque -->
-        <div style="text-align:left;background:#0d0d0d;border:1px solid #232323;border-radius:16px;padding:14px 16px;margin:0 0 14px;">
-          <div style="color:#B5ABA0;font-size:13px;line-height:2.05;">
-            <div><span style="color:#FF7A33;">✓</span> Analyses <span style="color:#fff;font-weight:700;">illimitées</span>, tous les jours</div>
-            <div><span style="color:#FF7A33;">✓</span> Tons secrets : <span style="color:#fff;font-weight:600;">🌹 Romantique · 😈 Sexto · 🎭 Mystère</span></div>
-            <div><span style="color:#FF7A33;">✓</span> Renard <span style="color:#fff;font-weight:600;">personnalisé</span> (ton âge, ton objectif…)</div>
-            <div><span style="color:#FF7A33;">✓</span> Sur <span style="color:#fff;font-weight:600;">tous tes appareils</span> avec ton compte</div>
-          </div>
+        <!-- Features -->
+        <div style="margin-top:26px;text-align:left;">
+          <div class="pw-feat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#FF9A45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Analyses <b style="color:#fff;font-weight:700;">illimitées</b>, chaque jour</span></div>
+          <div class="pw-feat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#FF9A45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Tous les <b style="color:#fff;font-weight:700;">tons secrets</b> : Romantique, Mystère, Audace</span></div>
+          <div class="pw-feat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#FF9A45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Renard <b style="color:#fff;font-weight:700;">personnalisé</b> : âge, objectif, style de message</span></div>
         </div>
 
-        <div style="display:flex;flex-direction:column;gap:10px;">
-          <!-- Mensuel : mis en avant avec essai gratuit -->
-          <button class="plan-btn" data-plan="monthly" style="position:relative;border:none;border-radius:16px;cursor:pointer;background:linear-gradient(90deg,#FF5C00,#FF8A3D);color:#fff;font-family:inherit;font-weight:700;padding:13px 18px;text-align:left;">
-            <span style="position:absolute;top:-9px;right:14px;background:#111;color:#FF9A55;font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;border:1px solid rgba(255,138,61,.5);letter-spacing:.4px;">3 JOURS GRATUITS</span>
-            <span style="display:flex;align-items:center;justify-content:space-between;">
-              <span style="font-size:16px;">Mensuel</span>
-              <span style="font-size:16px;">9,99€<span style="font-weight:500;font-size:12px;opacity:.85;"> /mois</span></span>
+        <!-- Plans (sélection) -->
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:22px;">
+          <button class="plan-opt sel" data-plan="annual" data-cta="Passer au Premium annuel" data-sub="Un seul paiement de 69,99€ · ≈ 5,83€/mois">
+            <span class="plan-badge" style="color:#0f2c1e;background:#34d399;">-42%</span>
+            <span class="plan-dot"></span>
+            <span style="flex:1;min-width:0;">
+              <span style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;">
+                <span style="font-size:15.5px;font-weight:700;color:#fff;">Annuel</span>
+                <span style="font-size:15px;font-weight:600;color:#fff;">69,99€<span style="font-size:12px;color:#86868f;font-weight:500;"> /an</span></span>
+              </span>
+              <span style="display:block;font-size:12px;color:#86868f;margin-top:2px;">≈ 5,83€ / mois — facturé une fois</span>
             </span>
-            <span style="display:block;font-weight:500;font-size:11.5px;opacity:.85;margin-top:2px;">Essaie 3 jours gratuitement, annule quand tu veux</span>
           </button>
-          <!-- Annuel : l'ancrage prix -->
-          <button class="plan-btn" data-plan="annual" style="position:relative;border:1.5px solid rgba(255,92,0,.35);border-radius:16px;cursor:pointer;background:#0d0d0d;color:#fff;font-family:inherit;font-weight:600;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;">
-            <span style="position:absolute;top:-9px;right:14px;background:rgba(94,206,134,.15);color:#5fce86;font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;border:1px solid rgba(94,206,134,.4);">-42%</span>
-            <span style="font-size:15px;">Annuel</span>
-            <span style="font-size:15px;">69,99€<span style="font-weight:500;font-size:12px;color:#8a8580;"> /an · ≈5,83€/mois</span></span>
+
+          <button class="plan-opt" data-plan="monthly" data-cta="Commencer l'essai gratuit" data-sub="Puis 9,99€/mois · Résiliable à tout moment">
+            <span class="plan-badge" style="color:#2a1400;background:#FF9A45;">3 jours offerts</span>
+            <span class="plan-dot"></span>
+            <span style="flex:1;min-width:0;">
+              <span style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;">
+                <span style="font-size:15.5px;font-weight:700;color:#fff;">Mensuel</span>
+                <span style="font-size:15px;font-weight:600;color:#fff;">9,99€<span style="font-size:12px;color:#86868f;font-weight:500;"> /mois</span></span>
+              </span>
+              <span style="display:block;font-size:12px;color:#86868f;margin-top:2px;">3 jours gratuits, annule quand tu veux</span>
+            </span>
           </button>
-          <!-- Hebdo -->
-          <button class="plan-btn" data-plan="weekly" style="border:1.5px solid #2a2a2a;border-radius:16px;cursor:pointer;background:#0d0d0d;color:#fff;font-family:inherit;font-weight:600;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;">
-            <span style="font-size:15px;">Hebdo</span>
-            <span style="font-size:15px;">4,99€<span style="font-weight:500;font-size:12px;color:#8a8580;"> /semaine</span></span>
+
+          <button class="plan-opt" data-plan="weekly" data-cta="Passer au Premium" data-sub="4,99€/semaine · Résiliable à tout moment">
+            <span class="plan-dot"></span>
+            <span style="flex:1;min-width:0;">
+              <span style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;">
+                <span style="font-size:15.5px;font-weight:700;color:#fff;">Hebdo</span>
+                <span style="font-size:15px;font-weight:600;color:#fff;">4,99€<span style="font-size:12px;color:#86868f;font-weight:500;"> /semaine</span></span>
+              </span>
+            </span>
           </button>
         </div>
 
-        <p style="color:#8a8580;font-size:12px;margin:12px 0 0;">🛡️ <span style="color:#B5ABA0;font-weight:600;">Satisfait ou remboursé 7 jours</span> · 🔒 Stripe · annulable en 2 clics</p>
-        <p style="color:#56524e;font-size:11.5px;margin:6px 0 0;">⭐ Déjà 1 200+ dragueurs assistés</p>
+        <!-- CTA -->
+        <button class="pw-continue" id="gateContinue">
+          <span id="gateCtaLabel" style="display:block;font-size:16px;font-weight:700;">Passer au Premium annuel</span>
+          <span id="gateCtaSub" style="display:block;font-size:12px;font-weight:500;opacity:.75;margin-top:2px;">Un seul paiement de 69,99€ · ≈ 5,83€/mois</span>
+        </button>
+        <div id="gateError" style="display:none;color:#ff8a80;font-size:12.5px;margin-top:10px;"></div>
 
-        <!-- Bonus email : +2 analyses gratuites (1 fois par email et par appareil) -->
-        <div id="bonusWrap" style="display:none;">
-          <div style="display:flex;align-items:center;gap:10px;margin:16px 0 12px;">
-            <span style="flex:1;height:1px;background:#2a2a2a;"></span>
-            <span style="color:#56524e;font-size:11.5px;">ou</span>
-            <span style="flex:1;height:1px;background:#2a2a2a;"></span>
-          </div>
-          <p style="color:#8a8580;font-size:13px;margin:0 0 10px;">🎁 Ton email = <span style="color:#FF7A33;font-weight:600;">+2 analyses offertes</span>, tout de suite</p>
-          <form id="bonusForm" style="display:flex;gap:8px;">
-            <input class="gate-input" id="bonusEmail" type="email" required placeholder="ton@email.fr" autocomplete="email" style="flex:1;min-width:0;">
-            <button type="submit" style="flex-shrink:0;padding:0 18px;background:rgba(255,92,0,.15);border:1.5px solid rgba(255,92,0,.4);color:#FF7A33;font-family:inherit;font-weight:700;font-size:14px;border-radius:14px;cursor:pointer;">+2</button>
-          </form>
-          <div id="bonusMsg" style="display:none;font-size:12.5px;margin-top:10px;"></div>
+        <!-- Footer -->
+        <div style="display:flex;align-items:center;justify-content:center;gap:9px;margin-top:16px;flex-wrap:wrap;">
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#a2a2ab;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6l7-3z" stroke="#5aa9ff" stroke-width="2" stroke-linejoin="round"/></svg>Remboursé 7 jours</span>
+          <span style="width:3px;height:3px;border-radius:999px;background:#3a3a40;"></span>
+          <button id="gateLogin" style="background:none;border:none;font-family:inherit;font-size:12.5px;font-weight:700;color:#FF9A45;cursor:pointer;text-decoration:none;">Se connecter</button>
         </div>
-
-        <div id="gateError" style="display:none;color:#ff6b5c;font-size:12.5px;margin-top:10px;"></div>
-        <button id="gateLogin" style="margin-top:12px;background:none;border:none;color:#8a8580;font-family:inherit;font-size:13px;cursor:pointer;">Déjà Premium ? <span style="color:#FF7A33;font-weight:600;text-decoration:underline;">Connecte-toi</span></button>
-        <button id="gateClose" style="margin-top:4px;background:none;border:none;color:#56524e;font-family:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline;">Revenir plus tard</button>
+        <button id="gateClose" style="margin-top:14px;background:none;border:none;color:#6c6c75;font-family:inherit;font-size:12.5px;cursor:pointer;">Revenir plus tard</button>
       </div>
     </div>
 
@@ -821,23 +843,24 @@
     const gate=document.getElementById('gate');
     // Code promo cadeau (?promo=CODE venant de l'email -10%)
     let promoCode=new URLSearchParams(location.search).get('promo')||null;
+    let selectedPlan='annual'; // plan mis en avant par défaut
     function openGate(context){
       if(quota.isPremium)return;
       const title=document.getElementById('gateTitle'), sub=document.getElementById('gateSub');
       if(context==='prefs'){
-        title.textContent='Désolé, c\'est du Premium 🔒';
-        sub.innerHTML='Personnaliser le renard (âge, objectif, instructions perso…) est réservé aux membres <span style="color:#FF7A33;font-weight:600;">Premium</span>. Débloque tout, tout de suite.';
+        title.textContent='Réservé au Premium 🔒';
+        sub.innerHTML='Personnaliser le renard (âge, objectif, instructions perso…) est réservé aux membres <b style="color:#FF9A45;">Premium</b>. Débloque tout, tout de suite.';
       }else if(context==='tone'){
-        title.textContent='Les tons secrets 😈';
-        sub.innerHTML='<span style="color:#FF7A33;font-weight:600;">🌹 Romantique · 😈 Sexto · 🎭 Mystère</span> — les répliques les plus puissantes du renard sont réservées aux Premium.';
+        title.textContent='Les tons secrets 🔒';
+        sub.innerHTML='<b style="color:#FF9A45;">Romantique · Mystère · Audace</b> — les répliques les plus puissantes du renard sont réservées aux Premium.';
       }else{
-        title.textContent='Passe en Premium 🌮';
-        sub.innerHTML='T\'as cramé tes analyses gratuites du jour. Débloque les <span style="color:#FF7A33;font-weight:600;">analyses illimitées</span>, tout de suite.';
+        title.textContent='Débloque tout le potentiel';
+        sub.innerHTML='Personnalise ton renard, débloque les analyses illimitées et tous les tons secrets. Sans engagement.';
       }
-      // le bonus email (+2 analyses) n'a pas de sens dans le contexte "perso" → on le cache
-      const showBonus = context!=='prefs' && context!=='tone' && !quota.emailBonusClaimed;
-      document.getElementById('bonusWrap').style.display = showBonus ? 'block' : 'none';
-      document.getElementById('promoBanner').style.display = promoCode ? 'block' : 'none';
+      // le cadeau -10% s'applique au Mensuel → on pré-sélectionne le mensuel, sinon l'annuel (recommandé)
+      const promoOn=Boolean(promoCode);
+      document.getElementById('promoBanner').style.display=promoOn?'block':'none';
+      selectPlan(document.querySelector('.plan-opt[data-plan="'+(promoOn?'monthly':'annual')+'"]'));
       gate.classList.add('show');
       track('paywall_view',{context:context||'quota'});
     }
@@ -859,29 +882,16 @@
     document.getElementById('gateClose').addEventListener('click',()=>gate.classList.remove('show'));
     document.getElementById('gateLogin').addEventListener('click',()=>{gate.classList.remove('show');openAuth();});
 
-    // Bonus email : +2 analyses (vérifié côté serveur : 1 fois par email ET par appareil)
-    document.getElementById('bonusForm').addEventListener('submit',async e=>{
-      e.preventDefault();
-      const msg=document.getElementById('bonusMsg');
-      const btn=e.target.querySelector('button');btn.disabled=true;btn.textContent='…';
-      try{
-        const r=await fetch('/api/bonus-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:document.getElementById('bonusEmail').value})});
-        const data=await r.json();
-        if(data.ok){
-          if(data.status)applyQuota(data.status);
-          e.target.style.display='none';
-          msg.style.color='#5fce86';msg.textContent='🎉 +2 analyses ajoutées ! Go.';msg.style.display='block';
-          setTimeout(()=>{gate.classList.remove('show');},1400);
-        }else{
-          if(data.status)applyQuota(data.status);
-          msg.style.color='#ff6b5c';msg.textContent=data.error||'Impossible d\'ajouter le bonus.';msg.style.display='block';
-          btn.disabled=false;btn.textContent='+2';
-        }
-      }catch(err){
-        msg.style.color='#ff6b5c';msg.textContent='Erreur réseau, réessaie.';msg.style.display='block';
-        btn.disabled=false;btn.textContent='+2';
-      }
-    });
+    // Paywall : sélection d'un plan (surligne la carte + met à jour le bouton continuer)
+    function selectPlan(el){
+      if(!el)return;
+      document.querySelectorAll('.plan-opt').forEach(p=>p.classList.remove('sel'));
+      el.classList.add('sel');
+      selectedPlan=el.dataset.plan;
+      document.getElementById('gateCtaLabel').textContent=el.dataset.cta;
+      document.getElementById('gateCtaSub').textContent=el.dataset.sub;
+    }
+    document.querySelectorAll('.plan-opt').forEach(p=>p.addEventListener('click',()=>{selectPlan(p);track('plan_select',{plan:p.dataset.plan});}));
 
     // Code founder dans l'URL (?founder=CODE) : accès illimité pour les premiers inscrits
     (async function handleFounder(){
@@ -903,23 +913,21 @@
     // Arrivée via le lien cadeau -10% : on ouvre direct le paywall (promo pré-appliquée)
     if(promoCode){(function waitQuota(){ if(quota.remaining!=null){ openGate(); } else setTimeout(waitQuota,150); })();}
 
-    // Clic sur une offre → création de la session Stripe → redirection vers le checkout
-    document.querySelectorAll('.plan-btn').forEach(btn=>{
-      btn.addEventListener('click',async()=>{
-        const plan=btn.dataset.plan;
-        track('plan_click',{plan});
-        const err=document.getElementById('gateError');err.style.display='none';
-        const label=btn.innerHTML;btn.style.opacity='.6';btn.style.pointerEvents='none';
-        try{
-          const r=await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({plan,promo:promoCode})});
-          const data=await r.json();
-          if(data.url){window.location.href=data.url;return;} // → Stripe Checkout
-          throw new Error(data.error||'Erreur');
-        }catch(e){
-          err.textContent="Oups, le paiement n'a pas pu démarrer. Réessaie.";err.style.display='block';
-          btn.style.opacity='1';btn.style.pointerEvents='auto';btn.innerHTML=label;
-        }
-      });
+    // Bouton "Continuer" → crée la session Stripe pour le plan sélectionné → redirection
+    document.getElementById('gateContinue').addEventListener('click',async()=>{
+      track('plan_click',{plan:selectedPlan});
+      const btn=document.getElementById('gateContinue'), lbl=document.getElementById('gateCtaLabel');
+      const prev=lbl.textContent; lbl.textContent='Un instant…'; btn.style.pointerEvents='none'; btn.style.opacity='.75';
+      const err=document.getElementById('gateError'); err.style.display='none';
+      try{
+        const r=await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({plan:selectedPlan,promo:promoCode})});
+        const data=await r.json();
+        if(data.url){window.location.href=data.url;return;} // → Stripe Checkout
+        throw new Error(data.error||'Erreur');
+      }catch(e){
+        err.textContent="Le paiement n'a pas pu démarrer. Réessaie."; err.style.display='block';
+        lbl.textContent=prev; btn.style.pointerEvents='auto'; btn.style.opacity='1';
+      }
     });
 
     // Retour depuis Stripe : ?paid=1 → on confirme et on débloque l'accès illimité

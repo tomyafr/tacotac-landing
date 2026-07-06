@@ -33,8 +33,8 @@ const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
   : null;
 const PRICES = { weekly: process.env.STRIPE_PRICE_WEEKLY, monthly: process.env.STRIPE_PRICE_MONTHLY, annual: process.env.STRIPE_PRICE_ANNUAL };
-// Essai gratuit : le mensuel et l'annuel démarrent par 3 jours offerts (l'hebdo reste direct)
-const TRIAL_DAYS = { monthly: 3, annual: 3 };
+// Essai gratuit : seul le mensuel démarre par 3 jours offerts (annuel = paiement direct, hebdo direct)
+const TRIAL_DAYS = { monthly: 3 };
 
 // ⚠️ Le webhook Stripe DOIT recevoir le corps BRUT (non parsé) pour vérifier la signature.
 // On le déclare donc AVANT express.json().
