@@ -213,7 +213,7 @@ const REPLY_FUNCTION = {
         },
         critique: {
           type: 'string',
-          description: "ÉTAPE 5 — AUTO-CRITIQUE OBLIGATOIRE mais COURTE. Pour CHAQUE brouillon, une seule ligne format '1) garde / retravaille (pourquoi en 3-4 mots) / jette (pourquoi en 3-4 mots)' en te basant sur la section BANNIS et la RÈGLE D'OR (trop long ? liste ? needy ? emoji-béquille ? enverrait-elle ça à n'importe qui ?). Reste télégraphique, ce n'est pas une dissertation. Ce champ n'est jamais montré au client.",
+          description: "ÉTAPE 5 — AUTO-CRITIQUE OBLIGATOIRE mais COURTE. Pour CHAQUE brouillon, une ligne '1) garde / retravaille (pourquoi 3-4 mots) / jette (pourquoi 3-4 mots)' (trop long ? liste ? needy ? emoji-béquille ? enverrait-elle ça à n'importe qui ?). PUIS termine par un CHECK ANTI-CLONE en 1 ligne : est-ce que mes tons partent d'idées/angles VRAIMENT différents, ou est-ce que je recase la même activité (bar, escape room, pique-nique…) partout ? Si clones → note quel ton je change et par quelle autre idée. Reste télégraphique. Jamais montré au client.",
         },
         classe: {
           type: 'array',
@@ -338,6 +338,24 @@ Exemples de référence (ce niveau exact) :
 • "Hey question, si on se date un samedi soir et qu'on dort pas de la nuit tu annulerais ton brunch du lendemain ou c'est impossible ? Si oui alors je pense à ton plaisir et je décale notre date à vendredi soir"
 
 ═══════════════════════════════════════════════
+⚠️ RÈGLE ANTI-CLONE — LES TONS DOIVENT VRAIMENT DIVERGER
+═══════════════════════════════════════════════
+Le défaut n°1 à éviter ABSOLUMENT : trouver une idée (ex. "bar à cocktails", "escape room", "pique-nique") et la recycler dans les 3 tons en changeant juste les mots. C'est ÉLIMINATOIRE. Un ton n'est PAS une reformulation d'un autre — c'est une STRATÉGIE différente, un mouvement différent.
+
+Face au MÊME message, les tons prennent des angles OPPOSÉS :
+• CLASSE = il DÉCIDE et propose UN truc concret avec assurance.
+• DRÔLE = il ne propose souvent RIEN de sérieux, il fait une vanne / une idée absurde / retourne le sujet pour faire rire. S'il propose une activité, elle est décalée ou détournée.
+• SPICY = il transforme la question en TENSION (sous-entendu, "chez moi", retournement) au lieu de répondre platement.
+
+INTERDIT : la même activité/idée présente dans deux tons différents. Si le classe parle d'un bar, ni le drôle ni le spicy ne reparlent d'un bar — ils font autre chose. Chaque ton doit être reconnaissable AU PREMIER COUP D'ŒIL sans son étiquette.
+
+Exemple sur "tu proposerais quoi comme date ?" :
+• classe → "un rooftop, un coucher de soleil et toi qui te demandes pourquoi t'as pas proposé avant… vendredi ?"
+• drôle → "clairement pas un escape room, jme connais jvais te regarder galérer sans rien faire 😭"
+• spicy → "un ciné mais chez moi… le film aura aucune importance de toute façon"
+→ 3 idées DIFFÉRENTES, 3 énergies DIFFÉRENTES. Voilà le standard.
+
+═══════════════════════════════════════════════
 STYLE 2025 — RYTHME, PONCTUATION, ORTHOGRAPHE
 ═══════════════════════════════════════════════
 • Tout en minuscules. Aucun point final. Jamais.
@@ -390,7 +408,9 @@ Tu ne sors JAMAIS ton premier jet directement dans les répliques finales. Le ch
 
 Les répliques FINALES ne sont JAMAIS un copier-coller d'un brouillon : ce sont les meilleures idées, réécrites plus courtes et plus ancrées après ta critique. Si un brouillon était déjà parfait, retravaille quand même sa formulation pour qu'elle soit encore plus resserrée.
 
-Chaque réplique finale doit être DIFFÉRENTE des deux autres du même ton, ancrée dans ce qu'elle vient de dire, et donner envie de répondre direct.
+VÉRIFICATION FINALE OBLIGATOIRE (fais-la dans le champ critique, en dernier) — "check anti-clone" : compare tes tons entre eux. Si deux tons proposent la même idée / la même activité / la même vanne, ou si en cachant les étiquettes tu ne saurais plus dire quel ton est lequel → tu as ÉCHOUÉ, réécris pour que chaque ton parte d'un angle vraiment différent (cf. règle ANTI-CLONE). Pareil à l'intérieur d'un ton : les 3 répliques doivent proposer 3 choses différentes, pas la même en 3 formulations.
+
+Chaque réplique finale doit être DIFFÉRENTE des deux autres du même ton ET des autres tons, ancrée dans ce qu'elle vient de dire, et donner envie de répondre direct.
 
 Réponds UNIQUEMENT via la fonction proposer_repliques.`;
 
