@@ -81,6 +81,19 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
 // screenshots en base64 → il faut une limite de body généreuse
 app.use(express.json({ limit: '12mb' }));
 app.use(cookieParser(process.env.COOKIE_SECRET || 'dev-secret-change-me'));
+
+// ── PWA : service worker et manifest servis AVANT le static pour contrôler les en-têtes ──
+// no-cache sur le SW : sinon le navigateur peut garder l'ancien worker 24h après un déploiement.
+app.get('/sw.js', (req, res) => {
+  res.set('Cache-Control', 'no-cache');
+  res.sendFile(path.join(__dirname, 'public', 'sw.js'));
+});
+app.get('/manifest.json', (req, res) => {
+  res.set('Cache-Control', 'no-cache');
+  res.type('application/manifest+json');
+  res.sendFile(path.join(__dirname, 'public', 'manifest.json'));
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Fin de période d'un abonnement (compatible anciennes/nouvelles versions d'API Stripe).

@@ -8,6 +8,14 @@
   <meta name="theme-color" content="#0E0E0E">
   <link rel="icon" href="assets/fox_chill.png">
 
+  <!-- PWA : installable sur l'écran d'accueil -->
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tacotac">
+
   <!-- Google Analytics : tunnel de conversion (app_open → analyze → paywall → plan → checkout) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-14KLWFZXYY"></script>
   <script>
@@ -208,6 +216,17 @@
     .gate-input:focus{border-color:#FF5C00}
     .gate-input::placeholder{color:#56524e}
 
+    /* ── PWA : bouton installer + guide iOS ── */
+    .install-btn{display:none;width:100%;margin-top:12px;position:relative;z-index:2;align-items:center;justify-content:center;gap:8px;height:46px;border-radius:14px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:600;color:#FF7A33;background:rgba(255,92,0,.07);border:1px solid rgba(255,92,0,.35);transition:background .2s,border-color .2s,transform .15s}
+    .install-btn:hover{background:rgba(255,92,0,.12);border-color:rgba(255,92,0,.55)}
+    .install-btn:active{transform:scale(.98)}
+    .ios-step{display:flex;align-items:center;gap:13px;text-align:left;background:#141414;border:1px solid #262626;border-radius:14px;padding:13px 15px;margin-top:10px}
+    .ios-step .num{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:rgba(255,92,0,.14);color:#FF7A33;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center}
+    .ios-step .ic{flex-shrink:0;width:34px;height:34px;border-radius:9px;background:#1d1d1d;border:1px solid #2e2e2e;display:flex;align-items:center;justify-content:center}
+    .ios-step p{margin:0;color:#d6d1cb;font-size:13.5px;line-height:1.45}
+    @keyframes tt-bounce{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,9px)}}
+    .ios-arrow{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);animation:tt-bounce 1.1s ease-in-out infinite;pointer-events:none;filter:drop-shadow(0 4px 10px rgba(255,92,0,.45))}
+
     @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition-duration:.01ms!important}}
   </style>
 </head>
@@ -276,6 +295,12 @@
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6e6a66" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
         Analyse privée · rien n'est stocké
       </div>
+
+      <!-- PWA : visible seulement si installable (Android/Chrome) ou sur iPhone (guide) -->
+      <button class="install-btn" id="installBtn">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2.5"></rect><path d="M12 18h.01"></path></svg>
+        Installer l'app sur ton tel
+      </button>
     </section>
 
     <!-- ═══════════════ ÉCRAN 2 — ANALYSE ═══════════════ -->
@@ -474,6 +499,32 @@
 
       <button class="btn-secondary" id="bioReset" style="margin-top:14px;">🔄 Réessayer avec une autre bio</button>
     </section>
+
+    <!-- ═══════════════ GUIDE INSTALLATION iOS ═══════════════ -->
+    <div class="gate-overlay" id="iosGuide">
+      <div class="gate-card" style="max-width:340px;">
+        <img src="/assets/icon-192.png" alt="Tacotac" style="width:64px;height:64px;border-radius:16px;border:1px solid #2a2a2a;margin:0 auto;display:block;">
+        <div class="display" style="color:#fff;font-size:22px;line-height:1.1;margin-top:14px;">Installe Tacotac</div>
+        <p style="color:#8a8580;font-size:13.5px;margin:8px 0 6px;line-height:1.5;">2 étapes, 10 secondes — et le renard vit sur ton écran d'accueil.</p>
+
+        <div class="ios-step">
+          <span class="num">1</span>
+          <span class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#4da3ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"></path><path d="m8 7 4-4 4 4"></path><path d="M8 11H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-2"></path></svg></span>
+          <p>Appuie sur <b style="color:#fff;">Partager</b> dans la barre de Safari, <b style="color:#fff;">juste en dessous</b> ⤵</p>
+        </div>
+        <div class="ios-step">
+          <span class="num">2</span>
+          <span class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#FF7A33" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"></rect><path d="M12 8v8"></path><path d="M8 12h8"></path></svg></span>
+          <p>Choisis <b style="color:#fff;">« Sur l'écran d'accueil »</b> puis <b style="color:#fff;">Ajouter</b></p>
+        </div>
+
+        <button id="iosGuideClose" style="margin-top:16px;width:100%;padding:13px;background:#141414;border:1.5px solid #2a2a2a;color:#8a8580;font-family:inherit;font-weight:600;font-size:14px;border-radius:14px;cursor:pointer;">J'ai compris</button>
+      </div>
+      <!-- flèche animée qui pointe vers le bouton Partager de Safari (barre du bas) -->
+      <div class="ios-arrow">
+        <svg width="40" height="46" viewBox="0 0 24 24" fill="none" stroke="#FF5C00" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v15"></path><path d="m6 13 6 6 6-6"></path></svg>
+      </div>
+    </div>
 
     <!-- ═══════════════ HISTORIQUE ═══════════════ -->
     <div class="prefs-overlay" id="hist">
@@ -1465,6 +1516,51 @@
         history.replaceState({},'',location.pathname);
       }
     })();
+
+    // ══════════════ PWA : service worker + bouton "Installer l'app" ══════════════
+    if('serviceWorker' in navigator){
+      window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+    }
+    const installBtn=document.getElementById('installBtn');
+    const iosGuide=document.getElementById('iosGuide');
+    let deferredInstall=null; // l'événement beforeinstallprompt mis de côté (Android/Chrome)
+    const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isStandalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+
+    if(!isStandalone){
+      // Android/Chrome : le navigateur dit quand l'app est installable → on montre NOTRE bouton
+      window.addEventListener('beforeinstallprompt',e=>{
+        e.preventDefault(); // pas de mini-bannière navigateur : on garde la main
+        deferredInstall=e;
+        installBtn.style.display='flex';
+        track('install_available');
+      });
+      // iOS/Safari : pas de beforeinstallprompt → bouton visible, il ouvre le guide 2 étapes
+      if(isIOS)installBtn.style.display='flex';
+    }
+
+    installBtn.addEventListener('click',async()=>{
+      track('install_click',{platform:deferredInstall?'android':'ios'});
+      if(deferredInstall){
+        deferredInstall.prompt(); // popup natif d'installation
+        try{
+          const {outcome}=await deferredInstall.userChoice;
+          track('install_choice',{outcome});
+          if(outcome==='accepted')installBtn.style.display='none';
+        }catch(e){}
+        deferredInstall=null;
+      }else if(isIOS){
+        iosGuide.classList.add('show');
+        track('ios_guide_view');
+      }
+    });
+    window.addEventListener('appinstalled',()=>{
+      installBtn.style.display='none';
+      toast('🦊 Tacotac est installé sur ton écran d\'accueil !');
+      track('app_installed');
+    });
+    document.getElementById('iosGuideClose').addEventListener('click',()=>iosGuide.classList.remove('show'));
+    iosGuide.addEventListener('click',e=>{if(e.target===iosGuide)iosGuide.classList.remove('show');});
 
     // ══════════════ LANCEMENT ══════════════
     analyzeBtn.addEventListener('click',()=>{
