@@ -81,6 +81,12 @@ db.exec(`
     created_at INTEGER NOT NULL,
     expires_at INTEGER NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS train_usage (
+    device_id TEXT NOT NULL,
+    day       TEXT NOT NULL,                              -- 'YYYY-MM-DD' (Europe/Paris)
+    count     INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (device_id, day)
+  );
   CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 `);
 
@@ -222,6 +228,24 @@ export function consumeQuota(deviceId, ip, account = null) {
   return { allowed: true, deviceId: user.device_id, plan, used: newUsed, limit,
            remaining: Math.max(0, limit - newUsed) + bonusLeft, isPremium,
            emailBonusClaimed: Boolean(user.email_bonus_claimed) };
+}
+
+// ── Quota du Mode Entraînement (messages de chat IA, premium uniquement) ──
+// Séparé du quota d'analyses : une session de drague fait 20-40 messages, on ne veut
+// pas qu'elle vide les 25 analyses/jour. Texte seul → ~10x moins cher qu'une analyse image.
+export const TRAIN_DAILY_LIMIT = 150; // messages/jour, large pour un humain, bloque un script
+const qGetTrainUsage = db.prepare('SELECT count FROM train_usage WHERE device_id = ? AND day = ?');
+const qUpsertTrainUsage = db.prepare(`
+  INSERT INTO train_usage (device_id, day, count) VALUES (?, ?, 1)
+  ON CONFLICT(device_id, day) DO UPDATE SET count = count + 1
+`);
+export function consumeTrainQuota(deviceId) {
+  const user = getOrCreateUser(deviceId);
+  const row = qGetTrainUsage.get(user.device_id, parisDay());
+  const used = row ? row.count : 0;
+  if (used >= TRAIN_DAILY_LIMIT) return { allowed: false, used, limit: TRAIN_DAILY_LIMIT };
+  qUpsertTrainUsage.run(user.device_id, parisDay());
+  return { allowed: true, used: used + 1, limit: TRAIN_DAILY_LIMIT };
 }
 
 // ── Bonus email : +2 analyses si email jamais utilisé (1 fois par email ET par appareil) ──

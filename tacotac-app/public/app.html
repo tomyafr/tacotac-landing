@@ -229,6 +229,32 @@
     @keyframes tt-bounce{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,9px)}}
     .ios-arrow{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);animation:tt-bounce 1.1s ease-in-out infinite;pointer-events:none;filter:drop-shadow(0 4px 10px rgba(255,92,0,.45))}
 
+    /* ── Mode Entraînement : sélection des profils + messagerie ── */
+    .persona-card{display:flex;align-items:center;gap:13px;background:#141414;border:1px solid #232323;border-radius:18px;padding:14px 15px;cursor:pointer;transition:border-color .2s,transform .15s;text-align:left;width:100%;font-family:inherit}
+    .persona-card:hover{border-color:#3a3a40}
+    .persona-card:active{transform:scale(.99)}
+    .p-avatar{position:relative;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .p-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+    .lvl-pill{font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.3px;white-space:nowrap}
+    #screen-8{padding:env(safe-area-inset-top) 0 0}
+    .chat-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #1c1c1c;background:#101010;flex-shrink:0}
+    .chat-scroll{flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:7px}
+    .chat-scroll::-webkit-scrollbar{width:0}
+    .msg{max-width:78%;padding:10px 14px;border-radius:18px;font-size:14.5px;line-height:1.45;word-break:break-word;animation:tt-up .22s ease both}
+    .msg.her{align-self:flex-start;background:#1e1e20;color:#ECEAE6;border-bottom-left-radius:6px}
+    .msg.me{align-self:flex-end;background:#FF5C00;color:#fff;border-bottom-right-radius:6px}
+    .sys-note{align-self:center;color:#56524e;font-size:11.5px;text-align:center;padding:6px 0}
+    .typing-bubble{align-self:flex-start;background:#1e1e20;border-radius:18px;border-bottom-left-radius:6px;padding:14px 16px;display:flex;gap:5px;animation:tt-up .22s ease both}
+    .typing-bubble .dot{width:6px;height:6px}
+    .chat-inputbar{display:flex;gap:8px;align-items:center;padding:10px 14px calc(12px + env(safe-area-inset-bottom));border-top:1px solid #1c1c1c;background:#101010;flex-shrink:0}
+    .chat-input{flex:1;background:#1a1a1a;border:1.5px solid #2a2a2a;border-radius:22px;color:#fff;padding:11px 16px;font:500 14.5px 'Space Grotesk',sans-serif;outline:none;min-width:0}
+    .chat-input:focus{border-color:rgba(255,92,0,.5)}
+    .chat-input:disabled{opacity:.45}
+    .chat-send{width:44px;height:44px;border-radius:50%;border:none;background:#FF5C00;color:#fff;font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:opacity .2s}
+    .chat-send:disabled{opacity:.35;cursor:not-allowed}
+    .heart-meter{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:#FF7A33;background:rgba(255,92,0,.1);border:1px solid rgba(255,92,0,.3);border-radius:20px;padding:5px 10px;white-space:nowrap;transition:border-color .3s}
+    .chat-iconbtn{width:34px;height:34px;border-radius:50%;background:#161616;border:1px solid #262626;color:#8a8580;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
     /* ── Modale de notification maison (remplace les alert() natifs) ── */
     @keyframes tt-pop{0%{opacity:0;transform:scale(.4) translateY(10px)}60%{opacity:1;transform:scale(1.08) translateY(0)}100%{opacity:1;transform:scale(1)}}
     .celeb-icon{width:76px;height:76px;margin:0 auto;display:flex;align-items:center;justify-content:center;animation:tt-pop .5s cubic-bezier(.34,1.56,.64,1) both}
@@ -266,6 +292,20 @@
         <button class="tone-btn" data-mode="coach">🔍 Coach <span class="mode-lock">🔒</span></button>
         <button class="tone-btn" data-mode="bio">📝 Bio <span class="mode-lock">🔒</span></button>
       </div>
+
+      <!-- Mode Entraînement : drague 3 IA, décroche le date (premium) -->
+      <button id="trainOpen" style="margin-top:12px;width:100%;display:flex;align-items:center;gap:12px;background:#141014;border:1px solid rgba(255,92,0,.3);border-radius:16px;padding:12px 15px;cursor:pointer;font-family:inherit;text-align:left;position:relative;z-index:2;transition:border-color .2s;">
+        <span style="display:flex;align-items:center;">
+          <span style="width:32px;height:32px;border-radius:50%;background:rgba(52,211,153,.16);border:1.5px solid rgba(52,211,153,.5);display:flex;align-items:center;justify-content:center;font-size:15px;">🌸</span>
+          <span style="width:32px;height:32px;border-radius:50%;background:rgba(255,176,32,.16);border:1.5px solid rgba(255,176,32,.5);display:flex;align-items:center;justify-content:center;font-size:15px;margin-left:-9px;">😏</span>
+          <span style="width:32px;height:32px;border-radius:50%;background:rgba(255,107,92,.16);border:1.5px solid rgba(255,107,92,.5);display:flex;align-items:center;justify-content:center;font-size:15px;margin-left:-9px;">🧊</span>
+        </span>
+        <span style="flex:1;min-width:0;">
+          <span style="display:block;color:#fff;font-size:14px;font-weight:700;">Mode Entraînement <span class="mode-lock" style="font-size:11px;">🔒</span></span>
+          <span style="display:block;color:#8a8580;font-size:11.5px;margin-top:2px;">3 filles IA, 3 niveaux · objectif : décrocher le date 🎯</span>
+        </span>
+        <span style="color:#FF7A33;font-size:18px;font-weight:700;">›</span>
+      </button>
 
       <div style="margin-top:20px;position:relative;z-index:2;">
         <div class="display" id="heroTitle" style="color:#fff;font-size:30px;line-height:1.1;">Balance ton <span style="color:#FF5C00;">match</span>.</div>
@@ -518,6 +558,77 @@
       <button class="btn-secondary" id="bioReset" style="margin-top:14px;">🔄 Réessayer avec une autre bio</button>
     </section>
 
+    <!-- ═══════════════ ÉCRAN 7 — ENTRAÎNEMENT : CHOIX DU PROFIL ═══════════════ -->
+    <section class="screen" id="screen-7">
+      <div class="glow-top"></div>
+      <div class="tt-head">
+        <div class="tt-logo">
+          <button id="trainBack" class="chat-iconbtn" title="Retour">‹</button>
+          <div style="color:#fff;font-size:17px;font-weight:700;letter-spacing:-.4px;">Entraînement</div>
+        </div>
+        <div class="badge-pill">🎯 Objectif : le date</div>
+      </div>
+
+      <div style="margin-top:20px;position:relative;z-index:2;">
+        <div class="display" style="color:#fff;font-size:26px;line-height:1.1;">Choisis ton <span style="color:#FF5C00;">match</span>.</div>
+        <div style="color:#8a8580;font-size:13.5px;margin-top:8px;line-height:1.5;">Elles répondent comme de vraies filles — avec leur caractère, leur rythme et leur mémoire. Décroche un rendez-vous concret pour gagner. Ce que tu apprends ici, tu le ressors sur tes vrais matchs.</div>
+      </div>
+
+      <div id="personaList" style="margin-top:18px;display:flex;flex-direction:column;gap:11px;position:relative;z-index:2;"></div>
+
+      <div style="display:flex;align-items:center;justify-content:center;gap:7px;color:#6e6a66;font-size:11.5px;margin-top:16px;position:relative;z-index:2;">
+        💡 leur profil (bio, centres d'intérêt) cache souvent la clé
+      </div>
+    </section>
+
+    <!-- ═══════════════ ÉCRAN 8 — ENTRAÎNEMENT : CHAT ═══════════════ -->
+    <section class="screen" id="screen-8">
+      <div class="chat-head">
+        <button id="chatBack" class="chat-iconbtn" title="Retour">‹</button>
+        <button id="chatProfileBtn" style="display:flex;align-items:center;gap:10px;background:none;border:none;cursor:pointer;font-family:inherit;text-align:left;flex:1;min-width:0;padding:0;">
+          <span class="p-avatar" id="chatAvatar" style="width:38px;height:38px;font-size:17px;"></span>
+          <span style="min-width:0;">
+            <span id="chatName" style="display:block;color:#fff;font-size:14.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</span>
+            <span id="chatStatus" style="display:block;color:#56b26a;font-size:11px;margin-top:1px;">en ligne</span>
+          </span>
+        </button>
+        <div class="heart-meter" id="chatHeart">❤️ —</div>
+        <button id="chatReset" class="chat-iconbtn" title="Recommencer">↻</button>
+      </div>
+      <div class="chat-scroll" id="chatScroll"></div>
+      <div class="chat-inputbar">
+        <input class="chat-input" id="chatInput" maxlength="300" placeholder="Écris ton message…" autocomplete="off">
+        <button class="chat-send" id="chatSend">➤</button>
+      </div>
+    </section>
+
+    <!-- ═══════════════ FIN D'ENTRAÎNEMENT (victoire / unmatch) ═══════════════ -->
+    <div class="gate-overlay" id="trainEnd">
+      <div class="gate-card" style="max-width:340px;">
+        <div class="celeb-icon" id="trainEndIcon">
+          <img id="trainEndFox" src="assets/fox_chill.png" alt="" style="display:none;">
+          <span class="em" id="trainEndEmoji" style="display:none;"></span>
+        </div>
+        <div class="display" id="trainEndTitle" style="color:#fff;font-size:22px;line-height:1.15;margin-top:14px;"></div>
+        <p id="trainEndMsg" style="color:#8a8580;font-size:14px;margin:9px 0 0;line-height:1.55;"></p>
+        <button class="cta" id="trainEndReplay" style="margin-top:18px;height:50px;font-size:15px;">↻ Rejouer</button>
+        <button class="btn-secondary" id="trainEndOther" style="margin-top:10px;">Choisir un autre profil</button>
+      </div>
+    </div>
+
+    <!-- ═══════════════ PROFIL DU PERSONA (bio + centres d'intérêt) ═══════════════ -->
+    <div class="gate-overlay" id="personaProfile">
+      <div class="gate-card" style="max-width:330px;">
+        <div class="p-avatar" id="ppAvatar" style="width:92px;height:92px;font-size:40px;margin:0 auto;"></div>
+        <div class="display" id="ppName" style="color:#fff;font-size:23px;line-height:1.1;margin-top:14px;"></div>
+        <div style="margin-top:8px;"><span class="lvl-pill" id="ppLevel"></span></div>
+        <p id="ppBio" style="color:#B5ABA0;font-size:14px;margin:14px 0 0;line-height:1.55;"></p>
+        <div class="chips" id="ppTags" style="justify-content:center;margin-top:14px;"></div>
+        <p style="color:#56524e;font-size:11.5px;margin:16px 0 0;line-height:1.5;">🦊 conseil du renard : rebondis sur ce qu'elle aime, pas sur ses photos.</p>
+        <button id="ppClose" style="display:block;margin:16px auto 0;background:none;border:none;color:#56524e;font-family:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline;">Fermer</button>
+      </div>
+    </div>
+
     <!-- ═══════════════ GUIDE INSTALLATION iOS ═══════════════ -->
     <div class="gate-overlay" id="iosGuide">
       <div class="gate-card" style="max-width:340px;">
@@ -700,7 +811,7 @@
         <div style="margin-top:26px;text-align:left;">
           <div class="pw-feat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#FF9A45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Analyses <b style="color:#fff;font-weight:700;">illimitées</b>, chaque jour</span></div>
           <div class="pw-feat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#FF9A45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Tous les <b style="color:#fff;font-weight:700;">tons secrets</b> : Romantique, Sexto, Mystère</span></div>
-          <div class="pw-feat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#FF9A45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span>3 outils exclusifs : <b style="color:#fff;font-weight:700;">1er message</b> · <b style="color:#fff;font-weight:700;">Coach de conv</b> · <b style="color:#fff;font-weight:700;">Optimiseur de bio</b></span></div>
+          <div class="pw-feat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#FF9A45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span>4 outils exclusifs : <b style="color:#fff;font-weight:700;">DM</b> · <b style="color:#fff;font-weight:700;">Coach</b> · <b style="color:#fff;font-weight:700;">Bio</b> · <b style="color:#fff;font-weight:700;">Entraînement 🎯</b></span></div>
           <div class="pw-feat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#FF9A45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Renard <b style="color:#fff;font-weight:700;">personnalisé</b> : âge, objectif, style de message</span></div>
         </div>
 
@@ -1466,6 +1577,187 @@
     document.getElementById('histTabAll').addEventListener('click',()=>{histFavOnly=false;document.getElementById('histTabAll').classList.add('on');document.getElementById('histTabFav').classList.remove('on');histRender();});
     document.getElementById('histTabFav').addEventListener('click',()=>{histFavOnly=true;document.getElementById('histTabFav').classList.add('on');document.getElementById('histTabAll').classList.remove('on');histRender();});
 
+    // ══════════════ MODE ENTRAÎNEMENT (3 personas IA, objectif : le date) ══════════════
+    const TRAIN_PERSONAS={
+      lea:{name:'Léa',age:21,levelLabel:'Facile',color:'#34d399',emoji:'🌸',start:60,
+        bio:"étudiante staps · team pizza ananas 🍍 · mon chien nugget est plus drôle que toi (à vérifier)",
+        tags:['padel','festivals','pizza ananas','nugget 🐶'],
+        desc:"chaleureuse et partante — parfaite pour t'échauffer"},
+      chloe:{name:'Chloé',age:24,levelLabel:'Joueuse',color:'#FFB020',emoji:'😏',start:40,
+        bio:"cm le jour, critique de tes vannes la nuit · si tu ouvres par « slt ça va » je disparais",
+        tags:['stand-up','vin nature','fripes','tattoos'],
+        desc:"elle te teste en permanence — tiens le rythme"},
+      maeva:{name:'Maëva',age:26,levelLabel:'Difficile',color:'#ff6b5c',emoji:'🧊',start:22,
+        bio:"architecte d'intérieur · ici par erreur je crois",
+        tags:['escalade','céramique','vinyles','argentique'],
+        desc:"froide au départ — trouve ce qui l'anime vraiment"},
+    };
+    const TRAIN_KEY='tacotac_train';
+    let trainState={};try{trainState=JSON.parse(localStorage.getItem(TRAIN_KEY)||'{}')||{};}catch(e){}
+    function trainSave(){try{localStorage.setItem(TRAIN_KEY,JSON.stringify(trainState));}catch(e){}}
+    function trainOf(id){if(!trainState[id])trainState[id]={msgs:[],interest:TRAIN_PERSONAS[id].start,status:'live'};return trainState[id];}
+    let currentPersona=null,trainBusy=false,resetArmed=null;
+
+    // Avatar : photo assets/persona-<id>.jpg si présente (à déposer plus tard), sinon pastille emoji colorée
+    function fillAvatar(el,id,size){
+      const p=TRAIN_PERSONAS[id];
+      el.innerHTML='';el.style.width=size+'px';el.style.height=size+'px';el.style.fontSize=Math.round(size*.44)+'px';
+      el.style.background='linear-gradient(135deg,'+p.color+'2e,'+p.color+'14)';
+      el.style.border='1.5px solid '+p.color+'66';
+      const em=document.createElement('span');em.textContent=p.emoji;el.appendChild(em);
+      const img=new Image();img.src='assets/persona-'+id+'.jpg';
+      img.onload=()=>{em.style.display='none';img.style.display='block';};
+      el.appendChild(img);
+    }
+    function renderPersonaList(){
+      const list=document.getElementById('personaList');list.innerHTML='';
+      Object.entries(TRAIN_PERSONAS).forEach(([id,p])=>{
+        const st=trainState[id];
+        const card=document.createElement('button');card.className='persona-card';
+        const av=document.createElement('span');av.className='p-avatar';fillAvatar(av,id,56);
+        const mid=document.createElement('span');mid.style.cssText='flex:1;min-width:0;';
+        let status='';
+        if(st&&st.status==='won')status='<span style="color:#34d399;">✅ RDV décroché</span>';
+        else if(st&&st.status==='dead')status='<span style="color:#ff6b5c;">💀 elle a unmatch</span>';
+        else if(st&&st.msgs.length)status='<span style="color:#FF7A33;">💬 conv en cours · ❤️ '+st.interest+'%</span>';
+        else status='<span style="color:#56524e;">nouveau match ✨</span>';
+        mid.innerHTML='<span style="display:flex;align-items:center;gap:8px;"><span style="color:#fff;font-size:15px;font-weight:700;">'+p.name+', '+p.age+'</span>'
+          +'<span class="lvl-pill" style="color:'+p.color+';background:'+p.color+'1f;border:1px solid '+p.color+'55;">'+p.levelLabel+'</span></span>'
+          +'<span style="display:block;color:#8a8580;font-size:12px;margin-top:3px;line-height:1.4;">'+p.desc+'</span>'
+          +'<span style="display:block;font-size:11.5px;margin-top:5px;">'+status+'</span>';
+        const chev=document.createElement('span');chev.style.cssText='color:#56524e;font-size:18px;';chev.textContent='›';
+        card.appendChild(av);card.appendChild(mid);card.appendChild(chev);
+        card.addEventListener('click',()=>openChat(id));
+        list.appendChild(card);
+      });
+    }
+    function openTrainSelect(){renderPersonaList();go(7);}
+    document.getElementById('trainOpen').addEventListener('click',()=>{
+      if(!quota.isPremium){track('mode_gate',{mode:'train'});openGate('train');return;}
+      track('train_open');openTrainSelect();
+    });
+    document.getElementById('trainBack').addEventListener('click',()=>go(1));
+    document.getElementById('chatBack').addEventListener('click',()=>openTrainSelect());
+
+    const chatScroll=document.getElementById('chatScroll'),chatInput=document.getElementById('chatInput'),chatSend=document.getElementById('chatSend');
+    function chatDown(){chatScroll.scrollTop=chatScroll.scrollHeight;}
+    function appendMsg(r,t){
+      const d=document.createElement('div');d.className='msg '+(r==='u'?'me':'her');d.textContent=t;
+      chatScroll.appendChild(d);chatDown();
+    }
+    function sysNote(t){const d=document.createElement('div');d.className='sys-note';d.textContent=t;chatScroll.appendChild(d);chatDown();}
+    function showTyping(){
+      const d=document.createElement('div');d.className='typing-bubble';
+      d.innerHTML='<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+      chatScroll.appendChild(d);chatDown();return d;
+    }
+    function setChatStatus(t,color){const s=document.getElementById('chatStatus');s.textContent=t;s.style.color=color||'#56b26a';}
+    function heartUpdate(v){
+      const h=document.getElementById('chatHeart');h.textContent='❤️ '+v+'%';
+      h.style.color=v>=70?'#34d399':(v>=40?'#FF7A33':'#ff6b5c');
+    }
+    function updateChatLock(){
+      const st=trainOf(currentPersona);const locked=st.status!=='live';
+      chatInput.disabled=locked;chatSend.disabled=locked;
+      chatInput.placeholder=st.status==='won'?'RDV décroché ✅ — rejoue ou change de profil':(st.status==='dead'?'Elle est partie… appuie sur ↻ pour retenter':'Écris ton message…');
+    }
+    function openChat(id){
+      currentPersona=id;const p=TRAIN_PERSONAS[id];const st=trainOf(id);
+      document.getElementById('chatName').textContent=p.name+', '+p.age;
+      fillAvatar(document.getElementById('chatAvatar'),id,38);
+      setChatStatus('en ligne');heartUpdate(st.interest);
+      chatScroll.innerHTML='';
+      sysNote('✨ Nouveau match avec '+p.name+' — à toi d\'ouvrir. Son profil peut t\'aider (appuie sur son nom).');
+      st.msgs.forEach(m=>appendMsg(m.r,m.t));
+      updateChatLock();trainSave();
+      go(8);track('train_start',{persona:id});
+      setTimeout(chatDown,80);
+    }
+
+    async function trainSend(){
+      if(trainBusy||!currentPersona)return;
+      const st=trainOf(currentPersona);if(st.status!=='live')return;
+      const text=chatInput.value.trim();if(!text)return;
+      chatInput.value='';
+      st.msgs.push({r:'u',t:text});appendMsg('u',text);trainSave();
+      trainBusy=true;chatSend.disabled=true;
+      const lvl=currentPersona==='maeva'?3:(currentPersona==='chloe'?2:1);
+      try{
+        // elle "voit" le message puis répond avec un délai réaliste selon son niveau
+        const readDelay=(700+Math.random()*1400)*(lvl===3?1.9:(lvl===2?1.3:1))+((lvl===3&&Math.random()<0.15)?5000:0);
+        const fetchP=fetch('/api/train',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({persona:currentPersona,history:st.msgs,interest:st.interest})});
+        await new Promise(r=>setTimeout(r,Math.min(readDelay,1500)));
+        setChatStatus('vu à l\'instant','#8a8580');
+        const resp=await fetchP;const data=await resp.json();
+        if(resp.status===401){trainBusy=false;chatSend.disabled=false;openAuth();return;}
+        if(resp.status===403){trainBusy=false;chatSend.disabled=false;go(1);openGate('train');return;}
+        if(resp.status===402){trainBusy=false;chatSend.disabled=false;setChatStatus('en ligne');toast(data.error||'Quota entraînement atteint, reviens demain');return;}
+        if(!resp.ok||!data.messages){trainBusy=false;chatSend.disabled=false;setChatStatus('en ligne');toast(data.error||'Elle a pas répondu, réessaie');return;}
+        await new Promise(r=>setTimeout(r,Math.max(0,readDelay-1500)));
+        for(const m of data.messages){
+          setChatStatus('écrit…','#FF7A33');
+          const ty=showTyping();
+          await new Promise(r=>setTimeout(r,Math.min(4200,Math.max(1000,m.length*42))));
+          ty.remove();
+          st.msgs.push({r:'h',t:m});appendMsg('h',m);
+          if(navigator.vibrate){try{navigator.vibrate(8);}catch(e){}}
+          await new Promise(r=>setTimeout(r,320+Math.random()*480));
+        }
+        setChatStatus('en ligne');
+        st.interest=data.interet;heartUpdate(data.interet);
+        track('train_msg',{persona:currentPersona,interest:data.interet});
+        if(data.date_acceptee){st.status='won';trainSave();updateChatLock();setTimeout(()=>showTrainEnd(true),650);}
+        else if(data.unmatch){st.status='dead';trainSave();updateChatLock();setTimeout(()=>showTrainEnd(false),650);}
+        else trainSave();
+      }catch(e){setChatStatus('en ligne');toast('Erreur réseau, réessaie');}
+      trainBusy=false;chatSend.disabled=trainOf(currentPersona).status!=='live';
+    }
+    chatSend.addEventListener('click',trainSend);
+    chatInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();trainSend();}});
+
+    // Fin de partie : victoire (RDV) ou défaite (unmatch)
+    const trainEnd=document.getElementById('trainEnd');
+    function showTrainEnd(won){
+      const p=TRAIN_PERSONAS[currentPersona];const st=trainOf(currentPersona);
+      const nb=st.msgs.filter(m=>m.r==='u').length;
+      const fox=document.getElementById('trainEndFox'),em=document.getElementById('trainEndEmoji');
+      if(won){fox.style.display='block';em.style.display='none';}
+      else{fox.style.display='none';em.style.display='block';em.textContent='💀';}
+      document.getElementById('trainEndTitle').textContent=won?'RDV décroché 🎉':p.name+' a unmatch';
+      document.getElementById('trainEndMsg').textContent=won
+        ?'T\'as convaincu '+p.name+' ('+p.levelLabel+') en '+nb+' message'+(nb>1?'s':'')+'. Maintenant, va faire pareil sur tes vrais matchs 🦊'
+        :'Intérêt tombé à '+st.interest+'%. Relis la conv : à quel moment t\'es passé en mode lourd ou générique ? Retente, elle a pas de rancune.';
+      trainEnd.classList.add('show');
+      track(won?'train_win':'train_unmatch',{persona:currentPersona,msgs:nb});
+    }
+    function trainResetPersona(id){trainState[id]={msgs:[],interest:TRAIN_PERSONAS[id].start,status:'live'};trainSave();}
+    document.getElementById('trainEndReplay').addEventListener('click',()=>{trainEnd.classList.remove('show');trainResetPersona(currentPersona);openChat(currentPersona);track('train_reset');});
+    document.getElementById('trainEndOther').addEventListener('click',()=>{trainEnd.classList.remove('show');openTrainSelect();});
+    trainEnd.addEventListener('click',e=>{if(e.target===trainEnd)trainEnd.classList.remove('show');});
+
+    // Reset en cours de conv : double-tap pour confirmer (pas de popup)
+    document.getElementById('chatReset').addEventListener('click',()=>{
+      if(!resetArmed){resetArmed=setTimeout(()=>{resetArmed=null;},2600);toast('↻ Re-appuie pour recommencer la conv');return;}
+      clearTimeout(resetArmed);resetArmed=null;
+      trainResetPersona(currentPersona);openChat(currentPersona);track('train_reset');
+    });
+
+    // Fiche profil du persona (la clé du niveau difficile est dedans)
+    const ppOverlay=document.getElementById('personaProfile');
+    document.getElementById('chatProfileBtn').addEventListener('click',()=>{
+      const p=TRAIN_PERSONAS[currentPersona];
+      fillAvatar(document.getElementById('ppAvatar'),currentPersona,92);
+      document.getElementById('ppName').textContent=p.name+', '+p.age;
+      const lv=document.getElementById('ppLevel');lv.textContent='Niveau '+p.levelLabel;
+      lv.style.cssText='color:'+p.color+';background:'+p.color+'1f;border:1px solid '+p.color+'55;font-size:11px;font-weight:800;padding:4px 11px;border-radius:20px;';
+      document.getElementById('ppBio').textContent='« '+p.bio+' »';
+      const tags=document.getElementById('ppTags');tags.innerHTML='';
+      p.tags.forEach(t=>{const c=document.createElement('span');c.className='chip';c.style.cursor='default';c.textContent=t;tags.appendChild(c);});
+      ppOverlay.classList.add('show');track('train_profile_view',{persona:currentPersona});
+    });
+    document.getElementById('ppClose').addEventListener('click',()=>ppOverlay.classList.remove('show'));
+    ppOverlay.addEventListener('click',e=>{if(e.target===ppOverlay)ppOverlay.classList.remove('show');});
+
     // ══════════════ RESET ══════════════
     function resetToUpload(){
       hasImage=false;imageDataUrl=null;replies=null;analyzeBtn.disabled=true;fileInput.value='';
@@ -1587,6 +1879,9 @@
       }else if(context==='fav'){
         title.textContent='Favoris Premium 🔒';
         sub.innerHTML='Garde tes meilleures répliques en <b style="color:#FF9A45;">favoris</b> et retrouve-les en un clin d\'œil — réservé aux membres Premium.';
+      }else if(context==='train'){
+        title.textContent='Mode Entraînement 🔒';
+        sub.innerHTML='<b style="color:#FF9A45;">3 filles IA, 3 niveaux de difficulté</b> — entraîne-toi à décrocher des dates sans cramer tes vrais matchs. Réservé aux membres Premium.';
       }else{
         title.textContent='Débloque tout le potentiel';
         sub.innerHTML='Personnalise ton renard, débloque les analyses illimitées et tous les tons secrets. Sans engagement.';

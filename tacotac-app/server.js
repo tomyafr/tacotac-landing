@@ -17,7 +17,7 @@ import OpenAI from 'openai';
 import Stripe from 'stripe';
 import { consumeQuota, getStatus, activatePremium, syncSubscription, deactivatePremium, claimEmailBonus, claimFounderCode, seedFounderCodes, reserveGiftEmail, setGiftPromo, releaseGiftEmail,
          createAccount, getAccountByEmail, getAccountByGoogleId, attachGoogleToAccount, linkDeviceToAccount, createSession, getSessionAccount, destroySession, effectivePlan,
-         accountsForLifecycle, markAccountEmail } from './db.js';
+         accountsForLifecycle, markAccountEmail, consumeTrainQuota } from './db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -741,6 +741,165 @@ FORMAT : français naturel 2025, minuscules acceptées, retours à la ligne auto
 
 Ordre : "faits" (la liste brute), puis "analyse" (ce qui pèche), puis les 3 versions. Réponds UNIQUEMENT via la fonction optimiser_bio.`;
 
+// ══════════════ MODE ENTRAÎNEMENT (premium) ══════════════
+// 3 personas IA avec 3 niveaux de difficulté. Le client s'entraîne à décrocher
+// un rendez-vous. Conversation stateless : le front envoie l'historique complet
+// (stocké en localStorage chez lui — cohérent avec "rien n'est stocké").
+const TRAIN_FUNCTION = {
+  type: 'function',
+  function: {
+    name: 'repondre_conversation',
+    description: "Ta réponse dans la conversation (tu es la fille du persona) + l'évolution de ton intérêt pour lui.",
+    strict: true,
+    parameters: {
+      type: 'object',
+      properties: {
+        analyse: {
+          type: 'string',
+          description: "1 phrase interne (jamais montrée) : comment tu reçois son dernier message (needy ? drôle ? générique ? bien vu ?) et pourquoi ton intérêt bouge.",
+        },
+        interet: {
+          type: 'integer',
+          description: "Ton niveau d'intérêt APRÈS son dernier message, 0-100. Pars du niveau actuel fourni dans le contexte et applique le barème de ton persona. Sois cohérente : il évolue par petits pas (±3 à ±10), sauf déclic ou grosse faute.",
+        },
+        messages: {
+          type: 'array',
+          items: { type: 'string' },
+          description: "1 à 3 messages courts que tu envoies, comme une vraie fille par SMS (minuscules, naturel, parfois un seul mot). JAMAIS de pavé, JAMAIS de langage d'assistant.",
+        },
+        date_acceptee: {
+          type: 'boolean',
+          description: "true UNIQUEMENT si tu viens d'accepter clairement un rendez-vous concret dans ces messages (il a proposé un vrai plan et ton intérêt dépasse ton seuil).",
+        },
+        unmatch: {
+          type: 'boolean',
+          description: "true si tu unmatch (intérêt effondré ou comportement lourd répété, selon les règles de ton persona). Tes messages sont alors tes derniers mots avant de partir.",
+        },
+      },
+      required: ['analyse', 'interet', 'messages', 'date_acceptee', 'unmatch'],
+      additionalProperties: false,
+    },
+  },
+};
+
+// Socle commun à tous les personas (le prompt spécifique est concaténé après).
+function trainSystemPrompt(p, interest) {
+  return `Tu joues ${p.name}, ${p.age} ans, une vraie fille française sur une app de rencontre. Tu N'ES PAS une assistante : tu ES elle, avec sa personnalité, sa vie, ses humeurs. L'utilisateur est un mec qui vient de te matcher — il s'entraîne à séduire, mais TOI tu joues le jeu à 100%, comme si c'était réel.
+
+TON STYLE D'ÉCRITURE (non négociable) :
+- Comme une vraie meuf de ${p.age} ans par SMS en 2025 : minuscules, court (souvent moins de 15 mots), naturel. Parfois juste "mdr", "ahah ok", "vasy raconte".
+- 1 à 3 messages par tour, jamais de pavé. Tu peux poser une question, taquiner, laisser un silence gêné (message très court).
+- JAMAIS de langage d'IA ("je suis là pour", "n'hésite pas", tirets cadratins, listes). Si on te demande si t'es une IA : tu tournes ça en vanne et tu continues.
+- Tu restes STRICTEMENT cohérente avec tout l'historique de la conversation (prénoms, détails, ce que tu as déjà dit).
+
+TA VIE (à faire vivre naturellement, sans réciter) : ${p.life}
+
+COMMENT TON INTÉRÊT ÉVOLUE (il est actuellement à ${interest}/100) :
+- Messages needy, génériques ("salut ça va", compliments plats), pavés, questions d'interrogatoire → il BAISSE (-3 à -10) et tes réponses raccourcissent.
+- Humour précis, assurance tranquille, rebonds sur ce que TU as dit, vraies questions sur ta vie → il MONTE (+3 à +8).
+- Vulgarité ou lourdeur sexuelle non réciproque → grosse chute (-15).
+${p.rules}
+
+LE RENDEZ-VOUS (l'objectif du jeu) :
+- date_acceptee=true SEULEMENT si il propose un plan CONCRET (un jour + une idée précise) ET que ton intérêt est ≥ ${p.threshold}.
+- S'il propose trop tôt ou trop vague : tu esquives de façon réaliste ("on verra", "t'es rapide toi 😅", "propose un vrai truc déjà").
+- Quand tu acceptes, tu le fais avec ta personnalité (enthousiaste, joueuse ou pince-sans-rire selon qui tu es).
+
+Réponds UNIQUEMENT via la fonction repondre_conversation.`;
+}
+
+const TRAIN_PERSONAS = {
+  lea: {
+    name: 'Léa', age: 21, start: 60, threshold: 55,
+    life: "étudiante en STAPS à Lyon, fan de padel et de festivals, team pizza ananas assumée, un golden retriever qui s'appelle Nugget, énergie solaire, rit facilement.",
+    rules: `TON CARACTÈRE (niveau facile) : chaleureuse, curieuse, partante. Tu relances quand la conv retombe, tu utilises pas mal d'emojis (😂🥹✨), tu kiffes qu'on te fasse rire même avec des vannes moyennes. Tu ne descends jamais sous 25 d'intérêt et tu n'unmatch JAMAIS (unmatch=false toujours).`,
+  },
+  chloe: {
+    name: 'Chloé', age: 24, start: 40, threshold: 70,
+    life: "community manager à Bordeaux, passionnée de stand-up (elle a testé une scène ouverte une fois), vin nature, fripes vintage, deux tatouages, répartie affûtée.",
+    rules: `TON CARACTÈRE (niveau joueuse) : tu TESTES. Tu chambres, tu retournes ses questions, tu laisses des pièges ("t'es du genre à dire ça à toutes ?"). Un mec qui rit de lui-même et te chambre en retour marque des points ; un mec qui se vexe ou qui force en perd. Tu alternes chaud et froid pour voir s'il tient. unmatch=true seulement s'il devient vulgaire ou si ton intérêt tombe ≤ 5.`,
+  },
+  maeva: {
+    name: 'Maëva', age: 26, start: 22, threshold: 85,
+    life: "architecte d'intérieur à Paris, grimpe en salle 3 fois par semaine, fait de la céramique le dimanche, collectionne les vinyles de soul, déteste les apps mais une copine a installé celle-là sur son tel.",
+    rules: `TON CARACTÈRE (niveau difficile) : froide, désabusée des apps, réponses très courtes au début ("oui", "mouais", "pk ?"). Les compliments physiques te saoulent (-8). Les "t'es pas comme les autres" aussi. Tu ne poses AUCUNE question tant que ton intérêt est sous 50.
+TON DÉCLIC SECRET (le green flag à trouver) : l'escalade et la céramique sont tes vraies passions. S'il les remarque (elles sont sur ton profil) et pose une VRAIE question dessus — pas juste "ah tu grimpes ?" mais un vrai intérêt — tu t'ouvres nettement (+10 à +15) et tes messages s'allongent enfin. C'est quasiment le seul chemin vers toi.
+unmatch=true si ton intérêt tombe ≤ 8, ou au 3e message lourd/needy d'affilée. Tu pars sans drame ("bon. bonne continuation").`,
+  },
+};
+
+const trainLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 80, // une conversation humaine rapide = ~5 msg/min, large marge
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Doucement sur les messages, réessaie dans quelques minutes.', code: 'rate_limited' },
+});
+
+app.post('/api/train', trainLimiter, async (req, res) => {
+  try {
+    const deviceId = attachDevice(req, res);
+    attachAccount(req);
+    if (!req.account) {
+      return res.status(401).json({ error: 'Crée ton compte pour continuer.', code: 'auth_required' });
+    }
+    if (!getStatus(deviceId, req.account).isPremium) {
+      return res.status(403).json({ error: "Le Mode Entraînement est réservé aux Premium.", code: 'premium_required' });
+    }
+    const persona = TRAIN_PERSONAS[req.body?.persona];
+    if (!persona) return res.status(400).json({ error: 'Persona inconnu.' });
+
+    // Historique : validé et borné (le front l'envoie en entier, on garde les 30 derniers)
+    const rawHist = Array.isArray(req.body?.history) ? req.body.history.slice(-30) : [];
+    const history = rawHist
+      .filter((m) => m && (m.r === 'u' || m.r === 'h') && typeof m.t === 'string' && m.t.trim())
+      .map((m) => ({ role: m.r === 'u' ? 'user' : 'assistant', content: String(m.t).slice(0, 500) }));
+    if (!history.length || history[history.length - 1].role !== 'user') {
+      return res.status(400).json({ error: 'Historique invalide.' });
+    }
+
+    const interest = Math.max(0, Math.min(100, parseInt(req.body?.interest, 10) || persona.start));
+
+    const tq = consumeTrainQuota(deviceId);
+    if (!tq.allowed) {
+      return res.status(402).json({ error: "T'as assez dragué pour aujourd'hui 😅 Reviens demain.", code: 'train_quota' });
+    }
+    if (!process.env.OPENAI_API_KEY) return res.status(503).json({ error: 'IA indisponible.', code: 'ia_indisponible' });
+
+    const completion = await openai.chat.completions.create({
+      model: MODEL,
+      max_tokens: 600,
+      messages: [
+        { role: 'system', content: trainSystemPrompt(persona, interest) },
+        ...history,
+      ],
+      tools: [TRAIN_FUNCTION],
+      tool_choice: { type: 'function', function: { name: 'repondre_conversation' } },
+    });
+
+    const call = completion.choices?.[0]?.message?.tool_calls?.[0];
+    let out = {};
+    try { out = JSON.parse(call?.function?.arguments || '{}'); } catch { out = {}; }
+    const messages = Array.isArray(out.messages)
+      ? out.messages.filter((s) => typeof s === 'string' && s.trim()).slice(0, 3).map((s) => s.slice(0, 300))
+      : [];
+    if (!messages.length) {
+      console.warn('[train] sortie mal formée malgré strict:true', JSON.stringify(out).slice(0, 200));
+      return res.status(503).json({ error: 'Elle a pas répondu, réessaie.', code: 'ia_indisponible' });
+    }
+    res.json({
+      messages,
+      interet: Number.isFinite(out.interet) ? Math.max(0, Math.min(100, Math.round(out.interet))) : interest,
+      date_acceptee: Boolean(out.date_acceptee),
+      unmatch: persona === TRAIN_PERSONAS.lea ? false : Boolean(out.unmatch), // Léa n'unmatch jamais, ceinture+bretelles
+      ...(process.env.NODE_ENV !== 'production' ? { debug: { analyse: out.analyse } } : {}),
+    });
+  } catch (err) {
+    console.error('[train] erreur:', err?.message || err);
+    res.status(503).json({ error: 'Elle a pas répondu, réessaie.', code: 'ia_indisponible' });
+  }
+});
+
 // Répliques de secours si l'IA est indispo / clé manquante (pour que la démo ne casse jamais)
 const FALLBACK = {
   classe: [
@@ -984,55 +1143,71 @@ async function sendEmail({ to, subject, html }) {
   }
 }
 
-function giftEmailHtml(code, link) {
-  return `<div style="max-width:460px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;background:#17120E;border-radius:20px;padding:32px 26px;color:#F4EEE2;">
-    <div style="font-size:34px;text-align:center;margin-bottom:8px;">🦊</div>
-    <h1 style="font-size:23px;margin:0 0 6px;text-align:center;color:#fff;">Ton cadeau : <span style="color:#FF7A45;">-10%</span></h1>
-    <p style="color:#B5ABA0;font-size:15px;line-height:1.55;text-align:center;margin:0 0 22px;">Merci d'avoir rejoint Tacotac. Voici ton code de réduction sur le forfait <b style="color:#fff;">Mensuel</b> — valable <b style="color:#FF7A45;">24h seulement</b>.</p>
-    <div style="background:#0d0d0d;border:1.5px dashed rgba(255,122,69,.5);border-radius:14px;padding:16px;text-align:center;margin:0 0 22px;">
-      <div style="color:#8A7F70;font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Ton code</div>
-      <div style="font-size:26px;font-weight:800;letter-spacing:2px;color:#FF7A45;">${code}</div>
+// ── Coquille commune des emails : vrai logo hébergé sur le domaine (pas d'emoji-logo),
+//    carte sombre sur fond neutre, CTA orange plein. Tout en styles inline (clients mail).
+function emailShell(inner, { cta = 'Ouvrir Tacotac →', ctaLink = `${PUBLIC_URL}/app` } = {}) {
+  return `<div style="background:#0b0b0b;padding:32px 14px;font-family:Arial,Helvetica,sans-serif;">
+  <div style="max-width:480px;margin:0 auto;">
+    <div style="text-align:center;padding-bottom:20px;">
+      <a href="${PUBLIC_URL}" style="text-decoration:none;">
+        <img src="${PUBLIC_URL}/assets/icon-192.png" width="64" height="64" alt="Tacotac" style="border-radius:18px;border:0;display:inline-block;">
+        <div style="color:#ffffff;font-size:20px;font-weight:800;letter-spacing:-.3px;margin-top:10px;">Tacotac</div>
+      </a>
     </div>
-    <a href="${link}" style="display:block;text-align:center;background:#FF5A1F;color:#fff;text-decoration:none;font-weight:700;font-size:16px;padding:15px;border-radius:12px;">J'en profite maintenant →</a>
-    <p style="color:#7A7062;font-size:12px;text-align:center;margin:18px 0 0;line-height:1.5;">Le code est déjà pré-rempli via le bouton. Sinon, saisis-le au paiement.<br>Tacotac · coach dating IA</p>
-  </div>`;
+    <div style="background:#161616;border:1px solid #262626;border-radius:20px;padding:32px 28px;color:#F4EEE2;">
+      ${inner}
+      <a href="${ctaLink}" style="display:block;text-align:center;background:#FF5C00;color:#ffffff;text-decoration:none;font-weight:700;font-size:16px;padding:16px;border-radius:13px;margin-top:26px;">${cta}</a>
+    </div>
+    <p style="color:#6e6a66;font-size:11.5px;text-align:center;margin:18px 0 0;line-height:1.7;">Tacotac · ton coach dating IA<br>Tu reçois cet email car tu as un compte sur <a href="${PUBLIC_URL}" style="color:#8a8580;">taco-tac.app</a></p>
+  </div></div>`;
+}
+
+function giftEmailHtml(code, link) {
+  return emailShell(`
+    <h1 style="font-size:24px;margin:0 0 8px;text-align:center;color:#fff;">Ton cadeau : <span style="color:#FF7A45;">-10%</span></h1>
+    <p style="color:#B5ABA0;font-size:15px;line-height:1.6;text-align:center;margin:0 0 22px;">Merci d'avoir rejoint la meute. Voici ta réduction sur le forfait <b style="color:#fff;">Mensuel</b> — valable <b style="color:#FF7A45;">24h seulement</b>.</p>
+    <div style="background:#0d0d0d;border:1.5px dashed rgba(255,122,69,.5);border-radius:14px;padding:18px;text-align:center;">
+      <div style="color:#8A7F70;font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Ton code</div>
+      <div style="font-size:27px;font-weight:800;letter-spacing:2px;color:#FF7A45;">${code}</div>
+    </div>
+    <p style="color:#7A7062;font-size:12px;text-align:center;margin:14px 0 0;line-height:1.5;">Le code est déjà pré-rempli via le bouton ci-dessous.</p>`,
+    { cta: "J'en profite maintenant →", ctaLink: link });
 }
 
 // ── Emails de cycle de vie (welcome / relance J+1 / J+3) ────────
-function emailShell(inner) {
-  return `<div style="max-width:460px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;background:#17120E;border-radius:20px;padding:32px 26px;color:#F4EEE2;">
-    <div style="font-size:34px;text-align:center;margin-bottom:10px;">🦊</div>${inner}
-    <a href="${PUBLIC_URL}/app" style="display:block;text-align:center;background:#FF5A1F;color:#fff;text-decoration:none;font-weight:700;font-size:16px;padding:15px;border-radius:12px;margin-top:22px;">Ouvrir Tacotac →</a>
-    <p style="color:#7A7062;font-size:11.5px;text-align:center;margin:18px 0 0;line-height:1.5;">Tacotac · ton coach dating IA<br>Tu reçois ça car tu as créé un compte sur taco-tac.app</p>
-  </div>`;
-}
 const LIFECYCLE = {
   welcome: {
-    subject: 'Bienvenue sur Tacotac 🦊',
+    subject: 'Bienvenue dans la meute 🦊',
     html: () => emailShell(`
-      <h1 style="font-size:22px;margin:0 0 10px;text-align:center;color:#fff;">T'es dans la place 🎉</h1>
-      <p style="color:#B5ABA0;font-size:15px;line-height:1.6;margin:0 0 16px;">Le principe est simple : t'envoies le screenshot d'une conv qui te bloque, et le renard te sort <b style="color:#fff;">3 répliques qui claquent</b> (classe, drôle, spicy) en 3 secondes.</p>
-      <p style="color:#B5ABA0;font-size:15px;line-height:1.6;margin:0 0 6px;">T'as <b style="color:#fff;">3 analyses gratuites chaque jour</b>. Et si tu veux tout casser : le <b style="color:#FF7A45;">Premium</b> débloque l'illimité, les tons secrets (Romantique, Sexto, Mystère) et le renard personnalisé — <b style="color:#fff;">essai 3 jours gratuits</b>.</p>`),
+      <h1 style="font-size:23px;margin:0 0 12px;text-align:center;color:#fff;">Plus jamais à court de réponse</h1>
+      <p style="color:#B5ABA0;font-size:15px;line-height:1.65;margin:0 0 18px;">Le principe : t'envoies le screenshot d'une conv qui te bloque, le renard te rend <b style="color:#fff;">3 répliques qui claquent</b> — classe, drôle ou spicy — en quelques secondes. T'as <b style="color:#fff;">3 analyses offertes chaque jour</b>.</p>
+      <div style="background:#0d0d0d;border:1px solid #262626;border-radius:14px;padding:16px 18px;color:#B5ABA0;font-size:13.5px;line-height:2;">
+        <div>💬 <b style="color:#fff;">Répondre</b> — ta conv → la réplique parfaite</div>
+        <div>✨ <b style="color:#fff;">DM</b> — son profil → le premier message qui accroche</div>
+        <div>🔍 <b style="color:#fff;">Coach</b> — score d'intérêt + ton meilleur move</div>
+        <div>📝 <b style="color:#fff;">Bio</b> — ta bio réécrite en 3 versions</div>
+      </div>
+      <p style="color:#8A7F70;font-size:12.5px;line-height:1.6;margin:14px 0 0;text-align:center;">Astuce : installe l'app sur ton tel (bouton dans l'app) pour l'avoir toujours sous la main.</p>`),
   },
   d1: {
     subject: "T'as une conv qui t'attend 👀",
     html: () => emailShell(`
-      <h1 style="font-size:22px;margin:0 0 10px;text-align:center;color:#fff;">Une conv en galère ?</h1>
-      <p style="color:#B5ABA0;font-size:15px;line-height:1.6;margin:0 0 12px;">Tes <b style="color:#fff;">3 analyses gratuites</b> se rechargent chaque jour. La prochaine fois que tu sais pas quoi répondre, laisse le renard s'en charger.</p>
-      <p style="color:#B5ABA0;font-size:15px;line-height:1.6;margin:0;">Balance ton screenshot, choisis ton ton, copie la réplique. C'est tout.</p>`),
+      <h1 style="font-size:23px;margin:0 0 12px;text-align:center;color:#fff;">Une conv en galère ?</h1>
+      <p style="color:#B5ABA0;font-size:15px;line-height:1.65;margin:0 0 14px;">Tes <b style="color:#fff;">3 analyses gratuites</b> se sont rechargées cette nuit. La prochaine fois qu'un match te laisse sans réponse, laisse le renard s'en charger.</p>
+      <p style="color:#B5ABA0;font-size:15px;line-height:1.65;margin:0;">Balance ton screenshot → choisis ton ton → copie la réplique. 10 secondes chrono.</p>`),
   },
   d3: {
     subject: 'Ce que tu rates en gratuit 🌶️',
     html: () => emailShell(`
-      <h1 style="font-size:22px;margin:0 0 10px;text-align:center;color:#fff;">Passe au niveau au-dessus</h1>
-      <p style="color:#B5ABA0;font-size:15px;line-height:1.6;margin:0 0 12px;">En gratuit t'as les 3 tons de base. Le <b style="color:#FF7A45;">Premium</b>, c'est un autre monde :</p>
-      <div style="color:#B5ABA0;font-size:14.5px;line-height:1.9;margin:0 0 14px;">
-        <div>✓ Analyses <b style="color:#fff;">illimitées</b></div>
+      <h1 style="font-size:23px;margin:0 0 12px;text-align:center;color:#fff;">Passe au niveau au-dessus</h1>
+      <p style="color:#B5ABA0;font-size:15px;line-height:1.65;margin:0 0 14px;">En gratuit t'as les 3 tons de base. Le <b style="color:#FF7A45;">Premium</b>, c'est un autre monde :</p>
+      <div style="background:#0d0d0d;border:1px solid #262626;border-radius:14px;padding:16px 18px;color:#B5ABA0;font-size:13.5px;line-height:2.1;">
+        <div>✓ Analyses <b style="color:#fff;">illimitées</b>, chaque jour</div>
         <div>✓ Les <b style="color:#fff;">tons secrets</b> : Romantique · Sexto · Mystère</div>
-        <div>✓ 3 outils exclusifs : <b style="color:#fff;">1er message</b> · <b style="color:#fff;">Coach de conv</b> · <b style="color:#fff;">Optimiseur de bio</b></div>
-        <div>✓ Le renard <b style="color:#fff;">personnalisé</b> (âge, objectif…)</div>
+        <div>✓ <b style="color:#fff;">DM</b> · <b style="color:#fff;">Coach de conv</b> · <b style="color:#fff;">Optimiseur de bio</b></div>
+        <div>✓ <b style="color:#fff;">Mode Entraînement</b> 🎯 : drague l'IA, décroche le date</div>
       </div>
-      <p style="color:#B5ABA0;font-size:15px;line-height:1.6;margin:0;">Teste-le <b style="color:#fff;">3 jours gratuitement</b>, annule quand tu veux.</p>`),
+      <p style="color:#B5ABA0;font-size:15px;line-height:1.65;margin:14px 0 0;">Teste tout ça <b style="color:#fff;">3 jours gratuitement</b>, annule quand tu veux.</p>`),
   },
 };
 
