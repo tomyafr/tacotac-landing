@@ -227,6 +227,12 @@
     @keyframes tt-bounce{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,9px)}}
     .ios-arrow{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);animation:tt-bounce 1.1s ease-in-out infinite;pointer-events:none;filter:drop-shadow(0 4px 10px rgba(255,92,0,.45))}
 
+    /* ── Modale de notification maison (remplace les alert() natifs) ── */
+    @keyframes tt-pop{0%{opacity:0;transform:scale(.4) translateY(10px)}60%{opacity:1;transform:scale(1.08) translateY(0)}100%{opacity:1;transform:scale(1)}}
+    .celeb-icon{width:76px;height:76px;margin:0 auto;display:flex;align-items:center;justify-content:center;animation:tt-pop .5s cubic-bezier(.34,1.56,.64,1) both}
+    .celeb-icon img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 10px 22px rgba(255,92,0,.35))}
+    .celeb-icon .em{font-size:42px;line-height:1}
+
     @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition-duration:.01ms!important}}
   </style>
 </head>
@@ -526,6 +532,19 @@
       </div>
     </div>
 
+    <!-- ═══════════════ NOTIFICATION MAISON (remplace les alert() natifs) ═══════════════ -->
+    <div class="gate-overlay" id="celeb">
+      <div class="gate-card" style="max-width:350px;">
+        <div class="celeb-icon" id="celebIconWrap">
+          <img id="celebFoxImg" src="assets/fox_chill.png" alt="" style="display:none;">
+          <span class="em" id="celebEmoji" style="display:none;"></span>
+        </div>
+        <div class="display" id="celebTitle" style="color:#fff;font-size:21px;line-height:1.15;margin-top:14px;"></div>
+        <p id="celebMsg" style="color:#8a8580;font-size:14px;margin:9px 0 0;line-height:1.5;"></p>
+        <button id="celebClose" class="cta" style="margin-top:18px;height:50px;font-size:15px;">Parfait 🦊</button>
+      </div>
+    </div>
+
     <!-- ═══════════════ HISTORIQUE ═══════════════ -->
     <div class="prefs-overlay" id="hist">
       <div class="prefs-panel">
@@ -727,6 +746,21 @@
       sexto:      { emoji:'😈', label:'Sexto',      fox:'assets/fox_spicy.png',  premium:true },
       mystere:    { emoji:'🎭', label:'Mystère',    fox:'assets/fox_chill.png',  premium:true },
     };
+
+    // Notification maison (remplace les alert() natifs — cohérent avec le reste de l'UI)
+    const celebOverlay=document.getElementById('celeb');
+    function showNotice(title,msg,opts){
+      opts=opts||{};
+      document.getElementById('celebTitle').textContent=title;
+      document.getElementById('celebMsg').textContent=msg;
+      const fox=document.getElementById('celebFoxImg'), em=document.getElementById('celebEmoji');
+      if(opts.fox){fox.style.display='block';em.style.display='none';}
+      else{fox.style.display='none';em.style.display='block';em.textContent=opts.emoji||'⚠️';}
+      document.getElementById('celebClose').textContent=opts.cta||'Parfait 🦊';
+      celebOverlay.classList.add('show');
+    }
+    document.getElementById('celebClose').addEventListener('click',()=>celebOverlay.classList.remove('show'));
+    celebOverlay.addEventListener('click',e=>{if(e.target===celebOverlay)celebOverlay.classList.remove('show');});
 
     // Toast générique (alerte quota, infos rapides)
     let toastTimer=null;
@@ -1369,9 +1403,9 @@
         const data=await r.json();
         if(data.ok){
           if(data.status)applyQuota(data.status);
-          alert('🦊 Bienvenue, membre fondateur ! Ton accès illimité est activé sur cet appareil.');
+          showNotice('Bienvenue, membre fondateur','Ton accès illimité est activé sur cet appareil.',{fox:true,cta:'Nickel 🦊'});
         }else{
-          alert(data.error||'Code invalide.');
+          showNotice('Code invalide',data.error||'Vérifie le code et réessaie.',{emoji:'⚠️',cta:'OK'});
         }
       }catch(e){}
       history.replaceState({},'',location.pathname);
@@ -1408,7 +1442,7 @@
         }catch(e){}
         if(quota.isPremium){
           gate.classList.remove('show');
-          alert('🎉 Bienvenue en Premium ! Analyses illimitées débloquées.');
+          showNotice('Bienvenue en Premium','Analyses illimitées débloquées, tous les tons secrets et outils exclusifs sont à toi.',{fox:true,cta:'On y va 🦊'});
         }
         history.replaceState({},'',location.pathname); // nettoie l'URL
       }
@@ -1512,7 +1546,7 @@
         }).catch(()=>{});
         history.replaceState({},'',location.pathname);
       }else if(p.get('auth_err')==='1'){
-        alert('La connexion Google a échoué, réessaie.');
+        showNotice('Connexion échouée','La connexion Google a échoué, réessaie.',{emoji:'⚠️',cta:'OK'});
         history.replaceState({},'',location.pathname);
       }
     })();
