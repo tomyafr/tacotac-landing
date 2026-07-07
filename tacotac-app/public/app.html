@@ -301,8 +301,8 @@
           <span style="width:32px;height:32px;border-radius:50%;background:rgba(255,107,92,.16);border:1.5px solid rgba(255,107,92,.5);display:flex;align-items:center;justify-content:center;font-size:15px;margin-left:-9px;">🧊</span>
         </span>
         <span style="flex:1;min-width:0;">
-          <span style="display:block;color:#fff;font-size:14px;font-weight:700;">Mode Entraînement <span class="mode-lock" style="font-size:11px;">🔒</span></span>
-          <span style="display:block;color:#8a8580;font-size:11.5px;margin-top:2px;">3 filles IA, 3 niveaux · objectif : décrocher le date 🎯</span>
+          <span style="display:block;color:#fff;font-size:14px;font-weight:700;">Mode Entraînement</span>
+          <span style="display:block;color:#8a8580;font-size:11.5px;margin-top:2px;">3 filles IA, 3 niveaux · essaie gratuitement 🎯</span>
         </span>
         <span style="color:#FF7A33;font-size:18px;font-weight:700;">›</span>
       </button>
@@ -621,9 +621,11 @@
       <div class="gate-card" style="max-width:330px;">
         <div class="p-avatar" id="ppAvatar" style="width:92px;height:92px;font-size:40px;margin:0 auto;"></div>
         <div class="display" id="ppName" style="color:#fff;font-size:23px;line-height:1.1;margin-top:14px;"></div>
-        <div style="margin-top:8px;"><span class="lvl-pill" id="ppLevel"></span></div>
-        <p id="ppBio" style="color:#B5ABA0;font-size:14px;margin:14px 0 0;line-height:1.55;"></p>
-        <div class="chips" id="ppTags" style="justify-content:center;margin-top:14px;"></div>
+        <div id="ppMeta" style="color:#8a8580;font-size:12.5px;margin-top:6px;"></div>
+        <div style="margin-top:9px;"><span class="lvl-pill" id="ppLevel"></span></div>
+        <p id="ppBio" style="color:#D6D1CB;font-size:13.5px;margin:14px 0 0;line-height:1.65;white-space:pre-line;text-align:left;background:#0d0d0d;border:1px solid #232323;border-radius:14px;padding:13px 15px;"></p>
+        <div style="color:#6e6a66;font-size:11px;letter-spacing:.5px;text-transform:uppercase;font-weight:600;margin-top:14px;text-align:left;">Ses centres d'intérêt</div>
+        <div class="chips" id="ppTags" style="margin-top:9px;"></div>
         <p style="color:#56524e;font-size:11.5px;margin:16px 0 0;line-height:1.5;">🦊 conseil du renard : rebondis sur ce qu'elle aime, pas sur ses photos.</p>
         <button id="ppClose" style="display:block;margin:16px auto 0;background:none;border:none;color:#56524e;font-family:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline;">Fermer</button>
       </div>
@@ -1579,17 +1581,20 @@
 
     // ══════════════ MODE ENTRAÎNEMENT (3 personas IA, objectif : le date) ══════════════
     const TRAIN_PERSONAS={
-      lea:{name:'Léa',age:21,levelLabel:'Facile',color:'#34d399',emoji:'🌸',start:60,
-        bio:"étudiante staps · team pizza ananas 🍍 · mon chien nugget est plus drôle que toi (à vérifier)",
-        tags:['padel','festivals','pizza ananas','nugget 🐶'],
+      lea:{name:'Léa',age:21,levelLabel:'Facile',color:'#34d399',emoji:'🌸',start:55,
+        job:'étudiante STAPS (L3)',city:'Lyon',
+        bio:"staps + padel + festivals ☀️\nnugget (mon golden) est fourni avec, c'est non négociable 🐶\nteam pizza ananas, je pars pas en débat\nfais-moi rire et je te suis (presque) n'importe où",
+        tags:['padel','festivals','pizza ananas','nugget 🐶','friends'],
         desc:"chaleureuse et partante — parfaite pour t'échauffer"},
-      chloe:{name:'Chloé',age:24,levelLabel:'Joueuse',color:'#FFB020',emoji:'😏',start:40,
-        bio:"cm le jour, critique de tes vannes la nuit · si tu ouvres par « slt ça va » je disparais",
-        tags:['stand-up','vin nature','fripes','tattoos'],
+      chloe:{name:'Chloé',age:24,levelLabel:'Joueuse',color:'#FFB020',emoji:'😏',start:38,
+        job:'community manager',city:'Bordeaux',
+        bio:"cm le jour, critique de tes vannes la nuit\nune scène ouverte de stand-up à mon actif (un bide magnifique)\nvin nature > ta cave à bières\nl'ananas sur la pizza c'est NON\nsi tu ouvres par « slt ça va » je disparais ✌️",
+        tags:['stand-up','vin nature','fripes','tattoos','débats inutiles'],
         desc:"elle te teste en permanence — tiens le rythme"},
-      maeva:{name:'Maëva',age:26,levelLabel:'Difficile',color:'#ff6b5c',emoji:'🧊',start:22,
-        bio:"architecte d'intérieur · ici par erreur je crois",
-        tags:['escalade','céramique','vinyles','argentique'],
+      maeva:{name:'Maëva',age:26,levelLabel:'Difficile',color:'#ff6b5c',emoji:'🧊',start:18,
+        job:"architecte d'intérieur",city:'Paris',
+        bio:"architecte d'intérieur. paris 11e.\nici par erreur (merci inès)\nplus sur les murs que sur les apps\nsi tu veux me convaincre, bon courage",
+        tags:['escalade (bloc)','céramique','vinyles soul','argentique'],
         desc:"froide au départ — trouve ce qui l'anime vraiment"},
     };
     const TRAIN_KEY='tacotac_train';
@@ -1632,10 +1637,8 @@
       });
     }
     function openTrainSelect(){renderPersonaList();go(7);}
-    document.getElementById('trainOpen').addEventListener('click',()=>{
-      if(!quota.isPremium){track('mode_gate',{mode:'train'});openGate('train');return;}
-      track('train_open');openTrainSelect();
-    });
+    // Ouvert à tous : les gratuits ont 1 message offert par jour (le serveur bloque ensuite → paywall)
+    document.getElementById('trainOpen').addEventListener('click',()=>{track('train_open');openTrainSelect();});
     document.getElementById('trainBack').addEventListener('click',()=>go(1));
     document.getElementById('chatBack').addEventListener('click',()=>openTrainSelect());
 
@@ -1689,8 +1692,18 @@
         await new Promise(r=>setTimeout(r,Math.min(readDelay,1500)));
         setChatStatus('vu à l\'instant','#8a8580');
         const resp=await fetchP;const data=await resp.json();
-        if(resp.status===401){trainBusy=false;chatSend.disabled=false;openAuth();return;}
-        if(resp.status===403){trainBusy=false;chatSend.disabled=false;go(1);openGate('train');return;}
+        // Message refusé (compte requis / paywall) : on le retire de la conv et on le remet
+        // dans l'input pour qu'il ne soit pas perdu — on reste dans le chat.
+        const restoreLast=()=>{
+          if(st.msgs.length&&st.msgs[st.msgs.length-1].r==='u')st.msgs.pop();
+          trainSave();
+          const mine=chatScroll.querySelectorAll('.msg.me');
+          if(mine.length)mine[mine.length-1].remove();
+          chatInput.value=text;
+          setChatStatus('en ligne');
+        };
+        if(resp.status===401){restoreLast();trainBusy=false;chatSend.disabled=false;openAuth();return;}
+        if(resp.status===403){restoreLast();trainBusy=false;chatSend.disabled=false;track('mode_gate',{mode:'train'});openGate('train');return;}
         if(resp.status===402){trainBusy=false;chatSend.disabled=false;setChatStatus('en ligne');toast(data.error||'Quota entraînement atteint, reviens demain');return;}
         if(!resp.ok||!data.messages){trainBusy=false;chatSend.disabled=false;setChatStatus('en ligne');toast(data.error||'Elle a pas répondu, réessaie');return;}
         await new Promise(r=>setTimeout(r,Math.max(0,readDelay-1500)));
@@ -1748,9 +1761,10 @@
       const p=TRAIN_PERSONAS[currentPersona];
       fillAvatar(document.getElementById('ppAvatar'),currentPersona,92);
       document.getElementById('ppName').textContent=p.name+', '+p.age;
+      document.getElementById('ppMeta').textContent=p.job+' · '+p.city;
       const lv=document.getElementById('ppLevel');lv.textContent='Niveau '+p.levelLabel;
       lv.style.cssText='color:'+p.color+';background:'+p.color+'1f;border:1px solid '+p.color+'55;font-size:11px;font-weight:800;padding:4px 11px;border-radius:20px;';
-      document.getElementById('ppBio').textContent='« '+p.bio+' »';
+      document.getElementById('ppBio').textContent=p.bio;
       const tags=document.getElementById('ppTags');tags.innerHTML='';
       p.tags.forEach(t=>{const c=document.createElement('span');c.className='chip';c.style.cursor='default';c.textContent=t;tags.appendChild(c);});
       ppOverlay.classList.add('show');track('train_profile_view',{persona:currentPersona});
@@ -1880,8 +1894,8 @@
         title.textContent='Favoris Premium 🔒';
         sub.innerHTML='Garde tes meilleures répliques en <b style="color:#FF9A45;">favoris</b> et retrouve-les en un clin d\'œil — réservé aux membres Premium.';
       }else if(context==='train'){
-        title.textContent='Mode Entraînement 🔒';
-        sub.innerHTML='<b style="color:#FF9A45;">3 filles IA, 3 niveaux de difficulté</b> — entraîne-toi à décrocher des dates sans cramer tes vrais matchs. Réservé aux membres Premium.';
+        title.textContent='Elle est encore en ligne… 😏';
+        sub.innerHTML='T\'as eu ton message offert du jour. Débloque les <b style="color:#FF9A45;">conversations illimitées</b> avec les 3 profils (et les 3 niveaux) — plus tous les outils Premium.';
       }else{
         title.textContent='Débloque tout le potentiel';
         sub.innerHTML='Personnalise ton renard, débloque les analyses illimitées et tous les tons secrets. Sans engagement.';

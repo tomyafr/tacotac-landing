@@ -248,6 +248,13 @@ export function consumeTrainQuota(deviceId) {
   return { allowed: true, used: used + 1, limit: TRAIN_DAILY_LIMIT };
 }
 
+// Lecture seule (sans consommer) : sert au teasing gratuit (1 message offert/jour puis paywall)
+export function trainUsedToday(deviceId) {
+  const user = getOrCreateUser(deviceId);
+  const row = qGetTrainUsage.get(user.device_id, parisDay());
+  return row ? row.count : 0;
+}
+
 // ── Bonus email : +2 analyses si email jamais utilisé (1 fois par email ET par appareil) ──
 export const EMAIL_BONUS_CREDITS = 2;
 const qGetBonusEmail = db.prepare('SELECT email FROM bonus_emails WHERE email = ?');
