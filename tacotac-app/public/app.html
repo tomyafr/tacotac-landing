@@ -414,6 +414,7 @@
       </div>
 
       <button class="copy-cta" id="copyBtn"><span id="copyIcon" style="font-size:16px;">📋</span> <span id="copyText">Copier la réponse</span></button>
+      <button class="btn-secondary" id="shareBtn" style="margin-top:10px;"><span id="shareIcon">🦊</span> <span id="shareText">Partager en story</span></button>
       <!-- Upsell au moment chaud : juste après une victoire (copie d'une réplique) -->
       <button id="copyUpsell" style="display:none;width:100%;margin-top:10px;background:rgba(255,92,0,.08);border:1px solid rgba(255,92,0,.3);color:#B5ABA0;font-family:inherit;font-size:12.5px;border-radius:14px;padding:11px 14px;cursor:pointer;line-height:1.45;">
         🦊 Elle t'a plu ? Les Premium en ont <span style="color:#FF7A33;font-weight:700;">en illimité</span> + les tons secrets 😈 — <span style="color:#FF7A33;font-weight:700;text-decoration:underline;">essaie 3 jours gratuits</span>
@@ -1094,6 +1095,118 @@
       if(!quota.isPremium&&!window._upsellShown){window._upsellShown=true;document.getElementById('copyUpsell').style.display='block';}
     });
     document.getElementById('copyUpsell').addEventListener('click',()=>{track('upsell_click',{from:'copy'});openGate();});
+
+    // ══════════════ CARTE PARTAGEABLE (story Insta/TikTok) ══════════════
+    function roundRect(ctx,x,y,w,h,r){
+      ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);
+      ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();
+    }
+    function loadImageAsset(src){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>res(img);img.onerror=rej;img.src=src;});}
+    function wrapText(ctx,text,maxWidth){
+      const words=text.split(' ');const lines=[];let cur='';
+      for(const w of words){
+        const test=cur?cur+' '+w:w;
+        if(ctx.measureText(test).width>maxWidth&&cur){lines.push(cur);cur=w;}
+        else cur=test;
+      }
+      if(cur)lines.push(cur);
+      return lines;
+    }
+    async function buildShareCard(toneKey,text){
+      const W=1080,H=1920;
+      const c=document.createElement('canvas');c.width=W;c.height=H;
+      const x=c.getContext('2d');
+      const grad=x.createLinearGradient(0,0,0,H);
+      grad.addColorStop(0,'#141414');grad.addColorStop(1,'#0a0a0a');
+      x.fillStyle=grad;x.fillRect(0,0,W,H);
+
+      await document.fonts.ready;
+      const fox=await loadImageAsset('assets/fox_chill.png');
+
+      // ── Passe 1 : calcul de la mise en page (pour centrer verticalement, réponse courte ou longue) ──
+      const padX=90,cardW=W-padX*2;
+      x.font="500 54px 'Space Grotesk'";
+      const lines=wrapText(x,text,cardW-140);
+      const lineH=76;
+      const cardH=Math.max(280,lines.length*lineH+180);
+      const fh=320,fw=fh*(401/623);
+
+      const logoH=96,gapLogoBadge=90,badgeH=76,gapBadgeCard=74,gapCardFox=36,gapFoxWm=90,wmH=110,bottomPad=70;
+      const totalH=logoH+gapLogoBadge+badgeH+gapBadgeCard+cardH+gapCardFox+fh+gapFoxWm+wmH+bottomPad;
+      const topY=Math.max(90,(H-totalH)/2);
+
+      // glow discret centré sur le logo
+      const glowCy=topY+logoH/2;
+      const glow=x.createRadialGradient(W/2,glowCy,40,W/2,glowCy,700);
+      glow.addColorStop(0,'rgba(255,92,0,.16)');glow.addColorStop(1,'rgba(255,92,0,0)');
+      x.fillStyle=glow;x.fillRect(0,Math.max(0,glowCy-700),W,1400);
+
+      // logo + wordmark
+      const avR=48,avCy=topY+avR;
+      x.save();x.beginPath();x.arc(150,avCy,avR,0,Math.PI*2);x.closePath();x.clip();
+      x.fillStyle='#1a1a1a';x.fillRect(150-avR,avCy-avR,avR*2,avR*2);
+      x.drawImage(fox,53,5,280,280,150-avR,avCy-avR-6,avR*2,avR*2*1.15);
+      x.restore();
+      x.strokeStyle='rgba(255,92,0,.8)';x.lineWidth=3;x.beginPath();x.arc(150,avCy,avR,0,Math.PI*2);x.stroke();
+      x.fillStyle='#fff';x.font="700 44px 'Bricolage Grotesque'";x.textBaseline='middle';
+      x.fillText('Tacotac',220,avCy);
+
+      // badge du ton
+      const t=tones[toneKey]||tones.drole;
+      x.font="600 30px 'Space Grotesk'";
+      const badgeText=t.emoji+'  Mode '+t.label;
+      const bw=x.measureText(badgeText).width+64,by=topY+logoH+gapLogoBadge,bx=(W-bw)/2;
+      roundRect(x,bx,by,bw,badgeH,badgeH/2);x.fillStyle='rgba(255,92,0,.12)';x.fill();
+      roundRect(x,bx,by,bw,badgeH,badgeH/2);x.strokeStyle='rgba(255,92,0,.5)';x.lineWidth=2;x.stroke();
+      x.fillStyle='#FF9A45';x.textAlign='center';x.fillText(badgeText,W/2,by+badgeH/2+2);x.textAlign='left';
+
+      // bulle réponse
+      const cardY=by+badgeH+gapBadgeCard;
+      roundRect(x,padX,cardY,cardW,cardH,40);x.fillStyle='#1c1c1c';x.fill();
+      roundRect(x,padX,cardY,cardW,cardH,40);x.strokeStyle='#2b2b2b';x.lineWidth=2;x.stroke();
+      x.fillStyle='#FF6F1F';x.font="700 26px 'Space Grotesk'";x.fillText('TIENS RÉPOND LUI ÇA',padX+70,cardY+80);
+      x.fillStyle='#F0EDE8';x.font="500 54px 'Space Grotesk'";
+      let ly=cardY+150;
+      for(const line of lines){x.fillText(line,padX+70,ly);ly+=lineH;}
+
+      // renard sous la carte
+      const foxY=cardY+cardH+gapCardFox;
+      x.drawImage(fox,(W-fw)/2,foxY,fw,fh);
+
+      // watermark / CTA
+      const wmY=foxY+fh+gapFoxWm;
+      x.textAlign='center';
+      x.fillStyle='#fff';x.font="700 42px 'Bricolage Grotesque'";
+      x.fillText('Toi aussi, débloque tes répliques',W/2,wmY);
+      x.fillStyle='#FF7A33';x.font="700 46px 'Bricolage Grotesque'";
+      x.fillText('taco-tac.app',W/2,wmY+70);
+      x.textAlign='left';
+
+      return c;
+    }
+    const shareBtn=document.getElementById('shareBtn');
+    shareBtn.addEventListener('click',async()=>{
+      const shareIcon=document.getElementById('shareIcon'),shareText=document.getElementById('shareText');
+      const prevIcon=shareIcon.textContent,prevText=shareText.textContent;
+      shareIcon.textContent='⏳';shareText.textContent='Génération…';shareBtn.style.pointerEvents='none';
+      try{
+        const canvas=await buildShareCard(selectedTone,replyText.textContent);
+        const blob=await new Promise(res=>canvas.toBlob(res,'image/png'));
+        const file=new File([blob],'tacotac.png',{type:'image/png'});
+        if(navigator.canShare&&navigator.canShare({files:[file]})){
+          await navigator.share({files:[file],title:'Tacotac',text:'Fait avec Tacotac 🦊 taco-tac.app'});
+          track('share_card',{method:'native',tone:selectedTone});
+        }else{
+          const url=URL.createObjectURL(blob);
+          const a=document.createElement('a');a.href=url;a.download='tacotac-'+selectedTone+'.png';document.body.appendChild(a);a.click();document.body.removeChild(a);
+          setTimeout(()=>URL.revokeObjectURL(url),4000);
+          track('share_card',{method:'download',tone:selectedTone});
+        }
+      }catch(e){
+        if(!e||e.name!=='AbortError')toast('Impossible de générer l\'image, réessaie');
+      }
+      shareIcon.textContent=prevIcon;shareText.textContent=prevText;shareBtn.style.pointerEvents='auto';
+    });
 
     // Tease premium (réplique floutée) : uniquement pour les gratuits, clic → paywall
     document.getElementById('premiumTease').addEventListener('click',()=>{track('tease_click',{from:'results'});openGate('tone');});
