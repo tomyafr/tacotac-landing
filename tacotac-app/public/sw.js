@@ -6,7 +6,7 @@
 //  Les appels /api/* ne sont JAMAIS interceptés (quota, paiement…).
 // ══════════════════════════════════════════════════════════════
 
-const CACHE = 'tacotac-v3'; // ⚠️ incrémenter à chaque déploiement qui change app.html/assets
+const CACHE = 'tacotac-v4'; // ⚠️ incrémenter à chaque déploiement qui change app.html/assets
 
 const PRECACHE = [
   '/',
@@ -47,8 +47,9 @@ self.addEventListener('fetch', (e) => {
     e.respondWith(
       fetch(e.request)
         .then((r) => {
-          const copy = r.clone();
-          caches.open(CACHE).then((c) => c.put(e.request, copy));
+          // Ne jamais mettre en cache une erreur (404/500…) : sinon elle devient permanente
+          // jusqu'au prochain bump de version, même une fois le vrai fichier disponible.
+          if (r.ok) { const copy = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); }
           return r;
         })
         .catch(() => caches.match(e.request).then((m) => m || caches.match('/app')))
@@ -57,8 +58,7 @@ self.addEventListener('fetch', (e) => {
     // Assets : cache d'abord (rapide), réseau en complément
     e.respondWith(
       caches.match(e.request).then((m) => m || fetch(e.request).then((r) => {
-        const copy = r.clone();
-        caches.open(CACHE).then((c) => c.put(e.request, copy));
+        if (r.ok) { const copy = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); }
         return r;
       }))
     );

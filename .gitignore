@@ -4,6 +4,8 @@ Thumbs.db
 
 # Fichiers sources JPG (on garde uniquement les PNG détourés)
 *.jpg
+# Exception : photos des personas du Mode Entraînement, servies telles quelles
+!tacotac-app/public/assets/persona-*.jpg
 
 # Logs
 *.log
