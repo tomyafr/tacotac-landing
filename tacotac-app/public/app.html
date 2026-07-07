@@ -66,7 +66,7 @@
     .fmt{font-size:11px;color:#6e6a66;border:1px solid #2a2a2a;border-radius:8px;padding:4px 9px}
 
     .tone-track{display:flex;gap:6px;background:rgba(255,255,255,.04);border:1px solid #1f1f1f;border-radius:100px;padding:5px;position:relative}
-    /* Switch de mode (4 outils) : Répondre / Opener / Coach / Bio */
+    /* Switch de mode (4 outils) : Répondre / DM / Coach / Bio */
     #modeTrack .tone-glider{width:calc((100% - 28px)/4)}
     #modeTrack .tone-btn{font-size:.74rem;white-space:nowrap;padding:10px 2px}
     .mode-lock{font-size:9px;margin-left:1px}
@@ -254,7 +254,7 @@
       <div class="tone-track" id="modeTrack" style="margin-top:18px;position:relative;z-index:2;">
         <div class="tone-glider" id="modeGlider"></div>
         <button class="tone-btn active" data-mode="reply">💬 Répondre</button>
-        <button class="tone-btn" data-mode="opener">✨ Opener <span class="mode-lock">🔒</span></button>
+        <button class="tone-btn" data-mode="opener">✨ DM <span class="mode-lock">🔒</span></button>
         <button class="tone-btn" data-mode="coach">🔍 Coach <span class="mode-lock">🔒</span></button>
         <button class="tone-btn" data-mode="bio">📝 Bio <span class="mode-lock">🔒</span></button>
       </div>
@@ -824,7 +824,7 @@
     // (Le choix du ton en amont a été retiré : l'analyse renvoie toujours les 3 tons,
     //  l'utilisateur bascule entre eux sur l'écran de résultats.)
 
-    // ══════════════ MODES : 4 outils (Répondre / Opener / Coach / Bio) ══════════════
+    // ══════════════ MODES : 4 outils (Répondre / DM / Coach / Bio) ══════════════
     const MODES={
       reply:{ premium:false, input:'image',
         hero:'Balance ton <span style="color:#FF5C00;">match</span>.',
@@ -834,7 +834,7 @@
       opener:{ premium:true, input:'image',
         hero:'Balance son <span style="color:#FF5C00;">profil</span>.',
         sub:'Glisse le screenshot de son profil (bio, photos), le renard te sort le premier message parfait.',
-        cta:'Générer mes openers <span style="font-size:21px;">⚡</span>',
+        cta:'Générer mes DM <span style="font-size:21px;">⚡</span>',
         steps:['Lecture du profil…','Repérage des accroches…','Détection du vibe…','Génération de plusieurs pistes…','Le renard élimine les mauvaises…','Dernière relecture…'] },
       coach:{ premium:true, input:'image',
         hero:'Fais-toi <span style="color:#FF5C00;">coacher</span>.',
@@ -1155,7 +1155,7 @@
 
     // ══════════════ HISTORIQUE (localStorage — rien côté serveur) ══════════════
     const HIST_KEY='tacotac_history';
-    const HIST_META={reply:{e:'💬',l:'Réponses'},opener:{e:'✨',l:'Openers'},coach:{e:'🔍',l:'Coach'},bio:{e:'📝',l:'Bio'}};
+    const HIST_META={reply:{e:'💬',l:'Réponses'},opener:{e:'✨',l:'DM'},coach:{e:'🔍',l:'Coach'},bio:{e:'📝',l:'Bio'}};
     let histFavOnly=false;
     function histAll(){try{const a=JSON.parse(localStorage.getItem(HIST_KEY)||'[]');return Array.isArray(a)?a:[];}catch(e){return[];}}
     function histWrite(a){try{localStorage.setItem(HIST_KEY,JSON.stringify(a.slice(0,30)));}catch(e){}}
@@ -1310,7 +1310,7 @@
         sub.innerHTML='<b style="color:#FF9A45;">Romantique · Sexto · Mystère</b> — les répliques les plus puissantes du renard sont réservées aux Premium.';
       }else if(context==='opener'){
         title.textContent='Générateur de 1er message 🔒';
-        sub.innerHTML='Envoie le <b style="color:#FF9A45;">profil</b> de ton match (bio, photos), le renard te sort l\'opener parfait — réservé aux membres Premium.';
+        sub.innerHTML='Envoie le <b style="color:#FF9A45;">profil</b> de ton match (bio, photos), le renard te sort le DM parfait — réservé aux membres Premium.';
       }else if(context==='coach'){
         title.textContent='Coach de conv 🔒';
         sub.innerHTML='Le renard lit ta conv, mesure son intérêt (<b style="color:#FF9A45;">score + signaux</b>) et te donne ton meilleur move — réservé aux membres Premium.';
