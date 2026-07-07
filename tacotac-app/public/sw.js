@@ -6,7 +6,7 @@
 //  Les appels /api/* ne sont JAMAIS interceptés (quota, paiement…).
 // ══════════════════════════════════════════════════════════════
 
-const CACHE = 'tacotac-v1'; // ⚠️ incrémenter à chaque déploiement qui change app.html/assets
+const CACHE = 'tacotac-v2'; // ⚠️ incrémenter à chaque déploiement qui change app.html/assets
 
 const PRECACHE = [
   '/',

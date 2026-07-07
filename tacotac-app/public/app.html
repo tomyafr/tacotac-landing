@@ -47,7 +47,7 @@
     .phone{position:relative;width:100%;max-width:540px;margin:0 auto;height:100dvh;background:#0E0E0E;overflow:hidden}
     @media(min-width:640px){.phone{border-left:1px solid #1c1c1c;border-right:1px solid #1c1c1c}}
 
-    .screen{position:absolute;inset:0;padding:20px 22px 28px;display:flex;flex-direction:column;opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .45s ease,transform .45s ease,visibility .45s;overflow-y:auto;-webkit-overflow-scrolling:touch}
+    .screen{position:absolute;inset:0;padding:calc(20px + env(safe-area-inset-top)) 22px calc(28px + env(safe-area-inset-bottom));display:flex;flex-direction:column;opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .45s ease,transform .45s ease,visibility .45s;overflow-y:auto;-webkit-overflow-scrolling:touch}
     .screen.active{opacity:1;visibility:visible;transform:translateY(0)}
     .screen::-webkit-scrollbar{width:0}
     .glow-top{position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(85% 42% at 50% -6%,rgba(255,92,0,.06) 0%,transparent 60%)}
@@ -170,7 +170,7 @@
     /* ── Panneau latéral Personnalisation ── */
     .prefs-overlay{position:absolute;inset:0;z-index:70;background:rgba(8,8,8,.55);backdrop-filter:blur(3px);opacity:0;visibility:hidden;transition:opacity .25s;}
     .prefs-overlay.show{opacity:1;visibility:visible;}
-    .prefs-panel{position:absolute;top:0;right:0;bottom:0;width:86%;max-width:340px;background:linear-gradient(180deg,#161616,#0e0e0e);border-left:1px solid #2a2a2a;padding:22px 18px 26px;overflow-y:auto;transform:translateX(100%);transition:transform .32s cubic-bezier(.22,.68,0,1.05);}
+    .prefs-panel{position:absolute;top:0;right:0;bottom:0;width:86%;max-width:340px;background:linear-gradient(180deg,#161616,#0e0e0e);border-left:1px solid #2a2a2a;padding:calc(22px + env(safe-area-inset-top)) 18px calc(26px + env(safe-area-inset-bottom));overflow-y:auto;transform:translateX(100%);transition:transform .32s cubic-bezier(.22,.68,0,1.05);}
     .prefs-overlay.show .prefs-panel{transform:translateX(0);}
     .prefs-label{color:#6e6a66;font-size:11px;letter-spacing:.6px;text-transform:uppercase;font-weight:600;margin:18px 0 9px;}
     .chips{display:flex;flex-wrap:wrap;gap:7px;}
