@@ -270,6 +270,8 @@
         <div id="heroSub" style="color:#8a8580;font-size:14px;margin-top:8px;line-height:1.45;">Glisse ta capture, le renard te sort 3 répliques qui font mouche.</div>
       </div>
 
+      <button id="demoBtn" style="margin-top:14px;width:100%;background:none;border:1px dashed #333;color:#9a958f;font:600 13px 'Space Grotesk',sans-serif;border-radius:14px;padding:12px;cursor:pointer;position:relative;z-index:2;display:flex;align-items:center;justify-content:center;gap:7px;transition:border-color .2s,color .2s;">▶️ Voir un exemple avant de te lancer</button>
+
       <input type="file" id="fileInput" accept="image/*" hidden>
       <div class="dropzone" id="dropzone" style="margin-top:20px;position:relative;z-index:2;">
         <div id="dzEmpty" style="display:flex;flex-direction:column;align-items:center;gap:18px;">
@@ -381,6 +383,12 @@
           <div style="color:#fff;font-size:17px;font-weight:700;letter-spacing:-.4px;">Tes répliques</div>
         </div>
         <div class="badge-pill" id="toneBadge">😂 Mode Drôle</div>
+      </div>
+
+      <div id="demoBanner" style="display:none;margin-top:16px;align-items:center;gap:10px;background:rgba(255,92,0,.08);border:1px solid rgba(255,92,0,.3);border-radius:14px;padding:12px 14px;position:relative;z-index:2;">
+        <span style="font-size:18px;">🎬</span>
+        <span style="flex:1;color:#d6d1cb;font-size:12px;line-height:1.4;">Ceci est un exemple. Balance <b style="color:#fff;">TA</b> conv pour un résultat sur mesure.</span>
+        <button id="demoCta" style="flex-shrink:0;background:#FF5C00;color:#fff;border:none;border-radius:10px;padding:9px 13px;font:700 12px 'Space Grotesk',sans-serif;cursor:pointer;white-space:nowrap;">Essayer →</button>
       </div>
 
       <div style="margin-top:22px;position:relative;z-index:2;">
@@ -1211,9 +1219,10 @@
     // Tease premium (réplique floutée) : uniquement pour les gratuits, clic → paywall
     document.getElementById('premiumTease').addEventListener('click',()=>{track('tease_click',{from:'results'});openGate('tone');});
 
-    function showResults(){
+    function showResults(demo){
       pillGrid.querySelectorAll('.pill').forEach(p=>p.classList.toggle('active',p.dataset.tone===selectedTone));
-      document.getElementById('premiumTease').style.display = quota.isPremium ? 'none' : 'block';
+      document.getElementById('premiumTease').style.display = (quota.isPremium||demo) ? 'none' : 'block';
+      document.getElementById('demoBanner').style.display = demo ? 'flex' : 'none';
       variant=0;renderResult(true);go(4);
     }
 
@@ -1381,11 +1390,45 @@
     document.getElementById('histTabFav').addEventListener('click',()=>{histFavOnly=true;document.getElementById('histTabFav').classList.add('on');document.getElementById('histTabAll').classList.remove('on');histRender();});
 
     // ══════════════ RESET ══════════════
-    document.getElementById('resetBtn').addEventListener('click',()=>{
+    function resetToUpload(){
       hasImage=false;imageDataUrl=null;replies=null;analyzeBtn.disabled=true;fileInput.value='';
       dzPreview.src='';dzPreview.style.display='none';dzEmpty.style.display='flex';dropzone.classList.remove('has-img');
       go(1);
-    });
+    }
+    document.getElementById('resetBtn').addEventListener('click',resetToUpload);
+
+    // ══════════════ DÉMO (exemple pré-rempli, sans upload ni compte) ══════════════
+    const DEMO_REPLIES={
+      classe:["un rooftop, un coucher de soleil et toi qui te demandes pourquoi t'as pas proposé avant… vendredi ?","t'as un truc qui change des autres, jserais bête de pas t'inviter à boire un verre","bien sûr, et toi quel arrondissement ?"],
+      drole:["clairement pas un escape room, jme connais jvais te regarder galérer sans rien faire 😭","mdrr bon jte préviens jchoisis jamais le bon resto mais jte fais marrer grave en attendant deal","ptdrr notre premier rdv va être tellement bien que tu vas regretter d'avoir pas proposé avant moi"],
+      spicy:["un ciné mais chez moi… le film aura aucune importance de toute façon","ouuu toi t'as l'air dangereuse jdevrais me méfier mais t'es bien trop mon style pour que jjoue la sécurité","jsens que si on se voit jvais avoir du mal à te laisser partir, on tente le coup ?"],
+    };
+    function playDemo(){
+      if(hasImage)return; // ne coupe jamais un upload déjà en cours
+      track('demo_play');
+      replies=DEMO_REPLIES;selectedTone='drole';variant=0;
+      go(2);
+      let i=0;stepEl.textContent=steps[0];
+      const stepTimer=setInterval(()=>{i=(i+1)%steps.length;stepEl.style.opacity='0';setTimeout(()=>{stepEl.textContent=steps[i];stepEl.style.opacity='1';},150);},420);
+      barFill.style.width='0%';
+      const start=performance.now();
+      function tick(now){const p=Math.min((now-start)/1400,1);barFill.style.width=Math.round(p*100)+'%';if(p<1)requestAnimationFrame(tick);}
+      requestAnimationFrame(tick);
+      setTimeout(()=>{
+        clearInterval(stepTimer);go(3);
+        setTimeout(()=>{showResults(true);},1100);
+      },1500);
+    }
+    document.getElementById('demoBtn').addEventListener('click',playDemo);
+    document.getElementById('demoCta').addEventListener('click',()=>{track('demo_cta_click');resetToUpload();});
+    // Premier visiteur jamais vu : la démo se joue automatiquement pour vendre la magie avant tout effort.
+    (function autoPlayDemoOnce(){
+      try{
+        if(localStorage.getItem('tacotac_seen_demo'))return;
+        localStorage.setItem('tacotac_seen_demo','1');
+        setTimeout(()=>{if(!hasImage&&!currentAccount)playDemo();},1100);
+      }catch(e){}
+    })();
 
     // ══════════════ PERSONNALISATION (profil envoyé à l'IA) ══════════════
     const PREFS_KEY='tacotac_prefs';
