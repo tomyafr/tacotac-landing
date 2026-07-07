@@ -58,10 +58,34 @@
     .fmt{font-size:11px;color:#6e6a66;border:1px solid #2a2a2a;border-radius:8px;padding:4px 9px}
 
     .tone-track{display:flex;gap:6px;background:rgba(255,255,255,.04);border:1px solid #1f1f1f;border-radius:100px;padding:5px;position:relative}
-    /* Switch de mode (2 options) : Répondre / 1er message */
-    #modeTrack .tone-glider{width:calc((100% - 16px)/2)}
-    #modeTrack.opener .tone-glider{transform:translateX(calc(100% + 6px))}
-    #modeTrack .tone-btn{font-size:.82rem;white-space:nowrap}
+    /* Switch de mode (4 outils) : Répondre / Opener / Coach / Bio */
+    #modeTrack .tone-glider{width:calc((100% - 28px)/4)}
+    #modeTrack .tone-btn{font-size:.74rem;white-space:nowrap;padding:10px 2px}
+    .mode-lock{font-size:9px;margin-left:1px}
+
+    /* ── Écran Coach (diagnostic) ── */
+    .coach-card{border-radius:18px;background:#141414;border:1px solid #222;padding:16px}
+    .coach-lbl{color:#6e6a66;font-size:11.5px;letter-spacing:.5px;text-transform:uppercase;font-weight:600}
+    .signal-row{display:flex;gap:9px;color:#d6d1cb;font-size:13.5px;line-height:1.45;align-items:flex-start}
+
+    /* ── Écran Bio (3 versions) ── */
+    .bio-card{border-radius:18px;background:#141414;border:1px solid #222;padding:16px;cursor:pointer;transition:border-color .2s}
+    .bio-card:hover{border-color:rgba(255,92,0,.4)}
+    .bio-text{color:#F0EDE8;font-size:15px;line-height:1.55;margin:9px 0 0;white-space:pre-wrap;word-break:break-word}
+
+    /* ── Historique ── */
+    .hist-item{border-radius:16px;background:#141414;border:1px solid #232323;padding:13px 14px;cursor:pointer;transition:border-color .2s}
+    .hist-item:hover{border-color:#333}
+    .hist-meta{display:flex;align-items:center;gap:8px}
+    .hist-chip{font-size:11px;font-weight:700;color:#FF7A33;background:rgba(255,92,0,.1);border:1px solid rgba(255,92,0,.3);border-radius:20px;padding:3px 9px;white-space:nowrap}
+    .hist-date{color:#56524e;font-size:11px;margin-left:auto;white-space:nowrap}
+    .hist-preview{color:#a8a29b;font-size:13px;line-height:1.45;margin-top:8px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+    .hist-star{background:none;border:none;cursor:pointer;font-size:15px;padding:0 0 0 6px;line-height:1;filter:grayscale(1);opacity:.45;transition:filter .2s,opacity .2s}
+    .hist-star.on{filter:none;opacity:1}
+    .hist-del{background:none;border:none;cursor:pointer;color:#56524e;font-size:12px;padding:0 0 0 8px}
+    .hist-row{display:flex;align-items:flex-start;gap:8px;background:#0d0d0d;border:1px solid #232323;border-radius:12px;padding:10px 12px;margin-top:8px;cursor:pointer;color:#d6d1cb;font-size:13px;line-height:1.45}
+    .hist-row:hover{border-color:rgba(255,92,0,.35)}
+    .hist-row .tn{flex-shrink:0;font-size:13px}
     .tone-glider{position:absolute;top:5px;bottom:5px;left:5px;width:calc((100% - 10px)/3);background:linear-gradient(150deg,#FF7A2E,#FF5C00);border-radius:100px;box-shadow:0 6px 18px rgba(255,92,0,.45);z-index:0;transition:transform .35s cubic-bezier(.34,1.3,.4,1)}
     .tone-btn{flex:1;position:relative;z-index:1;border-radius:100px;padding:11px 4px;font-size:.85rem;font-weight:600;border:none;cursor:pointer;color:#7a756f;background:transparent;font-family:inherit;transition:color .25s ease,transform .15s ease}
     .tone-btn.active{color:#fff}
@@ -203,14 +227,17 @@
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           <div class="quota" id="quota">…</div>
+          <button id="histBtn" title="Historique" style="width:34px;height:34px;border-radius:50%;background:#141414;border:1.5px solid #2a2a2a;color:#8a8580;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .2s;">🕘</button>
           <button id="accountBtn" title="Mon compte" style="width:34px;height:34px;border-radius:50%;background:#141414;border:1.5px solid #2a2a2a;color:#8a8580;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .2s;">👤</button>
         </div>
       </div>
 
       <div class="tone-track" id="modeTrack" style="margin-top:18px;position:relative;z-index:2;">
-        <div class="tone-glider"></div>
+        <div class="tone-glider" id="modeGlider"></div>
         <button class="tone-btn active" data-mode="reply">💬 Répondre</button>
-        <button class="tone-btn" data-mode="opener">✨ 1er message <span id="openerLock" style="font-size:11px;">🔒</span></button>
+        <button class="tone-btn" data-mode="opener">✨ Opener <span class="mode-lock">🔒</span></button>
+        <button class="tone-btn" data-mode="coach">🔍 Coach <span class="mode-lock">🔒</span></button>
+        <button class="tone-btn" data-mode="bio">📝 Bio <span class="mode-lock">🔒</span></button>
       </div>
 
       <div style="margin-top:20px;position:relative;z-index:2;">
@@ -231,6 +258,12 @@
           <div style="display:flex;gap:7px;"><span class="fmt">PNG</span><span class="fmt">JPG</span><span class="fmt">Capture</span></div>
         </div>
         <img id="dzPreview" class="dz-preview" style="display:none;" alt="Aperçu de ta capture">
+      </div>
+
+      <!-- Mode Bio : saisie texte à la place de l'upload -->
+      <div id="bioBox" style="display:none;flex:1;flex-direction:column;margin-top:20px;position:relative;z-index:2;">
+        <textarea class="prefs-ta" id="bioInput" maxlength="500" style="flex:1;min-height:170px;font-size:15px;" placeholder="Colle ta bio actuelle ici…&#10;&#10;(pas encore de bio ? décris-toi en 2-3 phrases : métier, passions, ce qui te rend unique — le renard s'occupe du reste)"></textarea>
+        <div style="text-align:right;color:#56524e;font-size:11px;margin-top:6px;"><span id="bioCount">0</span>/500</div>
       </div>
 
       <button class="prefs-open" id="prefsOpen" style="position:relative;z-index:2;margin-top:20px;">
@@ -370,6 +403,94 @@
       <button class="btn-secondary" id="resetBtn" style="margin-top:12px;">🔄 Nouvelle analyse</button>
     </section>
 
+    <!-- ═══════════════ ÉCRAN 5 — COACH (diagnostic de conv) ═══════════════ -->
+    <section class="screen" id="screen-5">
+      <div class="glow-top"></div>
+      <div class="tt-head">
+        <div class="tt-logo">
+          <div class="tt-avatar" style="width:34px;height:34px;"><img src="assets/fox_chill.png" alt="Tacotac"></div>
+          <div style="color:#fff;font-size:17px;font-weight:700;letter-spacing:-.4px;">Ton diagnostic</div>
+        </div>
+        <div class="badge-pill">🔍 Coach</div>
+      </div>
+
+      <div style="margin-top:18px;position:relative;z-index:2;display:flex;flex-direction:column;gap:12px;">
+        <div class="coach-card">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;">
+            <div class="coach-lbl">Son niveau d'intérêt</div>
+            <div id="coachScore" class="display" style="font-size:36px;color:#FF5C00;">—</div>
+          </div>
+          <div class="bar-track" style="margin-top:10px;"><div class="bar-fill" id="coachBar" style="transition:width .8s cubic-bezier(.22,.68,0,1);"></div></div>
+          <div id="coachScoreLabel" style="color:#8a8580;font-size:12.5px;margin-top:9px;"></div>
+        </div>
+
+        <div class="coach-card">
+          <div class="coach-lbl">Les signaux détectés</div>
+          <div id="coachSignaux" style="margin-top:11px;display:flex;flex-direction:column;gap:9px;"></div>
+        </div>
+
+        <div class="coach-card">
+          <div class="coach-lbl">Le verdict du renard</div>
+          <p id="coachVerdict" style="color:#F0EDE8;font-size:14.5px;line-height:1.55;margin:9px 0 0;"></p>
+        </div>
+
+        <div class="coach-card" style="border-color:rgba(255,92,0,.5);background:rgba(255,92,0,.06);">
+          <div class="coach-lbl" style="color:#FF7A33;">🎯 Ton meilleur move</div>
+          <p id="coachMove" style="color:#fff;font-size:14.5px;line-height:1.55;margin:9px 0 0;font-weight:500;"></p>
+        </div>
+
+        <div class="bubble">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div class="lbl" style="margin-bottom:0;">la réplique qui exécute le move</div>
+            <span style="font-size:13px;">✏️</span>
+          </div>
+          <p class="reply" id="coachReply" contenteditable="true" spellcheck="false"></p>
+          <div class="tail"></div>
+        </div>
+      </div>
+
+      <button class="copy-cta" id="coachCopy"><span id="coachCopyIcon" style="font-size:16px;">📋</span> <span id="coachCopyText">Copier la réplique</span></button>
+      <button class="btn-secondary" id="coachReset" style="margin-top:12px;">🔄 Nouvelle analyse</button>
+    </section>
+
+    <!-- ═══════════════ ÉCRAN 6 — BIO (3 versions réécrites) ═══════════════ -->
+    <section class="screen" id="screen-6">
+      <div class="glow-top"></div>
+      <div class="tt-head">
+        <div class="tt-logo">
+          <div class="tt-avatar" style="width:34px;height:34px;"><img src="assets/fox_chill.png" alt="Tacotac"></div>
+          <div style="color:#fff;font-size:17px;font-weight:700;letter-spacing:-.4px;">Ta nouvelle bio</div>
+        </div>
+        <div class="badge-pill">📝 Bio</div>
+      </div>
+
+      <div style="margin-top:18px;position:relative;z-index:2;display:flex;flex-direction:column;gap:12px;">
+        <div style="border-radius:16px;background:rgba(255,92,0,.06);border:1px solid rgba(255,92,0,.3);padding:13px 15px;color:#d6d1cb;font-size:13px;line-height:1.5;">
+          <span style="color:#FF7A33;font-weight:700;">🦊 L'avis du renard :</span> <span id="bioAnalyse"></span>
+        </div>
+        <div id="bioCards" style="display:flex;flex-direction:column;gap:12px;"></div>
+        <div style="color:#56524e;font-size:11.5px;text-align:center;">appuie sur une version pour la copier</div>
+      </div>
+
+      <button class="btn-secondary" id="bioReset" style="margin-top:14px;">🔄 Réessayer avec une autre bio</button>
+    </section>
+
+    <!-- ═══════════════ HISTORIQUE ═══════════════ -->
+    <div class="prefs-overlay" id="hist">
+      <div class="prefs-panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <div style="color:#fff;font-size:19px;font-weight:700;letter-spacing:-.3px;">Historique 🕘</div>
+          <button id="histClose" style="background:rgba(255,255,255,.06);border:none;color:#8a8580;width:32px;height:32px;border-radius:50%;font-size:14px;cursor:pointer;">✕</button>
+        </div>
+        <p style="color:#6e6a66;font-size:12px;margin:4px 0 0;line-height:1.45;">Stocké uniquement sur ton appareil — rien sur nos serveurs.</p>
+        <div class="chips" style="margin-top:14px;">
+          <button class="chip on" id="histTabAll">Tout</button>
+          <button class="chip" id="histTabFav">⭐ Favoris</button>
+        </div>
+        <div id="histList" style="margin-top:14px;display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
+    </div>
+
     <!-- ═══════════════ COMPTE (connexion / inscription) ═══════════════ -->
     <div class="gate-overlay" id="auth">
       <div class="gate-card" style="text-align:left;">
@@ -483,7 +604,7 @@
         <div style="margin-top:26px;text-align:left;">
           <div class="pw-feat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#FF9A45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Analyses <b style="color:#fff;font-weight:700;">illimitées</b>, chaque jour</span></div>
           <div class="pw-feat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#FF9A45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Tous les <b style="color:#fff;font-weight:700;">tons secrets</b> : Romantique, Sexto, Mystère</span></div>
-          <div class="pw-feat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#FF9A45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b style="color:#fff;font-weight:700;">Générateur de 1er message</b> : son profil → l'opener parfait</span></div>
+          <div class="pw-feat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#FF9A45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span>3 outils exclusifs : <b style="color:#fff;font-weight:700;">1er message</b> · <b style="color:#fff;font-weight:700;">Coach de conv</b> · <b style="color:#fff;font-weight:700;">Optimiseur de bio</b></span></div>
           <div class="pw-feat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#FF9A45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Renard <b style="color:#fff;font-weight:700;">personnalisé</b> : âge, objectif, style de message</span></div>
         </div>
 
@@ -569,6 +690,8 @@
     let hasImage = false;
     let imageDataUrl = null;
     let replies = null; // { classe:[..], drole:[..], spicy:[..] }
+    let coachData = null; // { score, signaux[], verdict, move, replique }
+    let bioData = null;   // { analyse, drole, classe, mystere }
 
     // ══════════════ QUOTA (piloté par le serveur) ══════════════
     // Le serveur est la SEULE source de vérité. Le navigateur ne compte plus rien
@@ -586,10 +709,9 @@
       updatePrefsAccess();
       renderAccountBtn();
       updateLockedPills();
-      // switch de mode : cadenas sur "1er message" pour les gratuits + retour au mode conv si le premium saute
-      const lock=document.getElementById('openerLock');
-      if(lock)lock.style.display=quota.isPremium?'none':'inline';
-      if(!quota.isPremium&&mode==='opener')setMode('reply');
+      // switch de mode : cadenas sur les outils premium pour les gratuits + retour au mode conv si le premium saute
+      document.querySelectorAll('.mode-lock').forEach(l=>l.style.display=quota.isPremium?'none':'inline');
+      if(!quota.isPremium&&MODES[mode]&&MODES[mode].premium)setMode('reply');
     }
     function renderAccountBtn() {
       const b = document.getElementById('accountBtn');
@@ -651,39 +773,63 @@
     // (Le choix du ton en amont a été retiré : l'analyse renvoie toujours les 3 tons,
     //  l'utilisateur bascule entre eux sur l'écran de résultats.)
 
-    // ══════════════ MODE : Répondre (conv) / 1er message (profil, premium) ══════════════
+    // ══════════════ MODES : 4 outils (Répondre / Opener / Coach / Bio) ══════════════
+    const MODES={
+      reply:{ premium:false, input:'image',
+        hero:'Balance ton <span style="color:#FF5C00;">match</span>.',
+        sub:'Glisse ta capture, le renard te sort 3 répliques qui font mouche.',
+        cta:'Analyser ma conv <span style="font-size:21px;">⚡</span>',
+        steps:['Lecture du contexte…','Analyse du ton…','Détection du vibe…','Génération de plusieurs pistes…','Le renard élimine les mauvaises…','Dernière relecture…'] },
+      opener:{ premium:true, input:'image',
+        hero:'Balance son <span style="color:#FF5C00;">profil</span>.',
+        sub:'Glisse le screenshot de son profil (bio, photos), le renard te sort le premier message parfait.',
+        cta:'Générer mes openers <span style="font-size:21px;">⚡</span>',
+        steps:['Lecture du profil…','Repérage des accroches…','Détection du vibe…','Génération de plusieurs pistes…','Le renard élimine les mauvaises…','Dernière relecture…'] },
+      coach:{ premium:true, input:'image',
+        hero:'Fais-toi <span style="color:#FF5C00;">coacher</span>.',
+        sub:'Glisse ta conv, le renard lit ses signaux, mesure son intérêt et te donne ton meilleur move.',
+        cta:'Lancer le diagnostic <span style="font-size:21px;">🔍</span>',
+        steps:['Lecture de la conv…','Repérage des signaux…','Qui investit le plus…','Calcul du score…','Choix du meilleur move…'] },
+      bio:{ premium:true, input:'text',
+        hero:'Optimise ta <span style="color:#FF5C00;">bio</span>.',
+        sub:'Colle ta bio actuelle, le renard te sort 3 versions qui donnent envie de matcher.',
+        cta:'Optimiser ma bio <span style="font-size:21px;">✨</span>',
+        steps:['Lecture de ta bio…','Repérage des clichés…','Réécriture par le renard…','Dernier polish…'] },
+    };
     let mode='reply';
     const modeTrack=document.getElementById('modeTrack');
+    const bioInput=document.getElementById('bioInput');
+    function updateAnalyzeReady(){
+      analyzeBtn.disabled = MODES[mode].input==='text' ? bioInput.value.trim().length<5 : !hasImage;
+    }
     function setMode(m){
       mode=m;
-      const opener=(m==='opener');
-      modeTrack.classList.toggle('opener',opener);
-      modeTrack.querySelectorAll('.tone-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));
-      steps=opener?OPENER_STEPS:REPLY_STEPS;
-      document.getElementById('heroTitle').innerHTML=opener
-        ?'Balance son <span style="color:#FF5C00;">profil</span>.'
-        :'Balance ton <span style="color:#FF5C00;">match</span>.';
-      document.getElementById('heroSub').textContent=opener
-        ?'Glisse le screenshot de son profil (bio, photos), le renard te sort le premier message parfait.'
-        :'Glisse ta capture, le renard te sort 3 répliques qui font mouche.';
-      analyzeBtn.innerHTML=opener
-        ?'Générer mes openers <span style="font-size:21px;">⚡</span>'
-        :'Analyser ma conv <span style="font-size:21px;">⚡</span>';
-      document.getElementById('bubbleLbl').textContent=opener?'tiens envoie lui ça':'tiens répond lui ça';
+      const M=MODES[m];
+      const btns=[...modeTrack.querySelectorAll('.tone-btn')];
+      btns.forEach(b=>b.classList.toggle('active',b.dataset.mode===m));
+      const i=btns.findIndex(b=>b.dataset.mode===m);
+      document.getElementById('modeGlider').style.transform='translateX(calc('+(i*100)+'% + '+(i*6)+'px))';
+      steps=M.steps;
+      document.getElementById('heroTitle').innerHTML=M.hero;
+      document.getElementById('heroSub').textContent=M.sub;
+      analyzeBtn.innerHTML=M.cta;
+      dropzone.style.display=M.input==='image'?'flex':'none';
+      document.getElementById('bioBox').style.display=M.input==='text'?'flex':'none';
+      document.getElementById('bubbleLbl').textContent=m==='opener'?'tiens envoie lui ça':'tiens répond lui ça';
+      updateAnalyzeReady();
     }
     modeTrack.querySelectorAll('.tone-btn').forEach(b=>{
       b.addEventListener('click',()=>{
         const m=b.dataset.mode;
         if(m===mode)return;
-        if(m==='opener'&&!quota.isPremium){track('opener_gate');openGate('opener');return;} // premium only
+        if(MODES[m].premium&&!quota.isPremium){track('mode_gate',{mode:m});openGate(m);return;} // outils premium
         setMode(m);track('mode_switch',{mode:m});
       });
     });
+    bioInput.addEventListener('input',()=>{document.getElementById('bioCount').textContent=bioInput.value.length;updateAnalyzeReady();});
 
     // ══════════════ ÉCRAN 2 — ANALYSE (vrai appel IA) ══════════════
-    const REPLY_STEPS=['Lecture du contexte…','Analyse du ton…','Détection du vibe…','Génération de plusieurs pistes…','Le renard élimine les mauvaises…','Dernière relecture…'];
-    const OPENER_STEPS=['Lecture du profil…','Repérage des accroches…','Détection du vibe…','Génération de plusieurs pistes…','Le renard élimine les mauvaises…','Dernière relecture…'];
-    let steps=REPLY_STEPS;
+    let steps=MODES.reply.steps; // remplacé par setMode() selon l'outil actif
     const stepEl=document.getElementById('analyseStep');
     const barFill=document.getElementById('barFill');
 
@@ -748,9 +894,15 @@
         }else if(resp.status===403){ // mode opener sans premium → paywall dédié
           premiumNeeded=true;
         }else{
-          replies=data.replies;
+          if(mode==='coach'){
+            coachData=data.coach||null;
+            if(coachData)histAdd({mode:'coach',coach:coachData});
+          }else{
+            replies=data.replies;
+            if(data.replies&&data.source==='ai')histAdd({mode,replies:data.replies});
+          }
           if(data.quota)applyQuota(data.quota); // maj du compteur depuis le serveur
-          track('analyze_done',{source:data.source||'?'});
+          track('analyze_done',{source:data.source||'?',mode});
           // moment chaud : préviens AVANT le mur (le paywall ne sera pas une surprise)
           if(!quota.isPremium&&quota.remaining===1){setTimeout(()=>toast('⚠️ Plus qu\'1 analyse gratuite aujourd\'hui'),2600);track('quota_last_warning');}
         }
@@ -763,8 +915,12 @@
       barFill.style.width='100%';
 
       if(authNeeded){ pendingAnalysis=true; openAuth('analysis'); return; } // compte requis
-      if(premiumNeeded){ setMode('reply'); go(1); openGate('opener'); return; } // premium expiré entre-temps
+      if(premiumNeeded){ const gm=mode; setMode('reply'); go(1); openGate(gm); return; } // premium expiré entre-temps
       if(blocked){ go(1); openGate(); return; } // on ramène à l'upload et on ouvre le paywall
+      if(mode==='coach'){
+        if(!coachData){ toast('Le coach est indisponible, réessaie dans un instant'); go(1); return; }
+        setTimeout(showCoach,300); return;
+      }
       setTimeout(runReflexion,300);
     }
 
@@ -863,6 +1019,169 @@
       variant=0;renderResult(true);go(4);
     }
 
+    // ══════════════ ÉCRAN 5 — COACH (diagnostic) ══════════════
+    function showCoach(){
+      const c=coachData;
+      const s=c.score;
+      const col=s<40?'#ff6b5c':(s<70?'#FFB020':'#34d399');
+      const scoreEl=document.getElementById('coachScore');
+      scoreEl.textContent=s+'%';scoreEl.style.color=col;
+      const bar=document.getElementById('coachBar');
+      bar.style.background=col;bar.style.width='0%';
+      document.getElementById('coachScoreLabel').textContent=
+        s<31?'Mal engagé — mais pas forcément mort':(s<56?'Tiède — tout se joue maintenant':(s<76?'Intéressée — continue comme ça':'Très chaude — fonce'));
+      const sg=document.getElementById('coachSignaux');sg.innerHTML='';
+      (c.signaux||[]).forEach(x=>{const d=document.createElement('div');d.className='signal-row';d.textContent=x;sg.appendChild(d);});
+      document.getElementById('coachVerdict').textContent=c.verdict;
+      document.getElementById('coachMove').textContent=c.move;
+      document.getElementById('coachReply').textContent=c.replique;
+      go(5);
+      setTimeout(()=>{bar.style.width=s+'%';},350);
+    }
+    document.getElementById('coachCopy').addEventListener('click',async()=>{
+      const txt=document.getElementById('coachReply').textContent;
+      try{await navigator.clipboard.writeText(txt);}catch(e){const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e2){}document.body.removeChild(ta);}
+      document.getElementById('coachCopyIcon').textContent='✅';document.getElementById('coachCopyText').textContent='Copié !';
+      setTimeout(()=>{document.getElementById('coachCopyIcon').textContent='📋';document.getElementById('coachCopyText').textContent='Copier la réplique';},1800);
+      track('copy_reply',{tone:'coach'});
+    });
+    document.getElementById('coachReset').addEventListener('click',()=>go(1));
+
+    // ══════════════ MODE BIO — appel /api/bio + ÉCRAN 6 ══════════════
+    async function runBio(){
+      const text=bioInput.value.trim();
+      if(text.length<5)return;
+      track('analyze_start',{mode:'bio'});
+      go(2);
+      let i=0;stepEl.textContent=steps[0];
+      const stepTimer=setInterval(()=>{i=(i+1)%steps.length;stepEl.style.opacity='0';setTimeout(()=>{stepEl.textContent=steps[i];stepEl.style.opacity='1';},200);},800);
+      barFill.style.width='0%';
+      const start=performance.now();let raf;
+      function tick(now){const p=Math.min((now-start)/7000,1);barFill.style.width=Math.min(92,Math.round(p*92))+'%';if(p<1)raf=requestAnimationFrame(tick);}
+      raf=requestAnimationFrame(tick);
+      const minDelay=new Promise(r=>setTimeout(r,1600));
+      let authNeeded=false,blocked=false,premiumNeeded=false;
+      try{
+        const [resp]=await Promise.all([
+          fetch('/api/bio',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bio:text,profile:prefs})}),
+          minDelay,
+        ]);
+        const data=await resp.json();
+        if(resp.status===401)authNeeded=true;
+        else if(resp.status===402){blocked=true;if(data.quota)applyQuota(data.quota);}
+        else if(resp.status===403)premiumNeeded=true;
+        else{
+          bioData=data.bio||null;
+          if(data.quota)applyQuota(data.quota);
+          if(bioData){histAdd({mode:'bio',bio:bioData});track('analyze_done',{source:data.source||'?',mode:'bio'});}
+        }
+      }catch(e){bioData=null;}
+      cancelAnimationFrame(raf);clearInterval(stepTimer);barFill.style.width='100%';
+      if(authNeeded){pendingAnalysis=true;openAuth('analysis');return;}
+      if(premiumNeeded){setMode('reply');go(1);openGate('bio');return;}
+      if(blocked){go(1);openGate();return;}
+      if(!bioData){toast('Le renard est indisponible, réessaie');go(1);return;}
+      setTimeout(showBio,300);
+    }
+    function showBio(){
+      document.getElementById('bioAnalyse').textContent=bioData.analyse||'voilà 3 versions qui claquent.';
+      const wrap=document.getElementById('bioCards');wrap.innerHTML='';
+      [['😂','Drôle','drole'],['🎩','Classe','classe'],['🎭','Mystère','mystere']].forEach(([e,l,k])=>{
+        const card=document.createElement('div');card.className='bio-card';
+        const head=document.createElement('div');head.style.cssText='display:flex;align-items:center;justify-content:space-between;';
+        head.innerHTML='<span style="color:#FF6F1F;font-size:11.5px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;">'+e+' version '+l+'</span><span style="font-size:12px;color:#56524e;">📋</span>';
+        const p=document.createElement('p');p.className='bio-text';p.textContent=bioData[k]||'';
+        card.appendChild(head);card.appendChild(p);
+        card.addEventListener('click',async()=>{
+          try{await navigator.clipboard.writeText(bioData[k]||'');}catch(e2){}
+          toast('✅ Bio '+l+' copiée');track('copy_reply',{tone:'bio_'+k});
+        });
+        wrap.appendChild(card);
+      });
+      go(6);
+    }
+    document.getElementById('bioReset').addEventListener('click',()=>go(1));
+
+    // ══════════════ HISTORIQUE (localStorage — rien côté serveur) ══════════════
+    const HIST_KEY='tacotac_history';
+    const HIST_META={reply:{e:'💬',l:'Réponses'},opener:{e:'✨',l:'Openers'},coach:{e:'🔍',l:'Coach'},bio:{e:'📝',l:'Bio'}};
+    let histFavOnly=false;
+    function histAll(){try{const a=JSON.parse(localStorage.getItem(HIST_KEY)||'[]');return Array.isArray(a)?a:[];}catch(e){return[];}}
+    function histWrite(a){try{localStorage.setItem(HIST_KEY,JSON.stringify(a.slice(0,30)));}catch(e){}}
+    function histAdd(entry){const a=histAll();a.unshift({id:Date.now()+''+Math.floor(Math.random()*1e4),ts:Date.now(),fav:false,...entry});histWrite(a);}
+    function histPreview(h){
+      if(h.mode==='coach')return (h.coach&&h.coach.score!=null?h.coach.score+'% — ':'')+(h.coach&&h.coach.verdict||'');
+      if(h.mode==='bio')return h.bio&&(h.bio.drole||h.bio.classe)||'';
+      const r=h.replies||{};const first=Object.keys(r).find(k=>r[k]&&r[k].length);
+      return first?r[first][0]:'';
+    }
+    function histRow(parent,emoji,text){
+      const r=document.createElement('div');r.className='hist-row';
+      const t=document.createElement('span');t.className='tn';t.textContent=emoji;
+      const p=document.createElement('span');p.textContent=text;
+      r.appendChild(t);r.appendChild(p);
+      r.addEventListener('click',async ev=>{ev.stopPropagation();try{await navigator.clipboard.writeText(text);}catch(e){}toast('✅ Copié');});
+      parent.appendChild(r);
+    }
+    function histFill(box,h){
+      if(h.mode==='coach'){
+        if(h.coach.move)histRow(box,'🎯',h.coach.move);
+        if(h.coach.replique)histRow(box,'💬',h.coach.replique);
+        return;
+      }
+      if(h.mode==='bio'){
+        [['😂','drole'],['🎩','classe'],['🎭','mystere']].forEach(([e,k])=>{if(h.bio[k])histRow(box,e,h.bio[k]);});
+        return;
+      }
+      Object.entries(h.replies||{}).forEach(([tone,arr])=>{
+        const t=tones[tone];if(!t||!Array.isArray(arr))return;
+        arr.forEach(x=>histRow(box,t.emoji,x));
+      });
+    }
+    function histRender(){
+      const list=document.getElementById('histList');list.innerHTML='';
+      const items=histAll().filter(h=>!histFavOnly||h.fav);
+      if(!items.length){
+        const d=document.createElement('div');
+        d.style.cssText='color:#56524e;font-size:13px;text-align:center;padding:26px 10px;line-height:1.5;';
+        d.textContent=histFavOnly?'Aucun favori — appuie sur l\'étoile d\'une analyse pour la garder ici.':'Aucune analyse pour l\'instant. Lance-toi !';
+        list.appendChild(d);return;
+      }
+      items.forEach(h=>{
+        const it=document.createElement('div');it.className='hist-item';
+        const meta=document.createElement('div');meta.className='hist-meta';
+        const M=HIST_META[h.mode]||HIST_META.reply;
+        const chip=document.createElement('span');chip.className='hist-chip';chip.textContent=M.e+' '+M.l;
+        const d=new Date(h.ts);
+        const date=document.createElement('span');date.className='hist-date';
+        date.textContent=String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+        const star=document.createElement('button');star.className='hist-star'+(h.fav?' on':'');star.textContent='⭐';star.title='Favori';
+        star.addEventListener('click',ev=>{
+          ev.stopPropagation();
+          if(!quota.isPremium){openGate('fav');return;} // favoris = premium
+          const a=histAll();const x=a.find(y=>y.id===h.id);if(x){x.fav=!x.fav;histWrite(a);}
+          histRender();track('fav_toggle');
+        });
+        const del=document.createElement('button');del.className='hist-del';del.textContent='✕';del.title='Supprimer';
+        del.addEventListener('click',ev=>{ev.stopPropagation();histWrite(histAll().filter(y=>y.id!==h.id));histRender();});
+        meta.appendChild(chip);meta.appendChild(date);meta.appendChild(star);meta.appendChild(del);
+        const prev=document.createElement('div');prev.className='hist-preview';prev.textContent=histPreview(h);
+        const details=document.createElement('div');details.style.display='none';
+        it.appendChild(meta);it.appendChild(prev);it.appendChild(details);
+        it.addEventListener('click',()=>{
+          if(details.style.display==='none'){if(!details.childNodes.length)histFill(details,h);details.style.display='block';prev.style.display='none';}
+          else{details.style.display='none';prev.style.display='-webkit-box';}
+        });
+        list.appendChild(it);
+      });
+    }
+    const histOverlay=document.getElementById('hist');
+    document.getElementById('histBtn').addEventListener('click',()=>{histRender();histOverlay.classList.add('show');track('history_open');});
+    document.getElementById('histClose').addEventListener('click',()=>histOverlay.classList.remove('show'));
+    histOverlay.addEventListener('click',e=>{if(e.target===histOverlay)histOverlay.classList.remove('show');});
+    document.getElementById('histTabAll').addEventListener('click',()=>{histFavOnly=false;document.getElementById('histTabAll').classList.add('on');document.getElementById('histTabFav').classList.remove('on');histRender();});
+    document.getElementById('histTabFav').addEventListener('click',()=>{histFavOnly=true;document.getElementById('histTabFav').classList.add('on');document.getElementById('histTabAll').classList.remove('on');histRender();});
+
     // ══════════════ RESET ══════════════
     document.getElementById('resetBtn').addEventListener('click',()=>{
       hasImage=false;imageDataUrl=null;replies=null;analyzeBtn.disabled=true;fileInput.value='';
@@ -941,6 +1260,15 @@
       }else if(context==='opener'){
         title.textContent='Générateur de 1er message 🔒';
         sub.innerHTML='Envoie le <b style="color:#FF9A45;">profil</b> de ton match (bio, photos), le renard te sort l\'opener parfait — réservé aux membres Premium.';
+      }else if(context==='coach'){
+        title.textContent='Coach de conv 🔒';
+        sub.innerHTML='Le renard lit ta conv, mesure son intérêt (<b style="color:#FF9A45;">score + signaux</b>) et te donne ton meilleur move — réservé aux membres Premium.';
+      }else if(context==='bio'){
+        title.textContent='Optimiseur de bio 🔒';
+        sub.innerHTML='Colle ta bio, le renard la réécrit en <b style="color:#FF9A45;">3 versions qui matchent</b> — réservé aux membres Premium.';
+      }else if(context==='fav'){
+        title.textContent='Favoris Premium 🔒';
+        sub.innerHTML='Garde tes meilleures répliques en <b style="color:#FF9A45;">favoris</b> et retrouve-les en un clin d\'œil — réservé aux membres Premium.';
       }else{
         title.textContent='Débloque tout le potentiel';
         sub.innerHTML='Personnalise ton renard, débloque les analyses illimitées et tous les tons secrets. Sans engagement.';
@@ -1102,7 +1430,7 @@
           setTimeout(()=>{
             authOverlay.classList.remove('show');
             // une analyse attendait l'inscription → on la lance pour de vrai
-            if(pendingAnalysis){pendingAnalysis=false;authContext=null;runAnalyse();}
+            if(pendingAnalysis){pendingAnalysis=false;authContext=null;if(mode==='bio')runBio();else runAnalyse();}
           },700);
         }else{err.textContent=d.error||'Erreur, réessaie.';err.style.display='block';}
       }catch(ex){err.textContent='Erreur réseau, réessaie.';err.style.display='block';}
@@ -1122,7 +1450,7 @@
           applyQuota(st);
           // une analyse attendait l'inscription (détour Google) → on restaure l'image et on la lance
           let img=null,pm=null;try{img=sessionStorage.getItem('tt_pending_img');pm=sessionStorage.getItem('tt_pending_mode');sessionStorage.removeItem('tt_pending_img');sessionStorage.removeItem('tt_pending_mode');}catch(e){}
-          if(pm==='opener'&&st.isPremium)setMode('opener'); // reprend le mode choisi avant le détour Google
+          if(pm&&pm!=='reply'&&MODES[pm]&&st.isPremium)setMode(pm); // reprend l'outil choisi avant le détour Google
           if(img){
             imageDataUrl=img;hasImage=true;
             dzPreview.src=img;dzPreview.style.display='block';dzEmpty.style.display='none';dropzone.classList.add('has-img');analyzeBtn.disabled=false;
@@ -1140,6 +1468,11 @@
 
     // ══════════════ LANCEMENT ══════════════
     analyzeBtn.addEventListener('click',()=>{
+      if(mode==='bio'){ // entrée texte, pas d'image
+        if(bioInput.value.trim().length<5)return;
+        if(!currentAccount){pendingAnalysis=true;openAuth('analysis');return;}
+        runBio();return;
+      }
       if(!hasImage)return;
       if(!currentAccount){startTeaseAnalyse();return;} // pas de compte → suspense puis mur d'inscription
       // pré-check pour éviter une analyse inutile ; le serveur reste l'arbitre final

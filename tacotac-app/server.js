@@ -572,6 +572,162 @@ const OPENER_FALLBACK = {
   ],
 };
 
+// ══════════════ COACH DE CONVERSATION (premium) ══════════════
+// Le client ne veut pas de répliques : il veut un DIAGNOSTIC de sa conv
+// (score d'intérêt, signaux, verdict, meilleur move + la réplique qui l'exécute).
+const COACH_FUNCTION = {
+  type: 'function',
+  function: {
+    name: 'coacher_conversation',
+    description: "Diagnostique la conversation du client : signaux d'intérêt de la cible, score honnête, verdict, meilleur move et la réplique qui l'exécute.",
+    strict: true,
+    parameters: {
+      type: 'object',
+      properties: {
+        dernier_message: {
+          type: 'string',
+          description: "ÉTAPE 1 — Recopie MOT POUR MOT le tout dernier message de la conversation (la bulle la plus BASSE du screenshot). Si l'image n'est pas une conversation lisible : 'ILLISIBLE'.",
+        },
+        dernier_message_cote: {
+          type: 'string',
+          enum: ['gauche', 'droite'],
+          description: "ÉTAPE 2 — Alignement de cette bulle : 'gauche' (bord gauche, souvent grise, photo de profil à côté) = la CIBLE. 'droite' (bord droit, colorée) = le CLIENT. L'ALIGNEMENT, jamais le contenu.",
+        },
+        signaux: {
+          type: 'array',
+          description: "ÉTAPE 3 — 3 à 5 signaux OBSERVÉS dans la conv, chacun au format 'émoji signe → interprétation courte' (✅ = bon signe, ⚠️ = mitigé, ❌ = mauvais). Ex : '✅ elle pose des questions → elle investit'. UNIQUEMENT ce qui est visible, n'invente jamais.",
+          items: { type: 'string' },
+        },
+        interet_score: {
+          type: 'integer',
+          description: "ÉTAPE 4 — Score d'intérêt de la cible envers le client, 0 à 100, HONNÊTE (cf. barème du system prompt). La complaisance est interdite.",
+        },
+        verdict: {
+          type: 'string',
+          description: "ÉTAPE 5 — Le verdict en 2-3 phrases cash, tutoiement direct au client : où en est vraiment cette conv, ce qu'elle pense probablement de lui. Franc mais jamais méprisant.",
+        },
+        meilleur_move: {
+          type: 'string',
+          description: "ÉTAPE 6 — LE conseil concret et actionnable MAINTENANT (proposer un date précis, arrêter de sur-texter, attendre, changer d'angle, passer en vocal…). 1-3 phrases, zéro généralité de coach YouTube.",
+        },
+        replique: {
+          type: 'string',
+          description: "ÉTAPE 7 — La réplique EXACTE qui exécute ce move, prête à envoyer, style Tacotac : minuscules, courte, confiante, ancrée dans la conv, 0-1 emoji max, jamais needy.",
+        },
+      },
+      required: ['dernier_message', 'dernier_message_cote', 'signaux', 'interet_score', 'verdict', 'meilleur_move', 'replique'],
+      additionalProperties: false,
+    },
+  },
+};
+
+const COACH_SYSTEM_PROMPT = `Tu es Tacotac, coach de séduction français lucide et cash. Là, ton client ne veut PAS de répliques toutes faites : il veut ton DIAGNOSTIC. Il t'envoie le screenshot d'une conv (Tinder, Hinge, Insta, SMS…) et tu lui dis la vérité : est-ce qu'elle est intéressée, quels signaux le prouvent, et quel est son meilleur move.
+
+═══════════════════════════════════════════════
+COMMENT LIRE LE SCREENSHOT — NE TE TROMPE JAMAIS
+═══════════════════════════════════════════════
+• Bulles collées au bord DROIT (colorées) = TON CLIENT. Bulles au bord GAUCHE (grises, photo de profil à côté) = LA CIBLE.
+• Le critère FIABLE = l'ALIGNEMENT de la bulle, jamais le contenu.
+• Repère la bulle la plus basse (dernier_message) et son côté avant toute analyse.
+⛔ Si l'image n'est pas une conversation lisible : 'ILLISIBLE' dans dernier_message, score 50, signaux ['⚠️ conversation illisible → envoie un screenshot plus net'], et un verdict qui dit honnêtement que tu n'as pas pu lire.
+
+═══════════════════════════════════════════════
+LES SIGNAUX — UNIQUEMENT CE QUI EST VISIBLE
+═══════════════════════════════════════════════
+• Qui pose des questions ? Elle pose des questions = elle investit.
+• Effort comparé : elle écrit 3 mots quand lui écrit 3 lignes = mauvais. L'inverse = très bon.
+• Rires (mdr, 😂, haha), taquineries, emojis de sa part = engagement.
+• Qui relance après un blanc ? Elle relance = fort signal.
+• Elle parle d'elle spontanément, propose ou accepte du concret = très bon.
+• Réponses sèches, "ok", "oui oui", questions jamais retournées = elle décroche.
+N'invente JAMAIS un signal non visible (délais de réponse non affichés, "elle a vu ton message"…).
+
+═══════════════════════════════════════════════
+LE SCORE — BARÈME STRICT, ZÉRO COMPLAISANCE
+═══════════════════════════════════════════════
+• 0-30 : elle répond par politesse ou plus du tout. Aucun effort, aucune question.
+• 31-55 : tiède. Elle répond mais n'investit pas, n'initie rien.
+• 56-75 : intéressée. Questions, taquineries, elle investit dans ses réponses.
+• 76-100 : très chaude. Elle relance, propose, flirte ouvertement.
+La complaisance = trahison. Si c'est mal parti, DIS-LE : ton client préfère la vérité à un faux espoir. Mais reste factuel, jamais moqueur.
+
+VERDICT : 2-3 phrases cash, tutoiement direct ("elle te teste", "t'es en train de la perdre en sur-textant", "elle attend juste que tu proposes"). Franc, précis, jamais méprisant envers lui ni elle.
+
+MEILLEUR MOVE : LE truc concret à faire maintenant. Un move précis et daté vaut mieux qu'un principe ("propose mercredi soir un verre à tel endroit" > "sois plus confiant"). Si le bon move est de NE PAS écrire, dis-le aussi.
+
+RÉPLIQUE : minuscules, aucune ponctuation finale, courte, confiante, ancrée dans SON dernier message, 0-1 emoji max, jamais needy. Elle doit exécuter exactement le move conseillé. ⛔ JAMAIS de placeholder (XX, [lieu], "tel endroit") : si tu ne connais pas un détail, formule la phrase sans ("au mur d'escalade près de chez toi", "jeudi 19h, je choisis le spot").
+
+Réponds UNIQUEMENT via la fonction coacher_conversation.`;
+
+// ══════════════ OPTIMISEUR DE BIO (premium) ══════════════
+const BIO_FUNCTION = {
+  type: 'function',
+  function: {
+    name: 'optimiser_bio',
+    description: "Analyse la bio de dating du client et la réécrit en 3 versions distinctes (drôle, classe, mystère) qui donnent envie de matcher.",
+    strict: true,
+    parameters: {
+      type: 'object',
+      properties: {
+        faits: {
+          type: 'string',
+          description: "ÉTAPE 1 — Liste télégraphique des SEULS faits donnés par le client (âge exact, métier, passions, ville…). Tu n'auras le droit d'utiliser QUE ces faits dans les 3 versions — rien d'autre, aucun chiffre modifié, aucun sport/détail inventé.",
+        },
+        analyse: {
+          type: 'string',
+          description: "ÉTAPE 2 — Ce qui pèche dans la bio actuelle, en 1-2 phrases télégraphiques et bienveillantes (cliché ? liste d'adjectifs ? trop long ? aucun hook ?). Si la bio est déjà bonne, dis ce qui peut encore monter d'un cran.",
+        },
+        drole: {
+          type: 'string',
+          description: "Version DRÔLE : autodérision précise + punchline, le mec qu'on a envie de chambrer. 1-3 lignes, prête à coller.",
+        },
+        classe: {
+          type: 'string',
+          description: "Version CLASSE : assuré, direct, un détail intriguant, zéro blague forcée. 1-3 lignes, prête à coller.",
+        },
+        mystere: {
+          type: 'string',
+          description: "Version MYSTÈRE : en dit très peu mais bien, pique la curiosité, donne envie d'envoyer le premier message. 1-3 lignes, prête à coller.",
+        },
+      },
+      required: ['faits', 'analyse', 'drole', 'classe', 'mystere'],
+      additionalProperties: false,
+    },
+  },
+};
+
+const BIO_SYSTEM_PROMPT = `Tu es Tacotac, expert français des bios de dating apps (Tinder, Hinge, Bumble). Ton client te colle sa bio actuelle (ou se décrit en 2 phrases) : tu la réécris en 3 versions qui donnent envie de matcher ET d'envoyer le premier message.
+
+CE QUI FAIT UNE BIO QUI CONVERTIT :
+• COURTE : 1 à 3 lignes, ~40 mots max.
+• SPÉCIFIQUE : des détails concrets et imagés. "je perds toute dignité devant un karaoké des années 80" > "j'aime la musique".
+• UN HOOK : au moins un truc auquel on a ENVIE de répondre (une prise de position, une question implicite, un défi léger).
+• VRAIE : tu réutilises UNIQUEMENT les infos données par le client (métier, ville, passions…). Tu reformules, tu choisis, tu exagères pour l'humour évident — mais tu n'inventes AUCUN fait.
+
+═══ FIDÉLITÉ AUX FAITS — RÈGLE ABSOLUE ═══
+Commence par lister dans "faits" les seuls éléments donnés par le client. Ensuite, chaque version n'utilise QUE ces faits :
+• Il dit "sportif" sans préciser ? Tu restes vague ("le sport" / "la salle") — tu n'inventes JAMAIS un sport précis (escalade, boxe, tennis…).
+• Un chiffre (âge, taille, années) ne change JAMAIS : s'il dit 25 ans, c'est 25 — et de toute façon, ne mets PAS l'âge dans la bio (l'appli l'affiche déjà).
+• Pas de métier précisé ? Aucun métier dans la bio.
+• S'il donne très peu, fais court et stylé plutôt que d'inventer : une bonne bio de 8 mots vraie > une bio de 30 mots inventée.
+
+BANNIS ABSOLUS :
+• "j'aime voyager / rire / les restos / les séries" et toute liste d'adjectifs ("drôle, gentil, sportif").
+• "carpe diem", citations de motivation, "la vie est belle".
+• La taille + "parce que visiblement c'est important ici" (vu 10 000 fois).
+• Toute négativité : "pas là pour un plan d'un soir", "les fake profils passez votre chemin".
+• "demande-moi", "je sais pas quoi mettre ici".
+• Les pavés et les CV.
+
+3 VERSIONS OBLIGATOIRES, vraiment différentes (pas 3 reformulations de la même) :
+• "drole" : autodérision précise + punchline sèche.
+• "classe" : assuré, direct, un détail intriguant.
+• "mystere" : minimaliste, intrigant, il en dit peu mais bien.
+
+FORMAT : français naturel 2025, minuscules acceptées, retours à la ligne autorisés, 0-2 emojis max par version, jamais d'emoji-béquille. ⛔ Bannis aussi les smileys texte datés ( ;) ;p xD :P ) — ça fait 2009.
+
+Ordre : "faits" (la liste brute), puis "analyse" (ce qui pèche), puis les 3 versions. Réponds UNIQUEMENT via la fonction optimiser_bio.`;
+
 // Répliques de secours si l'IA est indispo / clé manquante (pour que la démo ne casse jamais)
 const FALLBACK = {
   classe: [
@@ -860,7 +1016,7 @@ const LIFECYCLE = {
       <div style="color:#B5ABA0;font-size:14.5px;line-height:1.9;margin:0 0 14px;">
         <div>✓ Analyses <b style="color:#fff;">illimitées</b></div>
         <div>✓ Les <b style="color:#fff;">tons secrets</b> : Romantique · Sexto · Mystère</div>
-        <div>✓ Le <b style="color:#fff;">générateur de 1er message</b> : son profil → l'opener parfait</div>
+        <div>✓ 3 outils exclusifs : <b style="color:#fff;">1er message</b> · <b style="color:#fff;">Coach de conv</b> · <b style="color:#fff;">Optimiseur de bio</b></div>
         <div>✓ Le renard <b style="color:#fff;">personnalisé</b> (âge, objectif…)</div>
       </div>
       <p style="color:#B5ABA0;font-size:15px;line-height:1.6;margin:0;">Teste-le <b style="color:#fff;">3 jours gratuitement</b>, annule quand tu veux.</p>`),
@@ -1006,11 +1162,12 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Image manquante ou format invalide (png/jpg/webp attendu).' });
     }
 
-    // ── Mode : 'reply' (répondre à une conv) ou 'opener' (1er message, premium) ──
-    // Vérifié AVANT de consommer le quota : un gratuit qui force l'appel ne perd pas un crédit.
-    const mode = req.body?.mode === 'opener' ? 'opener' : 'reply';
-    if (mode === 'opener' && !getStatus(deviceId, req.account).isPremium) {
-      return res.status(403).json({ error: 'Le générateur de 1er message est réservé aux Premium.', code: 'premium_required' });
+    // ── Mode : 'reply' (répondre), 'opener' (1er message) ou 'coach' (diagnostic) ──
+    // opener et coach = premium, vérifié AVANT de consommer le quota :
+    // un gratuit qui force l'appel ne perd pas un crédit.
+    const mode = ['opener', 'coach'].includes(req.body?.mode) ? req.body.mode : 'reply';
+    if (mode !== 'reply' && !getStatus(deviceId, req.account).isPremium) {
+      return res.status(403).json({ error: 'Cet outil est réservé aux Premium.', code: 'premium_required' });
     }
 
     // ── QUOTA (côté serveur, seule source de vérité) ──
@@ -1024,20 +1181,35 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
 
     const FB = mode === 'opener' ? OPENER_FALLBACK : FALLBACK;
     if (!process.env.OPENAI_API_KEY) {
-      // Pas de clé → on renvoie le fallback pour ne jamais casser la démo
+      // Pas de clé → fallback (le coach n'a pas de fallback crédible : il dit qu'il est indispo)
+      if (mode === 'coach') return res.json({ coach: null, source: 'fallback', quota });
       return res.json({ replies: FB, source: 'fallback', quota });
     }
 
-    const isOpener = mode === 'opener';
-    const userText = isOpener
-      ? "Voici le screenshot du PROFIL de la personne que je veux aborder (bio, photos, prompts). On n'a encore RIEN échangé. Écris 3 premiers messages par ton (les 6 tons) que MOI j'envoie pour lancer la conversation, chacun ancré dans un détail précis de son profil." + buildProfileContext(req.body?.profile)
-      : "Voici le screenshot de ma conv. RAPPEL : les bulles à DROITE (colorées) c'est MOI, ton client — les bulles à GAUCHE (grises) c'est la personne que je veux séduire. Écris 3 relances par ton que MOI j'envoie à cette personne, en répondant à son DERNIER message (dernière bulle à gauche). Ne réponds jamais à ma place comme si j'étais la personne de gauche." + (quota.isPremium ? PREMIUM_TONES_INSTRUCTION : '') + buildProfileContext(req.body?.profile);
+    // Config par mode : prompt système, texte utilisateur, schéma de fonction
+    let sys, tool, userText, maxTok;
+    if (mode === 'coach') {
+      sys = COACH_SYSTEM_PROMPT;
+      tool = COACH_FUNCTION;
+      maxTok = 1400;
+      userText = "Voici le screenshot de ma conv. RAPPEL : les bulles à DROITE (colorées) c'est MOI, ton client — les bulles à GAUCHE (grises) c'est la personne que je veux séduire. Diagnostique cette conversation : ses signaux, son niveau d'intérêt envers moi, ton verdict honnête, mon meilleur move et la réplique qui l'exécute." + buildProfileContext(req.body?.profile);
+    } else if (mode === 'opener') {
+      sys = OPENER_SYSTEM_PROMPT;
+      tool = OPENER_FUNCTION;
+      maxTok = 2600; // brouillons + critique + 6 tons + profil_lu/accroches
+      userText = "Voici le screenshot du PROFIL de la personne que je veux aborder (bio, photos, prompts). On n'a encore RIEN échangé. Écris 3 premiers messages par ton (les 6 tons) que MOI j'envoie pour lancer la conversation, chacun ancré dans un détail précis de son profil." + buildProfileContext(req.body?.profile);
+    } else {
+      sys = SYSTEM_PROMPT;
+      tool = replyFunctionFor(quota.isPremium);
+      maxTok = 2200;
+      userText = "Voici le screenshot de ma conv. RAPPEL : les bulles à DROITE (colorées) c'est MOI, ton client — les bulles à GAUCHE (grises) c'est la personne que je veux séduire. Écris 3 relances par ton que MOI j'envoie à cette personne, en répondant à son DERNIER message (dernière bulle à gauche). Ne réponds jamais à ma place comme si j'étais la personne de gauche." + (quota.isPremium ? PREMIUM_TONES_INSTRUCTION : '') + buildProfileContext(req.body?.profile);
+    }
 
     const completion = await openai.chat.completions.create({
       model: MODEL,
-      max_tokens: isOpener ? 2600 : 2200, // brouillons + critique + jusqu'à 6 tons (opener : + profil_lu/accroches)
+      max_tokens: maxTok,
       messages: [
-        { role: 'system', content: isOpener ? OPENER_SYSTEM_PROMPT : SYSTEM_PROMPT },
+        { role: 'system', content: sys },
         {
           role: 'user',
           content: [
@@ -1046,15 +1218,35 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
           ],
         },
       ],
-      tools: [isOpener ? OPENER_FUNCTION : replyFunctionFor(quota.isPremium)],
-      tool_choice: { type: 'function', function: { name: isOpener ? 'proposer_openers' : 'proposer_repliques' } },
+      tools: [tool],
+      tool_choice: { type: 'function', function: { name: tool.function.name } },
     });
 
     const call = completion.choices?.[0]?.message?.tool_calls?.[0];
-    if (!call?.function?.arguments) return res.json({ replies: FB, source: 'fallback', quota });
+    if (!call?.function?.arguments) {
+      if (mode === 'coach') return res.json({ coach: null, source: 'fallback', quota });
+      return res.json({ replies: FB, source: 'fallback', quota });
+    }
 
     let out = {};
     try { out = JSON.parse(call.function.arguments); } catch { out = {}; }
+
+    // ── Mode coach : réponse structurée diagnostic (pas de tons) ──
+    if (mode === 'coach') {
+      const score = Number.isFinite(out.interet_score) ? Math.max(0, Math.min(100, Math.round(out.interet_score))) : null;
+      const coach = score === null ? null : {
+        score,
+        signaux: Array.isArray(out.signaux) ? out.signaux.filter((s) => typeof s === 'string' && s.trim()).slice(0, 6) : [],
+        verdict: String(out.verdict || '').trim(),
+        move: String(out.meilleur_move || '').trim(),
+        replique: String(out.replique || '').trim(),
+      };
+      if (!coach) console.warn('[analyze] coach mal formé malgré strict:true', JSON.stringify(out).slice(0, 200));
+      return res.json({
+        coach, source: coach ? 'ai' : 'fallback', quota,
+        ...(process.env.NODE_ENV !== 'production' ? { debug: { dernier_message: out.dernier_message, cote: out.dernier_message_cote } } : {}),
+      });
+    }
 
     const clean = (arr) => (Array.isArray(arr) ? arr.filter((s) => typeof s === 'string' && s.trim()).slice(0, 3) : []);
     const withFallback = (tone) => {
@@ -1082,6 +1274,54 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
     console.error('[analyze] erreur:', err?.message || err);
     // On dégrade proprement plutôt que de casser l'app
     res.json({ replies: FALLBACK, source: 'fallback', warning: 'ia_indisponible' });
+  }
+});
+
+// ── Optimiseur de bio (premium, entrée texte — pas d'image) ─────
+app.post('/api/bio', analyzeLimiter, async (req, res) => {
+  try {
+    const deviceId = attachDevice(req, res);
+    attachAccount(req);
+    if (!req.account) {
+      return res.status(401).json({ error: 'Crée ton compte gratuit pour continuer.', code: 'auth_required' });
+    }
+    if (!getStatus(deviceId, req.account).isPremium) {
+      return res.status(403).json({ error: "L'optimiseur de bio est réservé aux Premium.", code: 'premium_required' });
+    }
+    const bioText = String(req.body?.bio || '').replace(/\s+/g, ' ').trim().slice(0, 500);
+    if (bioText.length < 5) {
+      return res.status(400).json({ error: 'Colle ta bio (ou décris-toi en 2 phrases).' });
+    }
+
+    const quota = consumeQuota(deviceId, req.ip, req.account);
+    if (!quota.allowed) {
+      return res.status(402).json({ error: 'Limite quotidienne atteinte, reviens demain.', code: 'quota_exceeded', quota });
+    }
+    if (!process.env.OPENAI_API_KEY) return res.json({ bio: null, source: 'fallback', quota });
+
+    const completion = await openai.chat.completions.create({
+      model: MODEL,
+      max_tokens: 1000,
+      messages: [
+        { role: 'system', content: BIO_SYSTEM_PROMPT },
+        { role: 'user', content: `Voici ma bio actuelle : « ${bioText} »` + buildProfileContext(req.body?.profile) },
+      ],
+      tools: [BIO_FUNCTION],
+      tool_choice: { type: 'function', function: { name: 'optimiser_bio' } },
+    });
+
+    const call = completion.choices?.[0]?.message?.tool_calls?.[0];
+    let out = {};
+    try { out = JSON.parse(call?.function?.arguments || '{}'); } catch { out = {}; }
+    const v = (k) => String(out[k] || '').trim();
+    const bio = (v('drole') && v('classe') && v('mystere'))
+      ? { analyse: v('analyse'), drole: v('drole'), classe: v('classe'), mystere: v('mystere') }
+      : null;
+    if (!bio) console.warn('[bio] sortie mal formée malgré strict:true', JSON.stringify(out).slice(0, 200));
+    res.json({ bio, source: bio ? 'ai' : 'fallback', quota });
+  } catch (err) {
+    console.error('[bio] erreur:', err?.message || err);
+    res.json({ bio: null, warning: 'ia_indisponible' });
   }
 });
 
