@@ -562,6 +562,20 @@
           <button id="histClose" style="background:rgba(255,255,255,.06);border:none;color:#8a8580;width:32px;height:32px;border-radius:50%;font-size:14px;cursor:pointer;">✕</button>
         </div>
         <p style="color:#6e6a66;font-size:12px;margin:4px 0 0;line-height:1.45;">Stocké uniquement sur ton appareil — rien sur nos serveurs.</p>
+        <div style="display:flex;gap:9px;margin-top:14px;">
+          <div style="flex:1;background:#141414;border:1px solid #232323;border-radius:14px;padding:12px 6px;text-align:center;">
+            <div style="font-size:19px;font-weight:800;color:#FF7A33;" id="statTotal">0</div>
+            <div style="font-size:10px;color:#6e6a66;margin-top:2px;">analyses</div>
+          </div>
+          <div style="flex:1;background:#141414;border:1px solid #232323;border-radius:14px;padding:12px 6px;text-align:center;">
+            <div style="font-size:19px;font-weight:800;color:#FF7A33;" id="statStreak">🔥 0</div>
+            <div style="font-size:10px;color:#6e6a66;margin-top:2px;">jours de suite</div>
+          </div>
+          <div style="flex:1;background:#141414;border:1px solid #232323;border-radius:14px;padding:12px 6px;text-align:center;">
+            <div style="font-size:17px;font-weight:800;color:#FF7A33;" id="statTone">—</div>
+            <div style="font-size:10px;color:#6e6a66;margin-top:2px;">ton préféré</div>
+          </div>
+        </div>
         <div class="chips" style="margin-top:14px;">
           <button class="chip on" id="histTabAll">Tout</button>
           <button class="chip" id="histTabFav">⭐ Favoris</button>
@@ -1099,6 +1113,7 @@
       copyBtn.classList.add('done');copyIcon.textContent='✅';copyText.textContent='Copié !';
       clearTimeout(copyBtn._t);copyBtn._t=setTimeout(resetCopy,1800);
       track('copy_reply',{tone:selectedTone});
+      bumpToneStat(selectedTone);
       // upsell au pic d'émotion (une seule fois par session, jamais pour les premium)
       if(!quota.isPremium&&!window._upsellShown){window._upsellShown=true;document.getElementById('copyUpsell').style.display='block';}
     });
@@ -1315,7 +1330,29 @@
     let histFavOnly=false;
     function histAll(){try{const a=JSON.parse(localStorage.getItem(HIST_KEY)||'[]');return Array.isArray(a)?a:[];}catch(e){return[];}}
     function histWrite(a){try{localStorage.setItem(HIST_KEY,JSON.stringify(a.slice(0,30)));}catch(e){}}
-    function histAdd(entry){const a=histAll();a.unshift({id:Date.now()+''+Math.floor(Math.random()*1e4),ts:Date.now(),fav:false,...entry});histWrite(a);}
+    function histAdd(entry){const a=histAll();a.unshift({id:Date.now()+''+Math.floor(Math.random()*1e4),ts:Date.now(),fav:false,...entry});histWrite(a);bumpAnalysisStat();}
+
+    // ══════════════ STATS & STREAK (total, jours de suite, ton préféré) ══════════════
+    const STATS_KEY='tacotac_stats';
+    function getStats(){try{return JSON.parse(localStorage.getItem(STATS_KEY)||'null')||{total:0,streak:0,lastDay:null,tones:{}};}catch(e){return {total:0,streak:0,lastDay:null,tones:{}};}}
+    function saveStats(s){try{localStorage.setItem(STATS_KEY,JSON.stringify(s));}catch(e){}}
+    function bumpAnalysisStat(){
+      const s=getStats();const today=new Date().toISOString().slice(0,10);
+      if(s.lastDay!==today){
+        const yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);
+        s.streak=(s.lastDay===yesterday)?(s.streak||0)+1:1;
+        s.lastDay=today;
+      }
+      s.total=(s.total||0)+1;saveStats(s);
+    }
+    function bumpToneStat(tone){const s=getStats();s.tones=s.tones||{};s.tones[tone]=(s.tones[tone]||0)+1;saveStats(s);}
+    function renderStats(){
+      const s=getStats();
+      document.getElementById('statTotal').textContent=s.total||0;
+      document.getElementById('statStreak').textContent='🔥 '+(s.streak||0);
+      const top=Object.entries(s.tones||{}).sort((a,b)=>b[1]-a[1])[0];
+      document.getElementById('statTone').textContent=top?((tones[top[0]]?tones[top[0]].emoji+' '+tones[top[0]].label:top[0])):'—';
+    }
     function histPreview(h){
       if(h.mode==='coach')return (h.coach&&h.coach.score!=null?h.coach.score+'% — ':'')+(h.coach&&h.coach.verdict||'');
       if(h.mode==='bio')return h.bio&&(h.bio.drole||h.bio.classe)||'';
@@ -1383,7 +1420,7 @@
       });
     }
     const histOverlay=document.getElementById('hist');
-    document.getElementById('histBtn').addEventListener('click',()=>{histRender();histOverlay.classList.add('show');track('history_open');});
+    document.getElementById('histBtn').addEventListener('click',()=>{histRender();renderStats();histOverlay.classList.add('show');track('history_open');});
     document.getElementById('histClose').addEventListener('click',()=>histOverlay.classList.remove('show'));
     histOverlay.addEventListener('click',e=>{if(e.target===histOverlay)histOverlay.classList.remove('show');});
     document.getElementById('histTabAll').addEventListener('click',()=>{histFavOnly=false;document.getElementById('histTabAll').classList.add('on');document.getElementById('histTabFav').classList.remove('on');histRender();});
