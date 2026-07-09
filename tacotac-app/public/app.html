@@ -261,6 +261,28 @@
     .celeb-icon img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 10px 22px rgba(255,92,0,.35))}
     .celeb-icon .em{font-size:42px;line-height:1}
 
+    /* ── Menu latéral (navigation outils + entraînement) ── */
+    .drawer-overlay{position:absolute;inset:0;z-index:60;background:rgba(6,6,6,.6);backdrop-filter:blur(3px);opacity:0;visibility:hidden;transition:opacity .28s,visibility .28s}
+    .drawer-overlay.show{opacity:1;visibility:visible}
+    .drawer{position:absolute;top:0;left:0;bottom:0;width:min(80%,300px);z-index:61;background:linear-gradient(165deg,#131313 0%,#0d0d0d 100%);border-right:1px solid #1e1e1e;box-shadow:20px 0 60px -20px rgba(0,0,0,.8);transform:translateX(-103%);visibility:hidden;transition:transform .36s cubic-bezier(.22,.68,0,1),visibility .36s;display:flex;flex-direction:column;overflow-y:auto;padding:20px 14px calc(18px + env(safe-area-inset-bottom))}
+    .drawer.show{transform:translateX(0);visibility:visible}
+    .drawer::-webkit-scrollbar{width:0}
+    .dr-sec{color:#56524e;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;font-weight:700;margin:20px 8px 8px}
+    .dr-item{display:flex;align-items:center;gap:11px;width:100%;background:none;border:none;border-radius:13px;padding:10px;cursor:pointer;font-family:inherit;text-align:left;transition:background .15s}
+    .dr-item:hover,.dr-item:active{background:#191919}
+    .dr-item.on{background:rgba(255,92,0,.1)}
+    .dr-item.on .dr-name{color:#FF7A33}
+    .dr-ic{width:38px;height:38px;border-radius:12px;background:#191919;border:1px solid #272727;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+    .dr-item.on .dr-ic{background:rgba(255,92,0,.14);border-color:rgba(255,92,0,.5)}
+    .dr-name{display:block;color:#ECEAE6;font-size:14px;font-weight:700;letter-spacing:-.2px}
+    .dr-desc{display:block;color:#6e6a66;font-size:11px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .dr-pro{margin-left:auto;flex-shrink:0;font-size:9px;font-weight:800;letter-spacing:.7px;color:#FF9A45;background:rgba(255,92,0,.12);border:1px solid rgba(255,92,0,.35);border-radius:20px;padding:3px 8px}
+    .dr-foot{margin-top:auto;padding-top:18px}
+    .dr-cta{display:block;width:100%;background:linear-gradient(135deg,#FF6A14,#FF5C00);border:none;border-radius:14px;color:#fff;font:700 14px 'Space Grotesk',sans-serif;padding:14px;cursor:pointer;box-shadow:0 10px 26px -12px rgba(255,92,0,.6);transition:transform .15s}
+    .dr-cta:active{transform:scale(.98)}
+    .menu-btn{width:34px;height:34px;border-radius:12px;background:#141414;border:1.5px solid #2a2a2a;color:#8a8580;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:border-color .2s,color .2s}
+    .menu-btn:hover{border-color:rgba(255,92,0,.5);color:#FF7A33}
+
     @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition-duration:.01ms!important}}
   </style>
 </head>
@@ -268,11 +290,69 @@
 <body>
   <div class="phone">
 
+    <!-- ═══════════════ MENU LATÉRAL ═══════════════ -->
+    <div class="drawer-overlay" id="drawerOverlay"></div>
+    <aside class="drawer" id="drawer">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 6px;">
+        <div style="display:flex;align-items:center;gap:9px;">
+          <div class="tt-avatar" style="width:38px;height:38px;"><img src="assets/fox_chill.png" alt="Tacotac"></div>
+          <div>
+            <div style="color:#fff;font-size:16px;font-weight:700;letter-spacing:-.3px;">Tacotac</div>
+            <div id="drawerQuota" style="color:#6e6a66;font-size:10.5px;margin-top:1px;">…</div>
+          </div>
+        </div>
+        <button id="drawerClose" style="width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.05);border:none;color:#8a8580;font-size:13px;cursor:pointer;">✕</button>
+      </div>
+
+      <div class="dr-sec">Outils</div>
+      <button class="dr-item" data-tool="reply">
+        <span class="dr-ic">💬</span>
+        <span style="flex:1;min-width:0;"><span class="dr-name">Répondre</span><span class="dr-desc">3 répliques sur ta conv</span></span>
+      </button>
+      <button class="dr-item" data-tool="opener">
+        <span class="dr-ic">✨</span>
+        <span style="flex:1;min-width:0;"><span class="dr-name">Premier DM</span><span class="dr-desc">l'ouverture parfaite sur son profil</span></span>
+        <span class="dr-pro">PRO</span>
+      </button>
+      <button class="dr-item" data-tool="coach">
+        <span class="dr-ic">🔍</span>
+        <span style="flex:1;min-width:0;"><span class="dr-name">Coach</span><span class="dr-desc">score d'intérêt + ton meilleur move</span></span>
+        <span class="dr-pro">PRO</span>
+      </button>
+      <button class="dr-item" data-tool="bio">
+        <span class="dr-ic">📝</span>
+        <span style="flex:1;min-width:0;"><span class="dr-name">Bio</span><span class="dr-desc">3 versions qui font matcher</span></span>
+        <span class="dr-pro">PRO</span>
+      </button>
+
+      <div class="dr-sec">Entraînement</div>
+      <button class="dr-item" id="drawerTrain">
+        <span class="dr-ic">🎯</span>
+        <span style="flex:1;min-width:0;"><span class="dr-name">Choisir un match</span><span class="dr-desc">3 filles IA · décroche le date</span></span>
+      </button>
+      <div id="drawerPersonas"></div>
+
+      <div class="dr-foot">
+        <button class="dr-item" id="drawerHist">
+          <span class="dr-ic" style="font-size:15px;">🕘</span>
+          <span style="flex:1;"><span class="dr-name" style="font-size:13.5px;">Historique</span></span>
+        </button>
+        <button class="dr-item" id="drawerAccount">
+          <span class="dr-ic" style="font-size:15px;">👤</span>
+          <span style="flex:1;"><span class="dr-name" style="font-size:13.5px;">Mon compte</span></span>
+        </button>
+        <button class="dr-cta" id="drawerCta" style="margin-top:12px;">✨ Passer Premium</button>
+      </div>
+    </aside>
+
     <!-- ═══════════════ ÉCRAN 1 — UPLOAD ═══════════════ -->
     <section class="screen active" id="screen-1">
       <div class="glow-top"></div>
       <div class="tt-head">
         <div class="tt-logo">
+          <button class="menu-btn" id="menuBtn" title="Menu">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16"></path><path d="M4 12h10"></path><path d="M4 17h16"></path></svg>
+          </button>
           <a href="/" style="text-decoration:none;display:flex;align-items:center;gap:9px;">
             <div class="tt-avatar"><img src="assets/fox_chill.png" alt="Tacotac"></div>
             <div style="color:#fff;font-size:17px;font-weight:700;letter-spacing:-.3px;">Tacotac</div>
@@ -497,6 +577,12 @@
         <div class="badge-pill">🔍 Coach</div>
       </div>
 
+      <div id="coachDemoBanner" style="display:none;margin-top:16px;align-items:center;gap:10px;background:rgba(255,92,0,.08);border:1px solid rgba(255,92,0,.3);border-radius:14px;padding:12px 14px;position:relative;z-index:2;">
+        <span style="font-size:18px;">🎬</span>
+        <span style="flex:1;color:#d6d1cb;font-size:12px;line-height:1.4;">Ceci est un exemple. Balance <b style="color:#fff;">TA</b> conv pour ton vrai diagnostic.</span>
+        <button id="coachDemoCta" style="flex-shrink:0;background:#FF5C00;color:#fff;border:none;border-radius:10px;padding:9px 13px;font:700 12px 'Space Grotesk',sans-serif;cursor:pointer;white-space:nowrap;">Essayer →</button>
+      </div>
+
       <div style="margin-top:18px;position:relative;z-index:2;display:flex;flex-direction:column;gap:12px;">
         <div class="coach-card">
           <div style="display:flex;align-items:baseline;justify-content:space-between;">
@@ -545,6 +631,12 @@
           <div style="color:#fff;font-size:17px;font-weight:700;letter-spacing:-.4px;">Ta nouvelle bio</div>
         </div>
         <div class="badge-pill">📝 Bio</div>
+      </div>
+
+      <div id="bioDemoBanner" style="display:none;margin-top:16px;align-items:center;gap:10px;background:rgba(255,92,0,.08);border:1px solid rgba(255,92,0,.3);border-radius:14px;padding:12px 14px;position:relative;z-index:2;">
+        <span style="font-size:18px;">🎬</span>
+        <span style="flex:1;color:#d6d1cb;font-size:12px;line-height:1.4;">Ceci est un exemple. Colle <b style="color:#fff;">TA</b> bio pour tes vraies versions.</span>
+        <button id="bioDemoCta" style="flex-shrink:0;background:#FF5C00;color:#fff;border:none;border-radius:10px;padding:9px 13px;font:700 12px 'Space Grotesk',sans-serif;cursor:pointer;white-space:nowrap;">Essayer →</button>
       </div>
 
       <div style="margin-top:18px;position:relative;z-index:2;display:flex;flex-direction:column;gap:12px;">
@@ -933,9 +1025,8 @@
       updatePrefsAccess();
       renderAccountBtn();
       updateLockedPills();
-      // switch de mode : cadenas sur les outils premium pour les gratuits + retour au mode conv si le premium saute
+      // cadenas sur les outils premium pour les gratuits (ils peuvent entrer : le paywall tombe à la réponse)
       document.querySelectorAll('.mode-lock').forEach(l=>l.style.display=quota.isPremium?'none':'inline');
-      if(!quota.isPremium&&MODES[mode]&&MODES[mode].premium)setMode('reply');
     }
     function renderAccountBtn() {
       const b = document.getElementById('accountBtn');
@@ -1046,7 +1137,7 @@
       b.addEventListener('click',()=>{
         const m=b.dataset.mode;
         if(m===mode)return;
-        if(MODES[m].premium&&!quota.isPremium){track('mode_gate',{mode:m});openGate(m);return;} // outils premium
+        // les gratuits entrent partout : ils investissent (upload, texte) et le paywall tombe juste avant la réponse
         setMode(m);track('mode_switch',{mode:m});
       });
     });
@@ -1071,9 +1162,10 @@
         const p=Math.min((now-start)/3200,1);
         barFill.style.width=Math.round(p*92)+'%';
         if(p<1)requestAnimationFrame(tick);
-        else{clearInterval(t);pendingAnalysis=true;openAuth('analysis');}
       }
       requestAnimationFrame(tick);
+      // ouverture par timer (pas par rAF : certains navigateurs le gèlent en arrière-plan)
+      setTimeout(()=>{clearInterval(t);pendingAnalysis=true;openAuth('analysis');},3300);
     }
 
     async function runAnalyse(){
@@ -1395,7 +1487,8 @@
     }
 
     // ══════════════ ÉCRAN 5 — COACH (diagnostic) ══════════════
-    function showCoach(){
+    function showCoach(demo){
+      document.getElementById('coachDemoBanner').style.display=demo?'flex':'none';
       const c=coachData;
       const s=c.score;
       const col=s<40?'#ff6b5c':(s<70?'#FFB020':'#34d399');
@@ -1458,7 +1551,8 @@
       if(!bioData){toast('Le renard est indisponible, réessaie');go(1);return;}
       setTimeout(showBio,300);
     }
-    function showBio(){
+    function showBio(demo){
+      document.getElementById('bioDemoBanner').style.display=demo?'flex':'none';
       document.getElementById('bioAnalyse').textContent=bioData.analyse||'voilà 3 versions qui claquent.';
       const wrap=document.getElementById('bioCards');wrap.innerHTML='';
       [['😂','Drôle','drole'],['🎩','Classe','classe'],['🎭','Mystère','mystere']].forEach(([e,l,k])=>{
@@ -1786,10 +1880,28 @@
       drole:["clairement pas un escape room, jme connais jvais te regarder galérer sans rien faire 😭","mdrr bon jte préviens jchoisis jamais le bon resto mais jte fais marrer grave en attendant deal","ptdrr notre premier rdv va être tellement bien que tu vas regretter d'avoir pas proposé avant moi"],
       spicy:["un ciné mais chez moi… le film aura aucune importance de toute façon","ouuu toi t'as l'air dangereuse jdevrais me méfier mais t'es bien trop mon style pour que jjoue la sécurité","jsens que si on se voit jvais avoir du mal à te laisser partir, on tente le coup ?"],
     };
+    // Chaque outil a SON exemple (avant, DM/Coach/Bio montraient l'exemple de Répondre)
+    const DEMO_OPENER={
+      classe:["ta bio dit « souvent en retard mais ça vaut le coup » — jsuis prêt à vérifier autour d'un verre","une photo en rando, une au resto… t'es le combo parfait, faut qu'on en parle","jparie que t'as un rire qui s'entend de loin, confirme autour d'un café ?"],
+      drole:["alors comme ça tu mets 4 photos de ton chien et UNE de toi ? il est mieux vendu que toi mdr","ta bio dit team sushi, moi team pizza… on est foutus mais on tente quand même ?","jsuis passé 3 fois sur ton profil avant d'oser, note l'effort"],
+      spicy:["t'as le genre de sourire qui fait faire des bêtises, jle sens d'ici","jsais pas ce qui est le plus dangereux, ta photo 2 ou ta bio","match à 23h47… le destin veut qu'on se parle maintenant"],
+    };
+    const DEMO_COACH={
+      score:72,
+      signaux:["📈 Elle répond vite et relance avec des questions — elle investit","😂 Elle rebondit sur tes vannes au lieu de répondre à côté","📸 Elle a mentionné un truc perso (son week-end) sans que tu demandes","⏳ Petit bémol : c'est toi qui ouvres 4 fois sur 5"],
+      verdict:"Elle est clairement intéressée mais elle attend que tu passes à l'étape suivante. Le rythme est bon, l'humour passe — reste pas coincé en mode pote de conv.",
+      move:"Propose un date concret dans les 2 prochains messages : jour + lieu. Pas de « on devrait se voir un de ces quatre » — un vrai plan.",
+      replique:"bon t'es sympa à l'écrit mais jsuis sûr que t'es encore mieux en vrai — jeudi soir, le petit bar près des Halles ?",
+    };
+    const DEMO_BIO={
+      analyse:"ta bio actuelle liste des adjectifs (« drôle, spontané, aventurier ») — tout le monde dit ça, personne n'y croit. On montre au lieu de dire :",
+      drole:"expert en choix de resto raté mais très fort pour rattraper le coup\nmon record : 3 fous rires en un premier date (vérifiable)\nswipe si tu veux vérifier le record",
+      classe:"le genre de mec qui retient ce que tu dis et te le ressort au bon moment\nplus intéressé par ta tête que par tes photos\nun verre, une vraie conversation, et on avise",
+      mystere:"jte dirai pas tout ici, sinon on a plus rien à se raconter\nindice : la 3e photo a une histoire\nà toi de la deviner",
+    };
     function playDemo(){
       if(hasImage)return; // ne coupe jamais un upload déjà en cours
-      track('demo_play');
-      replies=DEMO_REPLIES;selectedTone='drole';variant=0;
+      track('demo_play',{mode});
       go(2);
       let i=0;stepEl.textContent=steps[0];
       const stepTimer=setInterval(()=>{i=(i+1)%steps.length;stepEl.style.opacity='0';setTimeout(()=>{stepEl.textContent=steps[i];stepEl.style.opacity='1';},150);},420);
@@ -1798,12 +1910,19 @@
       function tick(now){const p=Math.min((now-start)/1400,1);barFill.style.width=Math.round(p*100)+'%';if(p<1)requestAnimationFrame(tick);}
       requestAnimationFrame(tick);
       setTimeout(()=>{
-        clearInterval(stepTimer);go(3);
+        clearInterval(stepTimer);
+        if(mode==='coach'){coachData=DEMO_COACH;showCoach(true);return;}
+        if(mode==='bio'){bioData=DEMO_BIO;showBio(true);return;}
+        replies=(mode==='opener')?DEMO_OPENER:DEMO_REPLIES;
+        selectedTone='drole';variant=0;
+        go(3);
         setTimeout(()=>{showResults(true);},1100);
       },1500);
     }
     document.getElementById('demoBtn').addEventListener('click',playDemo);
     document.getElementById('demoCta').addEventListener('click',()=>{track('demo_cta_click');resetToUpload();});
+    document.getElementById('coachDemoCta').addEventListener('click',()=>{track('demo_cta_click');resetToUpload();});
+    document.getElementById('bioDemoCta').addEventListener('click',()=>{track('demo_cta_click');resetToUpload();});
     // Premier visiteur jamais vu : la démo se joue automatiquement pour vendre la magie avant tout effort.
     (function autoPlayDemoOnce(){
       try{
@@ -2093,6 +2212,67 @@
       }
     })();
 
+    // ══════════════ MENU LATÉRAL ══════════════
+    const drawer=document.getElementById('drawer'),drawerOverlay=document.getElementById('drawerOverlay');
+    function renderDrawer(){
+      // quota dans l'en-tête du menu
+      const dq=document.getElementById('drawerQuota');
+      dq.textContent=quota.isPremium?'Accès illimité ✨':(quota.remaining==null?'…':(quota.remaining>0?quota.remaining+' analyse'+(quota.remaining>1?'s':'')+' restante'+(quota.remaining>1?'s':''):'Analyses épuisées'));
+      dq.style.color=quota.isPremium?'#FF7A33':'#6e6a66';
+      // outils : actif + badge PRO pour les gratuits
+      document.querySelectorAll('.dr-item[data-tool]').forEach(b=>{
+        b.classList.toggle('on',b.dataset.tool===mode);
+        const pro=b.querySelector('.dr-pro');if(pro)pro.style.display=quota.isPremium?'none':'inline';
+      });
+      // les 3 filles de l'entraînement, avec leur statut de conv
+      const wrap=document.getElementById('drawerPersonas');wrap.innerHTML='';
+      Object.entries(TRAIN_PERSONAS).forEach(([id,p])=>{
+        const st=trainState[id];
+        const b=document.createElement('button');b.className='dr-item';
+        const av=document.createElement('span');av.className='p-avatar';fillAvatar(av,id,38);av.style.borderRadius='12px';
+        const mid=document.createElement('span');mid.style.cssText='flex:1;min-width:0;';
+        let status='nouveau match ✨',color='#56524e';
+        if(st&&st.status==='won'){status='✅ RDV décroché';color='#34d399';}
+        else if(st&&st.status==='dead'){status='💀 elle a unmatch';color='#ff6b5c';}
+        else if(st&&st.msgs.length){status='💬 en cours · ❤️ '+st.interest+'%';color='#FF7A33';}
+        mid.innerHTML='<span class="dr-name">'+p.name+', '+p.age+' <span style="font-size:10px;font-weight:800;color:'+p.color+';">'+p.levelLabel+'</span></span>'
+          +'<span class="dr-desc" style="color:'+color+';">'+status+'</span>';
+        b.appendChild(av);b.appendChild(mid);
+        b.addEventListener('click',()=>{closeDrawer();openChat(id);track('menu_nav',{to:'persona_'+id});});
+        wrap.appendChild(b);
+      });
+      document.getElementById('drawerCta').style.display=quota.isPremium?'none':'block';
+    }
+    function openDrawer(){renderDrawer();drawer.classList.add('show');drawerOverlay.classList.add('show');track('menu_open');}
+    function closeDrawer(){drawer.classList.remove('show');drawerOverlay.classList.remove('show');}
+    document.getElementById('menuBtn').addEventListener('click',openDrawer);
+    document.getElementById('drawerClose').addEventListener('click',closeDrawer);
+    drawerOverlay.addEventListener('click',closeDrawer);
+    document.querySelectorAll('.dr-item[data-tool]').forEach(b=>{
+      b.addEventListener('click',()=>{
+        closeDrawer();setMode(b.dataset.tool);go(1);track('menu_nav',{to:b.dataset.tool});
+      });
+    });
+    document.getElementById('drawerTrain').addEventListener('click',()=>{closeDrawer();openTrainSelect();track('menu_nav',{to:'train'});});
+    document.getElementById('drawerHist').addEventListener('click',()=>{closeDrawer();histRender();renderStats();histOverlay.classList.add('show');track('menu_nav',{to:'hist'});});
+    document.getElementById('drawerAccount').addEventListener('click',()=>{closeDrawer();openAuth();track('menu_nav',{to:'account'});});
+    document.getElementById('drawerCta').addEventListener('click',()=>{closeDrawer();openGate();track('menu_nav',{to:'premium'});});
+    // swipe depuis le bord gauche pour ouvrir (geste natif d'app)
+    (function initDrawerSwipe(){
+      let sx=0,sy=0,edge=false;
+      const phone=document.querySelector('.phone');
+      phone.addEventListener('touchstart',e=>{
+        if(e.touches.length!==1)return;
+        sx=e.touches[0].clientX;sy=e.touches[0].clientY;
+        edge=sx<28&&!drawer.classList.contains('show');
+      },{passive:true});
+      phone.addEventListener('touchend',e=>{
+        if(!edge)return;edge=false;
+        const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+        if(dx>60&&Math.abs(dx)>Math.abs(dy)*1.5)openDrawer();
+      },{passive:true});
+    })();
+
     // ══════════════ PWA : service worker + bouton "Installer l'app" ══════════════
     if('serviceWorker' in navigator){
       window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
@@ -2139,13 +2319,34 @@
     iosGuide.addEventListener('click',e=>{if(e.target===iosGuide)iosGuide.classList.remove('show');});
 
     // ══════════════ LANCEMENT ══════════════
+    // Hard paywall des outils premium : le gratuit investit (upload/texte), on joue l'analyse
+    // pour le suspense, et le paywall tombe juste avant la réponse. AUCUN appel IA n'est fait
+    // (zéro coût — et le serveur renvoie 403 de toute façon si quelqu'un force).
+    function startTeasePaywall(){
+      track('analyze_tease_paywall',{mode});
+      go(2);
+      let i=0;stepEl.textContent=steps[0];
+      const t=setInterval(()=>{i=(i+1)%steps.length;stepEl.style.opacity='0';setTimeout(()=>{stepEl.textContent=steps[i];stepEl.style.opacity='1';},200);},800);
+      barFill.style.width='0%';
+      const start=performance.now();
+      function tick(now){
+        const p=Math.min((now-start)/3200,1);
+        barFill.style.width=Math.round(p*92)+'%';
+        if(p<1)requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+      // le paywall s'ouvre par timer (pas par rAF : certains navigateurs le gèlent en arrière-plan)
+      setTimeout(()=>{clearInterval(t);go(1);openGate(mode);},3300);
+    }
     analyzeBtn.addEventListener('click',()=>{
-      if(mode==='bio'){ // entrée texte, pas d'image
+      if(MODES[mode].input==='text'){
         if(bioInput.value.trim().length<5)return;
+      }else if(!hasImage)return;
+      if(MODES[mode].premium&&!quota.isPremium){startTeasePaywall();return;} // outil premium + gratuit → paywall à la réponse
+      if(mode==='bio'){
         if(!currentAccount){pendingAnalysis=true;openAuth('analysis');return;}
         runBio();return;
       }
-      if(!hasImage)return;
       if(!currentAccount){startTeaseAnalyse();return;} // pas de compte → suspense puis mur d'inscription
       // pré-check pour éviter une analyse inutile ; le serveur reste l'arbitre final
       if(!quota.isPremium && usesLeft()<=0){openGate();return;}
