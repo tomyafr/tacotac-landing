@@ -15,6 +15,7 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import OpenAI from 'openai';
 import Stripe from 'stripe';
+import disposableDomains from 'disposable-email-domains/index.json' with { type: 'json' };
 import { consumeQuota, getStatus, activatePremium, syncSubscription, deactivatePremium, claimEmailBonus, claimFounderCode, seedFounderCodes, reserveGiftEmail, setGiftPromo, releaseGiftEmail,
          createAccount, getAccountByEmail, getAccountByGoogleId, attachGoogleToAccount, linkDeviceToAccount, createSession, getSessionAccount, destroySession, effectivePlan,
          accountsForLifecycle, markAccountEmail, consumeTrainQuota, trainUsedToday } from './db.js';
@@ -1011,13 +1012,24 @@ app.get('/api/me', (req, res) => {
 });
 
 // ══════════════ AUTH : email + mot de passe ══════════════
-const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30, standardHeaders: true, legacyHeaders: false });
+// Anti-abus silencieux : on rejette les domaines email jetables (mailinator, tempmail...) avec le
+// même message générique que "email invalide" pour ne rien révéler côté client sur la raison exacte.
+const disposableDomainSet = new Set(disposableDomains);
+function isDisposableEmail(email) {
+  const domain = email.split('@')[1] || '';
+  return disposableDomainSet.has(domain);
+}
 
-app.post('/api/auth/signup', authLimiter, (req, res) => {
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30, standardHeaders: true, legacyHeaders: false });
+// Signup dédié, plus strict : un vrai utilisateur ne s'inscrit qu'une fois, un script qui
+// génère des comptes en masse depuis la même IP tombe vite sur ce plafond.
+const signupLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 5, standardHeaders: true, legacyHeaders: false });
+
+app.post('/api/auth/signup', signupLimiter, (req, res) => {
   attachDevice(req, res);
   const email = String(req.body?.email || '').trim().toLowerCase();
   const password = String(req.body?.password || '');
-  if (!EMAIL_RE.test(email)) return res.status(400).json({ ok: false, error: 'Entre un email valide.' });
+  if (!EMAIL_RE.test(email) || isDisposableEmail(email)) return res.status(400).json({ ok: false, error: 'Entre un email valide.' });
   if (password.length < 6) return res.status(400).json({ ok: false, error: '6 caractères minimum pour le mot de passe.' });
   const existing = getAccountByEmail(email);
   if (existing) {
@@ -1131,7 +1143,7 @@ const bonusLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHead
 app.post('/api/bonus-email', bonusLimiter, (req, res) => {
   const deviceId = attachDevice(req, res);
   const email = String(req.body?.email || '').trim().toLowerCase();
-  if (!EMAIL_RE.test(email)) {
+  if (!EMAIL_RE.test(email) || isDisposableEmail(email)) {
     return res.status(400).json({ ok: false, error: 'Entre un email valide.' });
   }
   const result = claimEmailBonus(deviceId, email);
@@ -1276,7 +1288,7 @@ setTimeout(() => processLifecycle().catch(() => {}), 30 * 1000);
 // ── Cadeau -10% contre email : code promo Stripe unique (24h) + Sheet + mail ──
 app.post('/api/gift-email', bonusLimiter, async (req, res) => {
   const email = String(req.body?.email || '').trim().toLowerCase();
-  if (!EMAIL_RE.test(email)) return res.status(400).json({ ok: false, error: 'Entre un email valide.' });
+  if (!EMAIL_RE.test(email) || isDisposableEmail(email)) return res.status(400).json({ ok: false, error: 'Entre un email valide.' });
 
   const reserve = reserveGiftEmail(email);
   if (!reserve.isNew) return res.status(409).json({ ok: false, error: 'Cet email a déjà reçu son code 😉' });
