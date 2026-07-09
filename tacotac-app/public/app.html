@@ -261,6 +261,11 @@
     .celeb-icon img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 10px 22px rgba(255,92,0,.35))}
     .celeb-icon .em{font-size:42px;line-height:1}
 
+    /* ── Refaire : feedback de chargement (spinner + réplique estompée) ── */
+    .spin-sm{display:inline-block;width:11px;height:11px;border:2px solid rgba(255,154,69,.3);border-top-color:#FF9A45;border-radius:50%;animation:tt-spin .7s linear infinite;vertical-align:-1px;margin-right:3px}
+    .reply.regen{opacity:.3;filter:blur(2.5px)}
+    .reply{transition:opacity .25s,filter .25s}
+
     /* ── Menu latéral (navigation outils + entraînement) ── */
     .drawer-overlay{position:absolute;inset:0;z-index:60;background:rgba(6,6,6,.6);backdrop-filter:blur(3px);opacity:0;visibility:hidden;transition:opacity .28s,visibility .28s}
     .drawer-overlay.show{opacity:1;visibility:visible}
@@ -307,7 +312,7 @@
       <div class="dr-sec">Outils</div>
       <button class="dr-item" data-tool="reply">
         <span class="dr-ic">💬</span>
-        <span style="flex:1;min-width:0;"><span class="dr-name">Répondre</span><span class="dr-desc">3 répliques sur ta conv</span></span>
+        <span style="flex:1;min-width:0;"><span class="dr-name">Réplique</span><span class="dr-desc">3 répliques sur ta conv</span></span>
       </button>
       <button class="dr-item" data-tool="opener">
         <span class="dr-ic">✨</span>
@@ -367,7 +372,7 @@
 
       <div class="tone-track" id="modeTrack" style="margin-top:18px;position:relative;z-index:2;">
         <div class="tone-glider" id="modeGlider"></div>
-        <button class="tone-btn active" data-mode="reply">💬 Répondre</button>
+        <button class="tone-btn active" data-mode="reply">💬 Réplique</button>
         <button class="tone-btn" data-mode="opener">✨ DM <span class="mode-lock">🔒</span></button>
         <button class="tone-btn" data-mode="coach">🔍 Coach <span class="mode-lock">🔒</span></button>
         <button class="tone-btn" data-mode="bio">📝 Bio <span class="mode-lock">🔒</span></button>
@@ -541,10 +546,10 @@
         <div style="display:flex;align-items:flex-end;justify-content:center;margin-top:14px;">
           <img id="resultFox" class="result-fox" src="assets/fox_chill.png" alt="renard Tacotac">
         </div>
-        <div style="text-align:center;color:#56524e;font-size:11px;margin-top:6px;">‹ glisse pour changer de ton ›</div>
+        <div style="text-align:center;color:#56524e;font-size:11px;margin-top:6px;">appuie sur un ton pour changer de style</div>
       </div>
 
-      <button class="copy-cta" id="copyBtn"><span id="copyIcon" style="font-size:16px;">📋</span> <span id="copyText">Copier la réponse</span></button>
+      <button class="copy-cta" id="copyBtn"><span id="copyIcon" style="font-size:16px;">📋</span> <span id="copyText">Copier la réplique</span></button>
       <button class="btn-secondary" id="shareBtn" style="margin-top:10px;"><span id="shareIcon">🦊</span> <span id="shareText">Partager en story</span></button>
       <!-- Upsell au moment chaud : juste après une victoire (copie d'une réplique) -->
       <button id="copyUpsell" style="display:none;width:100%;margin-top:10px;background:rgba(255,92,0,.08);border:1px solid rgba(255,92,0,.3);color:#B5ABA0;font-family:inherit;font-size:12.5px;border-radius:14px;padding:11px 14px;cursor:pointer;line-height:1.45;">
@@ -1277,7 +1282,7 @@
       resultFox.src=t.fox;
       resetCopy();
     }
-    function resetCopy(){copyBtn.classList.remove('done');copyIcon.textContent='📋';copyText.textContent='Copier la réponse';}
+    function resetCopy(){copyBtn.classList.remove('done');copyIcon.textContent='📋';copyText.textContent='Copier la réplique';}
 
     // Verrouillage des tons premium selon le plan
     function updateLockedPills(){
@@ -1298,54 +1303,28 @@
       });
     });
 
-    // ══════════════ SWIPE entre les tons (geste natif sur la carte résultat) ══════════════
-    function availableTones(){
-      return Object.keys(tones).filter(t=>{
-        const pill=pillGrid.querySelector('.pill[data-tone="'+t+'"]');
-        if(pill&&pill.classList.contains('locked'))return false;
-        if(tones[t].premium&&(!replies||!replies[t]||!replies[t].length))return false;
-        return true;
-      });
-    }
-    function switchToneBySwipe(dir){
-      const avail=availableTones();
-      if(avail.length<2)return;
-      let idx=avail.indexOf(selectedTone);if(idx===-1)idx=0;
-      const nextTone=avail[(idx+dir+avail.length)%avail.length];
-      const pill=pillGrid.querySelector('.pill[data-tone="'+nextTone+'"]');
-      pillGrid.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
-      if(pill)pill.classList.add('active');
-      selectedTone=nextTone;variant=0;renderResult(true);
-      track('tone_swipe',{tone:nextTone});
-    }
-    (function initSwipe(){
-      const card=document.querySelector('.result-card');
-      if(!card)return;
-      let startX=0,startY=0,tracking=false;
-      card.addEventListener('touchstart',e=>{
-        if(e.touches.length!==1)return;
-        startX=e.touches[0].clientX;startY=e.touches[0].clientY;tracking=true;
-      },{passive:true});
-      card.addEventListener('touchend',e=>{
-        if(!tracking)return;tracking=false;
-        const dx=e.changedTouches[0].clientX-startX, dy=e.changedTouches[0].clientY-startY;
-        if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.5)switchToneBySwipe(dx<0?1:-1);
-      },{passive:true});
-    })();
+    // (Le swipe entre les tons a été retiré : on change de ton uniquement en appuyant sur les pilules.)
     // Refaire : les Premium régénèrent de VRAIES nouvelles répliques (nouvel appel IA) ;
     // les gratuits font défiler les 3 déjà générées, puis sont invités à passer Premium.
     refaireBtn.addEventListener('click',async()=>{
       if(quota.isPremium){
         if(!imageDataUrl){toast('Relance une analyse d\'abord');return;}
-        const o=refaireBtn.innerHTML; refaireBtn.style.pointerEvents='none'; refaireBtn.innerHTML='…';
+        // feedback visible : spinner sur le bouton + réplique estompée, copie désactivée le temps de l'appel
+        const o=refaireBtn.innerHTML;
+        refaireBtn.style.pointerEvents='none';
+        refaireBtn.innerHTML='<span class="spin-sm"></span> Le renard réécrit…';
+        replyText.classList.add('regen');
+        copyBtn.style.pointerEvents='none';copyBtn.style.opacity='.5';
         try{
           const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:imageDataUrl,tone:selectedTone,profile:prefs,mode})});
           const data=await r.json();
           if(r.status===402){ toast('Limite quotidienne atteinte, reviens demain'); }
-          else if(r.status===403){ setMode('reply'); openGate('opener'); }
-          else if(data.replies){ replies=data.replies; if(data.quota)applyQuota(data.quota); variant=0; renderResult(true); track('regen'); }
+          else if(r.status===403){ const gm=mode; setMode('reply'); openGate(gm); }
+          else if(data.replies){ replies=data.replies; if(data.quota)applyQuota(data.quota); variant=0; renderResult(true); toast('✨ Nouvelles répliques prêtes'); track('regen'); }
           else { toast('Réessaie dans un instant'); }
         }catch(e){ toast('Erreur réseau, réessaie'); }
+        replyText.classList.remove('regen');
+        copyBtn.style.pointerEvents='auto';copyBtn.style.opacity='1';
         refaireBtn.style.pointerEvents='auto'; refaireBtn.innerHTML=o;
       }else{
         const list=currentList(); variant=(variant+1)%list.length; renderResult(true);
@@ -1573,7 +1552,7 @@
 
     // ══════════════ HISTORIQUE (localStorage — rien côté serveur) ══════════════
     const HIST_KEY='tacotac_history';
-    const HIST_META={reply:{e:'💬',l:'Réponses'},opener:{e:'✨',l:'DM'},coach:{e:'🔍',l:'Coach'},bio:{e:'📝',l:'Bio'}};
+    const HIST_META={reply:{e:'💬',l:'Répliques'},opener:{e:'✨',l:'DM'},coach:{e:'🔍',l:'Coach'},bio:{e:'📝',l:'Bio'}};
     let histFavOnly=false;
     function histAll(){try{const a=JSON.parse(localStorage.getItem(HIST_KEY)||'[]');return Array.isArray(a)?a:[];}catch(e){return[];}}
     function histWrite(a){try{localStorage.setItem(HIST_KEY,JSON.stringify(a.slice(0,30)));}catch(e){}}
@@ -1764,7 +1743,8 @@
       fillAvatar(document.getElementById('chatAvatar'),id,38);
       setChatStatus('en ligne');heartUpdate(st.interest);
       chatScroll.innerHTML='';
-      sysNote('✨ Nouveau match avec '+p.name+' — à toi d\'ouvrir. Son profil peut t\'aider (appuie sur son nom).');
+      // la note "nouveau match" n'a de sens que si la conv n'a pas commencé
+      if(!st.msgs.length)sysNote('✨ Nouveau match avec '+p.name+' — à toi d\'ouvrir. Son profil peut t\'aider (appuie sur son nom).');
       st.msgs.forEach(m=>appendMsg(m.r,m.t));
       updateChatLock();trainSave();
       go(8);track('train_start',{persona:id});
@@ -2339,6 +2319,9 @@
       setTimeout(()=>{clearInterval(t);go(1);openGate(mode);},3300);
     }
     analyzeBtn.addEventListener('click',()=>{
+      // anti-rebond : un double-tap rapide lançait deux analyses (2 crédits consommés)
+      if(analyzeBtn.dataset.busy)return;
+      analyzeBtn.dataset.busy='1';setTimeout(()=>{delete analyzeBtn.dataset.busy;},2000);
       if(MODES[mode].input==='text'){
         if(bioInput.value.trim().length<5)return;
       }else if(!hasImage)return;
