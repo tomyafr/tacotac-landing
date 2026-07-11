@@ -2,15 +2,17 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- maximum-scale=1 : bloque le zoom auto d'iOS au focus des inputs + le pinch (l'app reste figée comme une vraie app) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>Tacotac — l'app</title>
   <meta name="description" content="Upload ton screenshot, Tacotac te sort 3 répliques qui font mouche.">
   <meta name="theme-color" content="#0E0E0E">
+  <meta name="format-detection" content="telephone=no">
   <link rel="icon" href="assets/fox_chill.png">
 
   <!-- PWA : installable sur l'écran d'accueil -->
   <link rel="manifest" href="/manifest.json">
-  <link rel="apple-touch-icon" href="/assets/icon-192.png">
+  <link rel="apple-touch-icon" href="/assets/icon-180.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -38,8 +40,11 @@
   </script>
   <style>
     *,*::before,*::after{box-sizing:border-box}
-    html{-webkit-text-size-adjust:100%}
-    body{font-family:'Space Grotesk',sans-serif;margin:0;background:#0A0A0A;color:#fff}
+    html{-webkit-text-size-adjust:100%;overflow-x:hidden}
+    /* overscroll-behavior + touch-action : l'écran ne se déplace plus latéralement ni ne rebondit comme une page web */
+    body{font-family:'Space Grotesk',sans-serif;margin:0;background:#0A0A0A;color:#fff;overflow-x:hidden;overscroll-behavior:none;touch-action:pan-y;-webkit-tap-highlight-color:transparent}
+    /* 16px minimum sur les champs : en dessous, iOS zoome automatiquement au focus (l'app paraissait "dézoomée" ensuite) */
+    input,textarea,select{font-size:16px}
     ::selection{background:rgba(255,92,0,.85);color:#fff}
     .display{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;letter-spacing:-.035em;line-height:.95}
 
@@ -63,6 +68,9 @@
     .dropzone:active{transform:scale(.995)}
     .dropzone.has-img{border-style:solid;border-color:#262626;background:#0c0c0c;padding:10px}
     .dz-preview{width:100%;height:100%;border-radius:14px;object-fit:cover}
+    /* 2 screenshots (premium) : les aperçus se partagent la zone côte à côte */
+    .dropzone.two{flex-direction:row;gap:8px}
+    .dropzone.two .dz-preview{width:50%;min-width:0}
     .fmt{font-size:11px;color:#6e6a66;border:1px solid #2a2a2a;border-radius:8px;padding:4px 9px}
 
     .tone-track{display:flex;gap:6px;background:rgba(255,255,255,.04);border:1px solid #1f1f1f;border-radius:100px;padding:5px;position:relative}
@@ -181,7 +189,7 @@
     .prefs-range{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:99px;background:#2a2a2a;outline:none;}
     .prefs-range::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:#FF5C00;border:3px solid #111;box-shadow:0 2px 10px rgba(255,92,0,.5);cursor:pointer;}
     .prefs-range::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#FF5C00;border:3px solid #111;cursor:pointer;}
-    .prefs-ta{width:100%;background:#0d0d0d;border:1.5px solid #2a2a2a;color:#fff;border-radius:14px;padding:12px 14px;font:500 13.5px 'Space Grotesk',sans-serif;outline:none;resize:none;min-height:84px;transition:border-color .2s;}
+    .prefs-ta{width:100%;background:#0d0d0d;border:1.5px solid #2a2a2a;color:#fff;border-radius:14px;padding:12px 14px;font:500 16px 'Space Grotesk',sans-serif;outline:none;resize:none;min-height:84px;transition:border-color .2s;}
     .prefs-ta:focus{border-color:#FF5C00;}
     .prefs-ta::placeholder{color:#56524e;}
     .prefs-open{width:100%;margin-top:12px;background:#141414;border:1px solid #242424;color:#8a8580;font:600 13px 'Space Grotesk',sans-serif;border-radius:14px;padding:13px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;transition:border-color .2s,opacity .2s;}
@@ -214,7 +222,7 @@
     .pw-continue{margin-top:20px;width:100%;border:none;border-radius:16px;cursor:pointer;background:linear-gradient(180deg,#FFA23D,#FF7A18);color:#1a0d02;font-family:inherit;padding:12px;transition:filter .15s,transform .15s}
     .pw-continue:hover{filter:brightness(1.05)}
     .pw-continue:active{transform:scale(.99)}
-    .gate-input{width:100%;background:#0d0d0d;border:1.5px solid #2a2a2a;color:#fff;border-radius:14px;padding:14px 16px;font:500 15px 'Space Grotesk',sans-serif;outline:none;transition:border-color .2s}
+    .gate-input{width:100%;background:#0d0d0d;border:1.5px solid #2a2a2a;color:#fff;border-radius:14px;padding:14px 16px;font:500 16px 'Space Grotesk',sans-serif;outline:none;transition:border-color .2s}
     .gate-input:focus{border-color:#FF5C00}
     .gate-input::placeholder{color:#56524e}
 
@@ -247,7 +255,7 @@
     .typing-bubble{align-self:flex-start;background:#1e1e20;border-radius:18px;border-bottom-left-radius:6px;padding:14px 16px;display:flex;gap:5px;animation:tt-up .22s ease both}
     .typing-bubble .dot{width:6px;height:6px}
     .chat-inputbar{display:flex;gap:8px;align-items:center;padding:10px 14px calc(12px + env(safe-area-inset-bottom));border-top:1px solid #1c1c1c;background:#101010;flex-shrink:0}
-    .chat-input{flex:1;background:#1a1a1a;border:1.5px solid #2a2a2a;border-radius:22px;color:#fff;padding:11px 16px;font:500 14.5px 'Space Grotesk',sans-serif;outline:none;min-width:0}
+    .chat-input{flex:1;background:#1a1a1a;border:1.5px solid #2a2a2a;border-radius:22px;color:#fff;padding:11px 16px;font:500 16px 'Space Grotesk',sans-serif;outline:none;min-width:0}
     .chat-input:focus{border-color:rgba(255,92,0,.5)}
     .chat-input:disabled{opacity:.45}
     .chat-send{width:44px;height:44px;border-radius:50%;border:none;background:#FF5C00;color:#fff;font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:opacity .2s}
@@ -412,11 +420,18 @@
           <div style="display:flex;gap:7px;"><span class="fmt">PNG</span><span class="fmt">JPG</span><span class="fmt">Capture</span></div>
         </div>
         <img id="dzPreview" class="dz-preview" style="display:none;" alt="Aperçu de ta capture">
+        <img id="dzPreview2" class="dz-preview" style="display:none;" alt="Aperçu de la 2e capture">
       </div>
+
+      <!-- 2e screenshot (premium) : la suite de la conv pour plus de contexte -->
+      <input type="file" id="fileInput2" accept="image/*" hidden>
+      <button id="addPhoto2" style="display:none;margin-top:10px;width:100%;background:none;border:1px dashed #333;color:#9a958f;font:600 12.5px 'Space Grotesk',sans-serif;border-radius:12px;padding:10px;cursor:pointer;position:relative;z-index:2;align-items:center;justify-content:center;gap:6px;">
+        <span id="addPhoto2Label">➕ Ajouter la suite de la conv (photo 2)</span>
+      </button>
 
       <!-- Mode Bio : saisie texte à la place de l'upload -->
       <div id="bioBox" style="display:none;flex:1;flex-direction:column;margin-top:20px;position:relative;z-index:2;">
-        <textarea class="prefs-ta" id="bioInput" maxlength="500" style="flex:1;min-height:170px;font-size:15px;" placeholder="Colle ta bio actuelle ici…&#10;&#10;(pas encore de bio ? décris-toi en 2-3 phrases : métier, passions, ce qui te rend unique — le renard s'occupe du reste)"></textarea>
+        <textarea class="prefs-ta" id="bioInput" maxlength="500" style="flex:1;min-height:170px;font-size:16px;" placeholder="Colle ta bio actuelle ici…&#10;&#10;(pas encore de bio ? décris-toi en 2-3 phrases : métier, passions, ce qui te rend unique — le renard s'occupe du reste)"></textarea>
         <div style="text-align:right;color:#56524e;font-size:11px;margin-top:6px;"><span id="bioCount">0</span>/500</div>
       </div>
 
@@ -1010,6 +1025,7 @@
     let variant = 0;
     let hasImage = false;
     let imageDataUrl = null;
+    let imageDataUrl2 = null; // 2e screenshot (premium) : la suite de la conv
     let replies = null; // { classe:[..], drole:[..], spicy:[..] }
     let coachData = null; // { score, signaux[], verdict, move, replique }
     let bioData = null;   // { analyse, drole, classe, mystere }
@@ -1032,6 +1048,7 @@
       updateLockedPills();
       // cadenas sur les outils premium pour les gratuits (ils peuvent entrer : le paywall tombe à la réponse)
       document.querySelectorAll('.mode-lock').forEach(l=>l.style.display=quota.isPremium?'none':'inline');
+      updatePhoto2Btn(); // rafraîchit le cadenas du bouton "photo 2"
     }
     function renderAccountBtn() {
       const b = document.getElementById('accountBtn');
@@ -1086,8 +1103,48 @@
         dzPreview.src=imageDataUrl;dzPreview.style.display='block';
         dzEmpty.style.display='none';dropzone.classList.add('has-img');
         hasImage=true;analyzeBtn.disabled=false;
+        updatePhoto2Btn();
       };
       reader.readAsDataURL(file);
+    }
+
+    // ── 2e screenshot (premium) : photo 1 = début de conv, photo 2 = là où ça bloque ──
+    const fileInput2=document.getElementById('fileInput2');
+    const addPhoto2=document.getElementById('addPhoto2');
+    const dzPreview2=document.getElementById('dzPreview2');
+    function updatePhoto2Btn(){
+      // proposé uniquement sur les outils "conversation" (Réplique, Coach) et après la 1re photo
+      const ok=hasImage&&MODES[mode].input==='image'&&mode!=='opener';
+      addPhoto2.style.display=ok?'flex':'none';
+      if(!ok)return;
+      document.getElementById('addPhoto2Label').textContent=imageDataUrl2
+        ?'✕ Retirer la photo 2'
+        :(quota.isPremium?'➕ Ajouter la suite de la conv (photo 2)':'➕ Ajouter la suite de la conv 🔒 Premium');
+    }
+    function clearPhoto2(){
+      imageDataUrl2=null;fileInput2.value='';
+      dzPreview2.src='';dzPreview2.style.display='none';dropzone.classList.remove('two');
+      updatePhoto2Btn();
+    }
+    addPhoto2.addEventListener('click',()=>{
+      if(imageDataUrl2){clearPhoto2();return;}
+      if(!quota.isPremium){track('mode_gate',{mode:'photo2'});openGate();return;} // upsell : la 2e photo est premium
+      fileInput2.click();
+    });
+    fileInput2.addEventListener('change',e=>{
+      const f=e.target.files[0];if(!f)return;
+      const reader=new FileReader();
+      reader.onload=ev=>{
+        imageDataUrl2=ev.target.result;
+        dzPreview2.src=imageDataUrl2;dzPreview2.style.display='block';
+        dropzone.classList.add('two');
+        updatePhoto2Btn();track('photo2_added');
+      };
+      reader.readAsDataURL(f);
+    });
+    // les images envoyées à l'IA : 1 ou 2 selon ce qui est chargé (jamais 2 en mode opener)
+    function imagesPayload(){
+      return (imageDataUrl2&&mode!=='opener')?[imageDataUrl,imageDataUrl2]:[imageDataUrl];
     }
 
     // (Le choix du ton en amont a été retiré : l'analyse renvoie toujours les 3 tons,
@@ -1136,6 +1193,8 @@
       dropzone.style.display=M.input==='image'?'flex':'none';
       document.getElementById('bioBox').style.display=M.input==='text'?'flex':'none';
       document.getElementById('bubbleLbl').textContent=m==='opener'?'tiens envoie lui ça':'tiens répond lui ça';
+      if(m==='opener'&&imageDataUrl2)clearPhoto2(); // un profil = une seule photo
+      updatePhoto2Btn();
       updateAnalyzeReady();
     }
     modeTrack.querySelectorAll('.tone-btn').forEach(b=>{
@@ -1203,7 +1262,7 @@
       let blocked=false,authNeeded=false,premiumNeeded=false;
       try{
         const [resp]=await Promise.all([
-          fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:imageDataUrl,tone:selectedTone,profile:prefs,mode})}),
+          fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:imageDataUrl,images:imagesPayload(),tone:selectedTone,profile:prefs,mode})}),
           minDelay,
         ]);
         const data=await resp.json();
@@ -1316,7 +1375,7 @@
         replyText.classList.add('regen');
         copyBtn.style.pointerEvents='none';copyBtn.style.opacity='.5';
         try{
-          const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:imageDataUrl,tone:selectedTone,profile:prefs,mode})});
+          const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:imageDataUrl,images:imagesPayload(),tone:selectedTone,profile:prefs,mode})});
           const data=await r.json();
           if(r.status===402){ toast('Limite quotidienne atteinte, reviens demain'); }
           else if(r.status===403){ const gm=mode; setMode('reply'); openGate(gm); }
@@ -1850,6 +1909,7 @@
     function resetToUpload(){
       hasImage=false;imageDataUrl=null;replies=null;analyzeBtn.disabled=true;fileInput.value='';
       dzPreview.src='';dzPreview.style.display='none';dzEmpty.style.display='flex';dropzone.classList.remove('has-img');
+      clearPhoto2();
       go(1);
     }
     document.getElementById('resetBtn').addEventListener('click',resetToUpload);
@@ -2191,6 +2251,39 @@
         history.replaceState({},'',location.pathname);
       }
     })();
+
+    // ══════════════ PWA × GOOGLE : récupération de session ══════════════
+    // Depuis l'app installée (iOS surtout), le login Google se fait dans un navigateur
+    // intégré qui ne partage PAS ses cookies avec la PWA. Le serveur prépare donc une
+    // session "en attente" pour cet appareil : quand l'utilisateur revient ici, on la
+    // réclame et il se retrouve connecté sans rien faire.
+    const GPENDING_KEY='tt_gpending';
+    document.getElementById('googleBtn').addEventListener('click',()=>{
+      try{localStorage.setItem(GPENDING_KEY,String(Date.now()));}catch(e){}
+    });
+    let claimingPwa=false;
+    async function claimPwaSession(){
+      if(claimingPwa||currentAccount)return;
+      let started=0;try{started=parseInt(localStorage.getItem(GPENDING_KEY)||'0',10);}catch(e){}
+      if(!started)return;
+      if(Date.now()-started>10*60*1000){try{localStorage.removeItem(GPENDING_KEY);}catch(e){}return;}
+      claimingPwa=true;
+      try{
+        const d=await (await fetch('/api/auth/pwa-session',{method:'POST'})).json();
+        if(d.ok){
+          try{localStorage.removeItem(GPENDING_KEY);}catch(e){}
+          applyQuota(d.status);
+          renderAuth();
+          if(pendingAnalysis){authOverlay.classList.remove('show');pendingAnalysis=false;authContext=null;if(mode==='bio')runBio();else runAnalyse();}
+          else showNotice('Connecté ✓','Ton compte Google est maintenant actif dans l\'app.',{fox:true,cta:'Nickel 🦊'});
+        }
+      }catch(e){}
+      claimingPwa=false;
+    }
+    // au retour dans l'app (l'utilisateur ferme le navigateur Google) + au chargement
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')claimPwaSession();});
+    window.addEventListener('focus',claimPwaSession);
+    claimPwaSession();
 
     // ══════════════ MENU LATÉRAL ══════════════
     const drawer=document.getElementById('drawer'),drawerOverlay=document.getElementById('drawerOverlay');

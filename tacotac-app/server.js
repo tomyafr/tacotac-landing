@@ -10,7 +10,7 @@ import 'dotenv/config';
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { randomUUID, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
+import { randomUUID, randomBytes, scryptSync, timingSafeEqual, createHmac } from 'node:crypto';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import OpenAI from 'openai';
@@ -157,6 +157,7 @@ function openSession(res, accountId) {
     secure: process.env.NODE_ENV === 'production',
     maxAge: 1000 * 60 * 60 * 24 * 365,
   });
+  return token;
 }
 // Vue "compte" renvoyée au front (jamais le hash ni les IDs Stripe)
 function accountView(account) {
@@ -191,7 +192,10 @@ const analyzeLimiter = rateLimit({
 
 // ── Client OpenAI ───────────────────────────────────────────────
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const MODEL = 'gpt-4o-mini'; // vision + function calling, très bon marché (~$0.15 / $0.60 par 1M tokens)
+// Deux gammes : les gratuits coûtent le minimum, les payants ont un modèle nettement
+// meilleur (punchlines, contexte) qui reste bon marché (~$0.40/$1.60 par 1M tokens).
+const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';                    // tier gratuit
+const MODEL_PREMIUM = process.env.OPENAI_MODEL_PREMIUM || 'gpt-4.1-mini';   // abonnés (+ outils premium)
 
 // ── Function calling : force GPT à renvoyer exactement 3 répliques/ton ──
 // Le champ `analyse` force le modèle à d'abord identifier QUI parle avant de répondre
@@ -399,6 +403,7 @@ EMOJIS — règle stricte :
 BANNIS ABSOLUMENT — CE QUI TUE UNE RÉPLIQUE
 ═══════════════════════════════════════════════
 • Les LISTES de propositions ("on peut faire ci, ou ça, ou sinon ça"). UNE seule idée, point.
+• Les JEUX DE MOTS laborieux et calembours de tonton : si le jeu de mots ne te fait pas rire TOI-MÊME instantanément, il est bidon — jette-le. L'humour Tacotac vient de l'OBSERVATION (un détail vrai de la conv) et de l'ABSURDE PRÉCIS, presque jamais d'un jeu de mots. Dans le doute : pas de jeu de mots.
 • Les métaphores forcées : "magicien", "agent secret", "je fais disparaître nos différences", "notre brunch serait légendaire".
 • L'auto-dévalorisation molle : "même si je chante comme une casserole", "j'ai pas encore trouvé mon public", "j'ai une capacité limitée à…".
 • Les formules coach drague YouTube : "nos vibes s'accordent", "sous les étoiles", "la ville de l'amour", "je peux te faire changer d'avis", "tu fais partie de mon itinéraire", "un tour guidé ?".
@@ -659,11 +664,24 @@ N'invente JAMAIS un signal non visible (délais de réponse non affichés, "elle
 ═══════════════════════════════════════════════
 LE SCORE — BARÈME STRICT, ZÉRO COMPLAISANCE
 ═══════════════════════════════════════════════
+⛔ PLAFONDS ABSOLUS (ils écrasent tout le reste, même si elle est "gentille" dans ses messages) :
+• Elle mentionne un COPAIN / être en couple / voir quelqu'un → score MAX 10. C'est un rejet, point. Sa gentillesse autour ne compte pas.
+• Elle dit explicitement ne pas être intéressée, le friendzone ("t'es gentil mais", "je te vois comme un ami") ou lui demande d'arrêter → score MAX 10.
+• Elle refuse un date SANS contre-proposer un autre créneau → score MAX 30. ("j'peux pas samedi" tout court = mauvais signe, pas un contretemps.)
+• Elle a ghosté (plus de réponse depuis plusieurs messages du client) → score MAX 20.
+
+Barème général (si aucun plafond ne s'applique) :
 • 0-30 : elle répond par politesse ou plus du tout. Aucun effort, aucune question.
 • 31-55 : tiède. Elle répond mais n'investit pas, n'initie rien.
 • 56-75 : intéressée. Questions, taquineries, elle investit dans ses réponses.
-• 76-100 : très chaude. Elle relance, propose, flirte ouvertement.
-La complaisance = trahison. Si c'est mal parti, DIS-LE : ton client préfère la vérité à un faux espoir. Mais reste factuel, jamais moqueur.
+• 76-100 : très chaude. Elle relance, propose, flirte ouvertement. RARE : exige des preuves fortes.
+
+RÈGLES DE SÉVÉRITÉ :
+• En cas d'hésitation entre deux tranches, choisis TOUJOURS la plus basse.
+• La politesse n'est PAS de l'intérêt. Répondre ≠ investir : des réponses régulières mais courtes et sans question = 31-45, pas plus.
+• Ne confonds JAMAIS "elle est sympa" avec "elle est intéressée". Un rejet enrobé de compliments ("t'es adorable mais…") reste un rejet.
+La complaisance = trahison. Si c'est mal parti, DIS-LE : ton client préfère la vérité à un faux espoir (un 8% honnête lui évite de perdre 2 semaines). Mais reste factuel, jamais moqueur.
+Si un plafond s'applique, le VERDICT doit le dire cash ("elle t'a dit qu'elle avait un copain : c'est non") et le MEILLEUR MOVE doit souvent être de passer à autre chose — le dire est un vrai conseil.
 
 VERDICT : 2-3 phrases cash, tutoiement direct ("elle te teste", "t'es en train de la perdre en sur-textant", "elle attend juste que tu proposes"). Franc, précis, jamais méprisant envers lui ni elle.
 
@@ -894,7 +912,7 @@ app.post('/api/train', trainLimiter, async (req, res) => {
     if (!process.env.OPENAI_API_KEY) return res.status(503).json({ error: 'IA indisponible.', code: 'ia_indisponible' });
 
     const completion = await openai.chat.completions.create({
-      model: MODEL,
+      model: MODEL_PREMIUM, // l'entraînement est quasi-premium (1 msg/j offert) : les personas méritent le bon modèle
       max_tokens: 600,
       messages: [
         { role: 'system', content: trainSystemPrompt(persona, interest, userMsgCount) },
@@ -1074,16 +1092,50 @@ const GOOGLE_REDIRECT = `${PUBLIC_URL}/api/auth/google/callback`;
 
 app.get('/api/auth/config', (req, res) => res.json({ google: GOOGLE_ENABLED }));
 
+// ── State OAuth AUTOPORTEUR (HMAC) au lieu d'un cookie ──
+// Pourquoi : depuis la PWA installée (iOS), le login Google s'ouvre dans un navigateur
+// intégré SÉPARÉ qui n'a PAS les cookies de la PWA → l'ancien cookie tt_oauth_state
+// manquait au callback et la connexion échouait ("La connexion Google a échoué").
+// Le state signé transporte lui-même le deviceId d'origine : plus besoin de cookie,
+// et on sait relier le compte à l'appareil PWA même si le callback arrive ailleurs.
+const OAUTH_HMAC_SECRET = process.env.COOKIE_SECRET || 'dev-secret-change-me';
+function makeOauthState(deviceId) {
+  const payload = Buffer.from(JSON.stringify({ d: deviceId, t: Date.now() })).toString('base64url');
+  const sig = createHmac('sha256', OAUTH_HMAC_SECRET).update(payload).digest('base64url');
+  return payload + '.' + sig;
+}
+function readOauthState(state) {
+  try {
+    const [payload, sig] = String(state || '').split('.');
+    if (!payload || !sig) return null;
+    const expected = createHmac('sha256', OAUTH_HMAC_SECRET).update(payload).digest('base64url');
+    const a = Buffer.from(sig), b = Buffer.from(expected);
+    if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
+    const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    if (!data.d || !data.t || Date.now() - data.t > 10 * 60 * 1000) return null; // périmé après 10 min
+    return data;
+  } catch { return null; }
+}
+
+// ── Sessions en attente pour la PWA ──
+// Le login Google réussit dans le navigateur intégré (autre jarre de cookies que la PWA).
+// On mémorise "compte prêt pour l'appareil X" 10 min : quand l'utilisateur revient dans
+// la PWA, elle réclame sa session via /api/auth/pwa-session et se retrouve connectée.
+const pendingPwaSessions = new Map(); // deviceId -> { accountId, exp }
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of pendingPwaSessions) if (v.exp < now) pendingPwaSessions.delete(k);
+}, 60 * 1000).unref();
+
 app.get('/api/auth/google', (req, res) => {
   if (!GOOGLE_ENABLED) return res.redirect('/app');
-  const state = randomUUID();
-  res.cookie('tt_oauth_state', state, { httpOnly: true, signed: true, sameSite: 'lax', maxAge: 10 * 60 * 1000, secure: process.env.NODE_ENV === 'production' });
+  attachDevice(req, res);
   const u = new URL('https://accounts.google.com/o/oauth2/v2/auth');
   u.searchParams.set('client_id', process.env.GOOGLE_CLIENT_ID);
   u.searchParams.set('redirect_uri', GOOGLE_REDIRECT);
   u.searchParams.set('response_type', 'code');
   u.searchParams.set('scope', 'openid email');
-  u.searchParams.set('state', state);
+  u.searchParams.set('state', makeOauthState(req.deviceId));
   u.searchParams.set('prompt', 'select_account');
   res.redirect(u.toString());
 });
@@ -1093,8 +1145,8 @@ app.get('/api/auth/google/callback', async (req, res) => {
     if (!GOOGLE_ENABLED) return res.redirect('/app');
     attachDevice(req, res);
     const { code, state } = req.query;
-    if (!code || !state || state !== req.signedCookies?.tt_oauth_state) return res.redirect('/app?auth_err=1');
-    res.clearCookie('tt_oauth_state');
+    const stateData = readOauthState(state);
+    if (!code || !stateData) return res.redirect('/app?auth_err=1');
 
     // Échange code → tokens (directement auprès de Google, en TLS)
     const tokenResp = await fetch('https://oauth2.googleapis.com/token', {
@@ -1120,12 +1172,33 @@ app.get('/api/auth/google/callback', async (req, res) => {
       else { account = createAccount({ email, googleId }); pushToSheet(email, 'account-google'); sendLifecycleEmail(account, 'welcome').catch(() => {}); } // nouveau compte Google → Sheet + bienvenue
     }
     linkDeviceToAccount(req.deviceId, account.id);
+    // l'appareil D'ORIGINE (celui qui a cliqué "Google", ex. la PWA) peut être différent
+    // de celui du navigateur intégré : on le relie aussi et on lui prépare sa session
+    if (stateData.d && stateData.d !== req.deviceId) {
+      linkDeviceToAccount(stateData.d, account.id);
+    }
+    pendingPwaSessions.set(stateData.d, { accountId: account.id, exp: Date.now() + 10 * 60 * 1000 });
     openSession(res, account.id);
     res.redirect('/app?login=1');
   } catch (e) {
     console.error('[google] callback:', e?.message);
     res.redirect('/app?auth_err=1');
   }
+});
+
+// La PWA réclame la session préparée par le callback Google (voir pendingPwaSessions).
+// Répond {ok:false} sans erreur si rien n'attend : le front peut poller sans bruit.
+app.post('/api/auth/pwa-session', authLimiter, (req, res) => {
+  attachDevice(req, res);
+  const pending = pendingPwaSessions.get(req.deviceId);
+  if (!pending || pending.exp < Date.now()) {
+    pendingPwaSessions.delete(req.deviceId);
+    return res.json({ ok: false });
+  }
+  pendingPwaSessions.delete(req.deviceId);
+  const token = openSession(res, pending.accountId);
+  req.account = getSessionAccount(token) || null;
+  res.json({ ok: true, status: fullStatus(req) });
 });
 
 // ── Bonus email : +2 analyses (1 fois par email, 1 fois par appareil) ──
@@ -1396,8 +1469,10 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
       return res.status(401).json({ error: 'Crée ton compte gratuit pour voir tes répliques.', code: 'auth_required' });
     }
 
-    const dataUrl = req.body?.image;
-    if (!isValidDataUrl(dataUrl)) {
+    // ── Images : 1 pour tous, 2 pour les Premium (photo 1 = début de conv, photo 2 = là où ça bloque) ──
+    let dataUrls = Array.isArray(req.body?.images) ? req.body.images.filter(isValidDataUrl).slice(0, 2) : [];
+    if (!dataUrls.length && isValidDataUrl(req.body?.image)) dataUrls = [req.body.image];
+    if (!dataUrls.length) {
       return res.status(400).json({ error: 'Image manquante ou format invalide (png/jpg/webp attendu).' });
     }
 
@@ -1405,9 +1480,11 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
     // opener et coach = premium, vérifié AVANT de consommer le quota :
     // un gratuit qui force l'appel ne perd pas un crédit.
     const mode = ['opener', 'coach'].includes(req.body?.mode) ? req.body.mode : 'reply';
-    if (mode !== 'reply' && !getStatus(deviceId, req.account).isPremium) {
+    const isPremiumUser = getStatus(deviceId, req.account).isPremium;
+    if (mode !== 'reply' && !isPremiumUser) {
       return res.status(403).json({ error: 'Cet outil est réservé aux Premium.', code: 'premium_required' });
     }
+    if (!isPremiumUser && dataUrls.length > 1) dataUrls = dataUrls.slice(0, 1); // la 2e photo est un avantage premium
 
     // ── QUOTA (côté serveur, seule source de vérité) ──
     const quota = consumeQuota(deviceId, req.ip, req.account);
@@ -1444,8 +1521,13 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
       userText = "Voici le screenshot de ma conv. RAPPEL : les bulles à DROITE (colorées) c'est MOI, ton client — les bulles à GAUCHE (grises) c'est la personne que je veux séduire. Écris 3 relances par ton que MOI j'envoie à cette personne, en répondant à son DERNIER message (dernière bulle à gauche). Ne réponds jamais à ma place comme si j'étais la personne de gauche." + (quota.isPremium ? PREMIUM_TONES_INSTRUCTION : '') + buildProfileContext(req.body?.profile);
     }
 
+    // 2 screenshots (premium) : on précise l'ordre chronologique pour que l'IA suive la conv complète
+    if (dataUrls.length === 2) {
+      userText = "IMPORTANT : tu reçois DEUX screenshots de la MÊME conversation, dans l'ordre. Screenshot 1 = le DÉBUT (contexte). Screenshot 2 = la SUITE, la plus récente : c'est là que se trouve le dernier message. Utilise le contexte du 1er pour mieux répondre au 2e.\n\n" + userText;
+    }
+
     const completion = await openai.chat.completions.create({
-      model: MODEL,
+      model: isPremiumUser ? MODEL_PREMIUM : MODEL,
       max_tokens: maxTok,
       messages: [
         { role: 'system', content: sys },
@@ -1453,7 +1535,7 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
           role: 'user',
           content: [
             { type: 'text', text: userText },
-            { type: 'image_url', image_url: { url: dataUrl, detail: 'high' } },
+            ...dataUrls.map((u) => ({ type: 'image_url', image_url: { url: u, detail: 'high' } })),
           ],
         },
       ],
@@ -1539,7 +1621,7 @@ app.post('/api/bio', analyzeLimiter, async (req, res) => {
     if (!process.env.OPENAI_API_KEY) return res.json({ bio: null, source: 'fallback', quota });
 
     const completion = await openai.chat.completions.create({
-      model: MODEL,
+      model: MODEL_PREMIUM, // outil réservé aux abonnés
       max_tokens: 1000,
       messages: [
         { role: 'system', content: BIO_SYSTEM_PROMPT },
@@ -1566,7 +1648,7 @@ app.post('/api/bio', analyzeLimiter, async (req, res) => {
 
 // healthcheck
 app.get('/api/health', (req, res) => {
-  res.json({ ok: true, hasKey: Boolean(process.env.OPENAI_API_KEY), model: MODEL });
+  res.json({ ok: true, hasKey: Boolean(process.env.OPENAI_API_KEY), model: MODEL, modelPremium: MODEL_PREMIUM });
 });
 
 // routes explicites
