@@ -9,6 +9,7 @@
 import 'dotenv/config';
 import express from 'express';
 import path from 'node:path';
+import { statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { randomUUID, randomBytes, scryptSync, timingSafeEqual, createHmac } from 'node:crypto';
 import cookieParser from 'cookie-parser';
@@ -93,6 +94,17 @@ app.get('/manifest.json', (req, res) => {
   res.set('Cache-Control', 'no-cache');
   res.type('application/manifest+json');
   res.sendFile(path.join(__dirname, 'public', 'manifest.json'));
+});
+
+// ── Version de l'app : la date de modif d'app.html, figée au démarrage ──
+// iOS garde la PWA suspendue en mémoire pendant des jours : sans ça, les utilisateurs
+// tournent sur du vieux code même après un déploiement. Le front compare cette valeur
+// au retour au premier plan et se recharge tout seul si elle a changé.
+let APP_VERSION = '0';
+try { APP_VERSION = String(Math.floor(statSync(path.join(__dirname, 'public', 'app.html')).mtimeMs)); } catch { /* fichier absent = pas bloquant */ }
+app.get('/api/version', (req, res) => {
+  res.set('Cache-Control', 'no-cache');
+  res.json({ v: APP_VERSION });
 });
 
 app.use(express.static(path.join(__dirname, 'public')));

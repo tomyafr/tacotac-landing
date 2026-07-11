@@ -6,7 +6,7 @@
 //  Les appels /api/* ne sont JAMAIS interceptés (quota, paiement…).
 // ══════════════════════════════════════════════════════════════
 
-const CACHE = 'tacotac-v5'; // ⚠️ incrémenter à chaque déploiement qui change app.html/assets
+const CACHE = 'tacotac-v6'; // ⚠️ incrémenter à chaque déploiement qui change app.html/assets
 
 const PRECACHE = [
   '/',
@@ -16,6 +16,7 @@ const PRECACHE = [
   '/assets/fox_classe.png',
   '/assets/fox_spicy.png',
   '/assets/icon-192.png',
+  '/assets/icon-180.png',
 ];
 
 self.addEventListener('install', (e) => {

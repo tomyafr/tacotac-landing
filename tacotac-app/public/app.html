@@ -40,9 +40,10 @@
   </script>
   <style>
     *,*::before,*::after{box-sizing:border-box}
-    html{-webkit-text-size-adjust:100%;overflow-x:hidden}
-    /* overscroll-behavior + touch-action : l'écran ne se déplace plus latéralement ni ne rebondit comme une page web */
-    body{font-family:'Space Grotesk',sans-serif;margin:0;background:#0A0A0A;color:#fff;overflow-x:hidden;overscroll-behavior:none;touch-action:pan-y;-webkit-tap-highlight-color:transparent}
+    html{-webkit-text-size-adjust:100%;overflow:hidden;height:100%}
+    /* body en position:fixed = la page est PHYSIQUEMENT imbougeable au doigt (aucun pan, aucun rebond iOS).
+       Seuls les écrans internes (.screen, .chat-scroll…) défilent, comme une vraie app native. */
+    body{font-family:'Space Grotesk',sans-serif;margin:0;background:#0A0A0A;color:#fff;position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
     /* 16px minimum sur les champs : en dessous, iOS zoome automatiquement au focus (l'app paraissait "dézoomée" ensuite) */
     input,textarea,select{font-size:16px}
     ::selection{background:rgba(255,92,0,.85);color:#fff}
@@ -2258,9 +2259,26 @@
     // session "en attente" pour cet appareil : quand l'utilisateur revient ici, on la
     // réclame et il se retrouve connecté sans rien faire.
     const GPENDING_KEY='tt_gpending';
-    document.getElementById('googleBtn').addEventListener('click',()=>{
-      try{localStorage.setItem(GPENDING_KEY,String(Date.now()));}catch(e){}
+    // Depuis l'app installée : window.open → le login part dans le navigateur intégré
+    // pendant que CETTE page reste vivante en dessous, et on réclame la session en boucle.
+    // (Une navigation classique tuerait la page : plus personne pour récupérer la session.)
+    document.getElementById('googleBtn').addEventListener('click',(e)=>{
+      try{localStorage.setItem(GPENDING_KEY,String(Date.now()));}catch(e2){}
+      if(isStandalone){
+        e.preventDefault();
+        window.open('/api/auth/google','_blank');
+        startClaimPolling();
+      }
     });
+    let claimPoll=null;
+    function startClaimPolling(){
+      clearInterval(claimPoll);
+      let tries=0;
+      claimPoll=setInterval(()=>{
+        if(++tries>72||currentAccount){clearInterval(claimPoll);return;} // ~3 min max
+        claimPwaSession();
+      },2500);
+    }
     let claimingPwa=false;
     async function claimPwaSession(){
       if(claimingPwa||currentAccount)return;
@@ -2271,6 +2289,7 @@
       try{
         const d=await (await fetch('/api/auth/pwa-session',{method:'POST'})).json();
         if(d.ok){
+          clearInterval(claimPoll);
           try{localStorage.removeItem(GPENDING_KEY);}catch(e){}
           applyQuota(d.status);
           renderAuth();
@@ -2283,7 +2302,27 @@
     // au retour dans l'app (l'utilisateur ferme le navigateur Google) + au chargement
     document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')claimPwaSession();});
     window.addEventListener('focus',claimPwaSession);
+    window.addEventListener('pageshow',claimPwaSession);
     claimPwaSession();
+
+    // ══════════════ MISE À JOUR AUTO ══════════════
+    // iOS garde la PWA suspendue des jours : sans ça, l'app tourne sur du vieux code
+    // longtemps après un déploiement (fix jamais reçus). Au retour au premier plan,
+    // on compare la version du serveur et on recharge si elle a changé — uniquement
+    // quand rien n'est en cours pour ne jamais couper l'utilisateur.
+    let appVersion=null;
+    fetch('/api/version').then(r=>r.json()).then(d=>{appVersion=d.v;}).catch(()=>{});
+    async function checkVersion(){
+      if(document.visibilityState!=='visible')return;
+      try{
+        const d=await (await fetch('/api/version')).json();
+        if(appVersion&&d.v&&d.v!==appVersion){
+          const idle=document.getElementById('screen-1').classList.contains('active')&&!hasImage&&!trainBusy;
+          if(idle)location.reload();
+        }
+      }catch(e){}
+    }
+    document.addEventListener('visibilitychange',checkVersion);
 
     // ══════════════ MENU LATÉRAL ══════════════
     const drawer=document.getElementById('drawer'),drawerOverlay=document.getElementById('drawerOverlay');
