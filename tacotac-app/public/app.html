@@ -274,6 +274,9 @@
        propagent jamais leur défilement à la page (fini l'app qui bouge au doigt) ── */
     .screen,.chat-scroll,.prefs-panel,.gate-card,.drawer{overscroll-behavior:contain;touch-action:pan-y}
 
+    /* ── Tease paywall : le résultat est là, flouté, à 1 cm — il ne manque qu'un paiement ── */
+    .tease-blur{filter:blur(7px)!important;pointer-events:none;user-select:none}
+
     /* ── Refaire : feedback de chargement (spinner + réplique estompée) ── */
     .spin-sm{display:inline-block;width:11px;height:11px;border:2px solid rgba(255,154,69,.3);border-top-color:#FF9A45;border-radius:50%;animation:tt-spin .7s linear infinite;vertical-align:-1px;margin-right:3px}
     .reply.regen{opacity:.3;filter:blur(2.5px)}
@@ -926,12 +929,24 @@
         <p id="gateSub" style="color:#9a9aa4;font-size:15px;margin:10px auto 0;max-width:320px;line-height:1.55;">Personnalise ton renard, débloque les analyses illimitées et tous les tons secrets. Sans engagement.</p>
         <div id="promoBanner" style="display:none;background:#0f2c1e;border:1px solid rgba(52,211,153,.4);border-radius:12px;padding:10px 12px;margin:16px 0 0;color:#34d399;font-size:13px;font-weight:600;">🎁 Ta réduction est appliquée sur le Mensuel</div>
 
+        <!-- Quota épuisé : l'attente chiffrée rend la friction palpable -->
+        <div id="gateCountdown" style="display:none;margin:16px 0 0;background:#0d0d0d;border:1px solid #2a2a2a;border-radius:12px;padding:12px 14px;color:#B5ABA0;font-size:13px;">
+          ⏳ Tes 3 analyses gratuites reviennent dans <b id="gateCountdownVal" style="color:#FF9A45;font-variant-numeric:tabular-nums;">—</b>
+        </div>
+
         <!-- Features -->
         <div style="margin-top:26px;text-align:left;">
           <div class="pw-feat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#FF9A45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Analyses <b style="color:#fff;font-weight:700;">illimitées</b>, chaque jour</span></div>
           <div class="pw-feat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#FF9A45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Tous les <b style="color:#fff;font-weight:700;">tons secrets</b> : Romantique, Sexto, Mystère</span></div>
           <div class="pw-feat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#FF9A45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span>4 outils exclusifs : <b style="color:#fff;font-weight:700;">DM</b> · <b style="color:#fff;font-weight:700;">Coach</b> · <b style="color:#fff;font-weight:700;">Bio</b> · <b style="color:#fff;font-weight:700;">Entraînement 🎯</b></span></div>
           <div class="pw-feat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#FF9A45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Renard <b style="color:#fff;font-weight:700;">personnalisé</b> : âge, objectif, style de message</span></div>
+        </div>
+
+        <!-- Preuve sociale : la meute avant toi -->
+        <div style="margin-top:18px;background:#0d0d0d;border:1px solid #232323;border-radius:14px;padding:14px 16px;text-align:left;">
+          <div style="color:#FFB020;font-size:13px;letter-spacing:2.5px;">★★★★★ <span style="color:#9a9aa4;font-size:12px;letter-spacing:0;font-weight:600;">4,8/5 — la meute approuve</span></div>
+          <p style="color:#B5ABA0;font-size:12.5px;line-height:1.55;margin:10px 0 0;">« 3 dates en 2 semaines, je pensais pas que ça marcherait aussi bien » <span style="color:#6c6c75;">— Lucas, 24</span></p>
+          <p style="color:#B5ABA0;font-size:12.5px;line-height:1.55;margin:8px 0 0;">« le ton mystère est cheaté, c'est elle qui a relancé » <span style="color:#6c6c75;">— Sofiane, 22</span></p>
         </div>
 
         <!-- Plans (sélection) -->
@@ -977,6 +992,7 @@
           <span id="gateCtaSub" style="display:block;font-size:12px;font-weight:500;opacity:.75;margin-top:2px;">Un seul paiement de 69,99€ · ≈ 5,83€/mois</span>
         </button>
         <div id="gateError" style="display:none;color:#ff8a80;font-size:12.5px;margin-top:10px;"></div>
+        <div style="color:#6c6c75;font-size:12px;margin-top:12px;line-height:1.5;">Le Mensuel revient à <b style="color:#B5ABA0;">0,33€/jour</b> — un café. Pour ne plus jamais sécher devant une conv.</div>
 
         <!-- Footer -->
         <div style="display:flex;align-items:center;justify-content:center;gap:9px;margin-top:16px;flex-wrap:wrap;">
@@ -985,6 +1001,33 @@
           <button id="gateLogin" style="background:none;border:none;font-family:inherit;font-size:12.5px;font-weight:700;color:#FF9A45;cursor:pointer;text-decoration:none;">Se connecter</button>
         </div>
         <button id="gateClose" style="margin-top:14px;background:none;border:none;color:#6c6c75;font-family:inherit;font-size:12.5px;cursor:pointer;">Revenir plus tard</button>
+      </div>
+    </div>
+
+    <!-- ═══════════════ DOWNSELL DE SORTIE (-30% Hebdo, 15 min) ═══════════════ -->
+    <div class="gate-overlay" id="downsell">
+      <div class="gate-card" style="max-width:340px;">
+        <div style="font-size:42px;">🦊</div>
+        <div class="display" style="color:#fff;font-size:23px;line-height:1.1;margin-top:10px;">Attends deux secondes…</div>
+        <p style="color:#9a9aa4;font-size:14px;margin:10px 0 0;line-height:1.55;">Le renard déteste te voir partir. Offre unique, là, maintenant :</p>
+        <div style="margin-top:16px;background:#0d0d0d;border:1.5px dashed rgba(255,122,69,.5);border-radius:14px;padding:16px;">
+          <div style="color:#FF9A45;font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;">-30% sur l'Hebdo</div>
+          <div style="margin-top:6px;color:#fff;font-size:22px;font-weight:800;"><s style="color:#6c6c75;font-weight:500;font-size:16px;">4,99€</s> 3,49€ <span style="color:#86868f;font-size:13px;font-weight:500;">ta 1re semaine</span></div>
+        </div>
+        <div style="margin-top:12px;color:#B5ABA0;font-size:13px;">L'offre s'évapore dans <b id="downsellTimer" style="color:#FF9A45;font-variant-numeric:tabular-nums;">15:00</b></div>
+        <button class="cta" id="downsellGo" style="margin-top:16px;height:52px;font-size:15px;">J'en profite → 3,49€</button>
+        <button id="downsellNo" style="display:block;margin:14px auto 0;background:none;border:none;color:#6c6c75;font-family:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline;">Non merci, je préfère payer plein tarif plus tard</button>
+      </div>
+    </div>
+
+    <!-- ═══════════════ CADEAU DU RENARD : 1 ton secret offert à vie ═══════════════ -->
+    <div class="gate-overlay" id="giftTone">
+      <div class="gate-card" style="max-width:340px;">
+        <div class="celeb-icon"><span class="em" style="display:block;font-size:42px;">🎁</span></div>
+        <div class="display" style="color:#fff;font-size:22px;line-height:1.15;margin-top:12px;">Cadeau du renard</div>
+        <p style="color:#9a9aa4;font-size:14px;margin:10px 0 0;line-height:1.6;">Il t'offre <b style="color:#FF9A45;">UN ton secret</b> — une seule fois, pour cette conv. Tu veux goûter le ton <b id="giftToneName" style="color:#fff;">Sexto</b> ?</p>
+        <button class="cta" id="giftGo" style="margin-top:18px;height:52px;font-size:15px;">Débloquer mon cadeau 🎁</button>
+        <button id="giftLater" style="display:block;margin:14px auto 0;background:none;border:none;color:#6c6c75;font-family:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline;">Le garder pour une autre conv</button>
       </div>
     </div>
 
@@ -1301,7 +1344,7 @@
 
       if(authNeeded){ pendingAnalysis=true; openAuth('analysis'); return; } // compte requis
       if(premiumNeeded){ const gm=mode; setMode('reply'); go(1); openGate(gm); return; } // premium expiré entre-temps
-      if(blocked){ go(1); openGate(); return; } // on ramène à l'upload et on ouvre le paywall
+      if(blocked){ go(1); openGate('quota'); return; } // on ramène à l'upload et on ouvre le paywall
       if(mode==='coach'){
         if(!coachData){ toast('Le coach est indisponible, réessaie dans un instant'); go(1); return; }
         setTimeout(showCoach,300); return;
@@ -1351,12 +1394,16 @@
     // Verrouillage des tons premium selon le plan
     function updateLockedPills(){
       pillGrid.querySelectorAll('.pill.tone-premium').forEach(p=>{
-        p.classList.toggle('locked',!quota.isPremium);
+        p.classList.toggle('locked',!quota.isPremium&&!p.dataset.gifted); // gifted = débloqué pour cette conv
       });
     }
     pillGrid.querySelectorAll('.pill').forEach(p=>{
       p.addEventListener('click',()=>{
-        if(p.classList.contains('locked')){openGate('tone');return;} // ton premium → paywall
+        if(p.classList.contains('locked')){
+          // cadeau jamais utilisé + vraie analyse en cours → on lui offre de goûter CE ton
+          if(!quota.giftToneUsed&&!teasing&&replies&&imageDataUrl){openGiftModal(p.dataset.tone);return;}
+          openGate('tone');return;
+        }
         const t=p.dataset.tone;
         // ton premium demandé mais absent de cette analyse (faite avant l'upgrade / fallback)
         if(tones[t].premium&&(!replies||!replies[t]||!replies[t].length)){
@@ -1590,7 +1637,7 @@
       cancelAnimationFrame(raf);clearInterval(stepTimer);barFill.style.width='100%';
       if(authNeeded){pendingAnalysis=true;openAuth('analysis');return;}
       if(premiumNeeded){setMode('reply');go(1);openGate('bio');return;}
-      if(blocked){go(1);openGate();return;}
+      if(blocked){go(1);openGate('quota');return;}
       if(!bioData){toast('Le renard est indisponible, réessaie');go(1);return;}
       setTimeout(showBio,300);
     }
@@ -1915,6 +1962,9 @@
       hasImage=false;imageDataUrl=null;replies=null;analyzeBtn.disabled=true;fileInput.value='';
       dzPreview.src='';dzPreview.style.display='none';dzEmpty.style.display='flex';dropzone.classList.remove('has-img');
       clearPhoto2();
+      // le ton offert n'était valable que pour la conv en cours → on re-verrouille
+      pillGrid.querySelectorAll('.pill.tone-premium').forEach(p=>{delete p.dataset.gifted;const lk=p.querySelector('.plock');if(lk)lk.textContent='🔒';});
+      updateLockedPills();
       go(1);
     }
     document.getElementById('resetBtn').addEventListener('click',resetToUpload);
@@ -2031,15 +2081,84 @@
     });
     renderPrefs();
 
+    // ══════════════ TEASE PAYWALL : le résultat flouté sous les yeux ══════════════
+    // Le gratuit lance un outil premium → on affiche le VRAI écran de résultat rempli
+    // de contenu factice flouté (zéro appel IA), avec le paywall par-dessus. Son résultat
+    // est à 1 cm — il ne manque qu'un paiement.
+    let teasing=false,teaseEls=[],teaseHidden=[];
+    function applyTeaseBlur(blurSels,hideSels){
+      teaseEls=[];teaseHidden=[];
+      blurSels.forEach(s=>document.querySelectorAll(s).forEach(el=>{el.classList.add('tease-blur');teaseEls.push(el);}));
+      hideSels.forEach(s=>document.querySelectorAll(s).forEach(el=>{teaseHidden.push([el,el.style.display]);el.style.display='none';}));
+    }
+    function showTeaseResult(){
+      teasing=true;
+      if(mode==='coach'){
+        coachData={...DEMO_COACH,score:61};showCoach();
+        applyTeaseBlur(['#screen-5 .coach-card','#screen-5 .bubble'],['#coachCopy','#coachReset']);
+      }else if(mode==='bio'){
+        bioData=DEMO_BIO;showBio();
+        applyTeaseBlur(['#screen-6 .bio-card','#bioAnalyse'],['#bioReset']);
+      }else{
+        replies=DEMO_OPENER;selectedTone='drole';variant=0;showResults(false);
+        applyTeaseBlur(['#screen-4 .result-card'],['#copyBtn','#shareBtn','#copyUpsell','#premiumTease','#resetBtn']);
+      }
+      track('tease_view',{mode});
+      openGate(mode);
+    }
+    function endTease(){
+      if(!teasing)return;
+      teasing=false;
+      teaseEls.forEach(el=>el.classList.remove('tease-blur'));
+      teaseHidden.forEach(([el,d])=>{el.style.display=d;});
+      teaseEls=[];teaseHidden=[];
+      replies=null;coachData=null;bioData=null;
+      go(1);
+    }
+
     // ══════════════ GATE / PAYWALL ══════════════
     const gate=document.getElementById('gate');
     // Code promo cadeau (?promo=CODE venant de l'email -10%)
     let promoCode=new URLSearchParams(location.search).get('promo')||null;
     let selectedPlan='annual'; // plan mis en avant par défaut
+    // Compte à rebours jusqu'à minuit (Europe/Paris = reset du quota)
+    let gateCdInt=null;
+    function msToParisMidnight(){
+      const paris=new Date(new Date().toLocaleString('en-US',{timeZone:'Europe/Paris'}));
+      const mid=new Date(paris);mid.setHours(24,0,0,0);
+      return mid-paris;
+    }
+    function startGateCountdown(){
+      stopGateCountdown();
+      const el=document.getElementById('gateCountdownVal');
+      const tick=()=>{
+        const ms=Math.max(0,msToParisMidnight());
+        const h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000);
+        el.textContent=h+'h '+String(m).padStart(2,'0')+'m '+String(s).padStart(2,'0')+'s';
+      };
+      tick();gateCdInt=setInterval(tick,1000);
+    }
+    function stopGateCountdown(){clearInterval(gateCdInt);gateCdInt=null;}
+
     function openGate(context){
       if(quota.isPremium)return;
       const title=document.getElementById('gateTitle'), sub=document.getElementById('gateSub');
-      if(context==='prefs'){
+      // le countdown n'apparaît que sur le paywall "quota épuisé"
+      const cd=document.getElementById('gateCountdown');
+      if(context==='quota'&&!teasing){cd.style.display='block';startGateCountdown();}
+      else{cd.style.display='none';stopGateCountdown();}
+      if(teasing){
+        const T={
+          opener:['Tes DM sont prêts 🔒','3 premiers messages écrits pour <b style="color:#FF9A45;">son</b> profil sont là, juste derrière le flou. Débloque pour les lire.'],
+          coach:['Ton diagnostic est prêt 🔒','Son niveau d\'intérêt est calculé, ton meilleur move est trouvé — juste derrière le flou.'],
+          bio:['Ta nouvelle bio est prête 🔒','3 versions réécrites qui donnent envie de matcher — juste derrière le flou.'],
+        };
+        const c=T[context]||T.opener;
+        title.textContent=c[0];sub.innerHTML=c[1];
+      }else if(context==='quota'){
+        title.textContent='T\'as tout donné aujourd\'hui 🕐';
+        sub.innerHTML='Tes 3 analyses gratuites reviennent à minuit. Ou passe en <b style="color:#FF9A45;">illimité</b> maintenant et continue sur ta lancée.';
+      }else if(context==='prefs'){
         title.textContent='Réservé au Premium 🔒';
         sub.innerHTML='Personnaliser le renard (âge, objectif, instructions perso…) est réservé aux membres <b style="color:#FF9A45;">Premium</b>. Débloque tout, tout de suite.';
       }else if(context==='tone'){
@@ -2086,8 +2205,85 @@
         document.getElementById('prefsSummary').textContent='🔒 Premium';
       }
     }
-    document.getElementById('gateClose').addEventListener('click',()=>gate.classList.remove('show'));
-    document.getElementById('gateLogin').addEventListener('click',()=>{gate.classList.remove('show');openAuth();});
+    // "Revenir plus tard" = abandon → contre-offre one-shot (-30% Hebdo) avant de le laisser filer
+    document.getElementById('gateClose').addEventListener('click',()=>{
+      gate.classList.remove('show');stopGateCountdown();
+      if(downsellEligible()){showDownsell();return;} // le tease reste flouté derrière
+      endTease();
+    });
+    document.getElementById('gateLogin').addEventListener('click',()=>{gate.classList.remove('show');stopGateCountdown();openAuth();});
+
+    // ══════════════ DOWNSELL DE SORTIE (-30% Hebdo, 15 min) ══════════════
+    const downsellOv=document.getElementById('downsell');
+    let downsellInt=null,downsellUntil=0;
+    function downsellEligible(){
+      if(quota.isPremium)return false;
+      let last=0;try{last=parseInt(localStorage.getItem('tt_downsell_last')||'0',10);}catch(e){}
+      return Date.now()-last>24*3600*1000; // une fois par 24h max, sinon ça perd toute crédibilité
+    }
+    function showDownsell(){
+      try{localStorage.setItem('tt_downsell_last',String(Date.now()));}catch(e){}
+      downsellUntil=Date.now()+15*60*1000;
+      downsellOv.classList.add('show');
+      track('downsell_view');
+      clearInterval(downsellInt);
+      const tick=()=>{
+        const left=downsellUntil-Date.now();
+        if(left<=0){hideDownsell();return;}
+        document.getElementById('downsellTimer').textContent=Math.floor(left/60000)+':'+String(Math.floor(left%60000/1000)).padStart(2,'0');
+      };
+      tick();downsellInt=setInterval(tick,1000);
+    }
+    function hideDownsell(){clearInterval(downsellInt);downsellOv.classList.remove('show');endTease();}
+    document.getElementById('downsellNo').addEventListener('click',()=>{track('downsell_dismiss');hideDownsell();});
+    document.getElementById('downsellGo').addEventListener('click',async()=>{
+      track('downsell_click');
+      const b=document.getElementById('downsellGo');const o=b.textContent;
+      b.textContent='Un instant…';b.style.pointerEvents='none';
+      try{
+        const d=await (await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({plan:'weekly',downsell:true})})).json();
+        if(d.url){window.location.href=d.url;return;}
+        throw new Error(d.error||'Erreur');
+      }catch(e){
+        toast('Le paiement n\'a pas pu démarrer, réessaie');
+        b.textContent=o;b.style.pointerEvents='auto';
+      }
+    });
+
+    // ══════════════ CADEAU : 1 ton secret offert à vie ══════════════
+    const giftOv=document.getElementById('giftTone');
+    let giftPendingTone=null;
+    function openGiftModal(tone){
+      giftPendingTone=tone;
+      document.getElementById('giftToneName').textContent=tones[tone]?tones[tone].label:tone;
+      giftOv.classList.add('show');track('gift_view',{tone});
+    }
+    document.getElementById('giftLater').addEventListener('click',()=>{giftOv.classList.remove('show');track('gift_later');});
+    giftOv.addEventListener('click',e=>{if(e.target===giftOv)giftOv.classList.remove('show');});
+    document.getElementById('giftGo').addEventListener('click',async()=>{
+      const b=document.getElementById('giftGo');const o=b.textContent;
+      b.textContent='Le renard écrit… 🦊';b.style.pointerEvents='none';
+      try{
+        const r=await fetch('/api/gift-tone',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tone:giftPendingTone,image:imageDataUrl,profile:prefs})});
+        const d=await r.json();
+        if(d.ok){
+          quota.giftToneUsed=true;
+          replies=replies||{};replies[d.tone]=d.replies;
+          const pill=pillGrid.querySelector('.pill[data-tone="'+d.tone+'"]');
+          if(pill){pill.dataset.gifted='1';const lk=pill.querySelector('.plock');if(lk)lk.textContent='🎁';}
+          updateLockedPills();
+          giftOv.classList.remove('show');
+          pillGrid.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
+          if(pill)pill.classList.add('active');
+          selectedTone=d.tone;variant=0;renderResult(true);
+          toast('🎁 Ton secret débloqué sur cette conv');
+          track('gift_used',{tone:d.tone});
+        }else if(r.status===401){giftOv.classList.remove('show');openAuth();}
+        else if(d.code==='gift_used'){quota.giftToneUsed=true;giftOv.classList.remove('show');openGate('tone');}
+        else{toast(d.error||'Réessaie dans un instant');}
+      }catch(e){toast('Erreur réseau, réessaie');}
+      b.textContent=o;b.style.pointerEvents='auto';
+    });
 
     // Paywall : sélection d'un plan (surligne la carte + met à jour le bouton continuer)
     function selectPlan(el){
@@ -2200,6 +2396,7 @@
     document.getElementById('authClose').addEventListener('click',()=>{
       authOverlay.classList.remove('show');
       if(pendingAnalysis){pendingAnalysis=false;authContext=null;go(1);} // retour à l'upload, image conservée
+      else if(teasing)endTease(); // ne jamais laisser l'écran flouté interactif derrière
     });
     document.getElementById('authSwitch').addEventListener('click',()=>{authMode=(authMode==='login')?'signup':'login';document.getElementById('authErr').style.display='none';renderAuth();});
 
@@ -2222,6 +2419,11 @@
             authOverlay.classList.remove('show');
             // une analyse attendait l'inscription → on la lance pour de vrai
             if(pendingAnalysis){pendingAnalysis=false;authContext=null;if(mode==='bio')runBio();else runAnalyse();}
+            else if(teasing){
+              // connecté pendant le tease : si son compte est premium, on lance la VRAIE analyse
+              const nowPremium=quota.isPremium;endTease();
+              if(nowPremium){if(mode==='bio')runBio();else runAnalyse();}
+            }
           },700);
         }else{err.textContent=d.error||'Erreur, réessaie.';err.style.display='block';}
       }catch(ex){err.textContent='Erreur réseau, réessaie.';err.style.display='block';}
@@ -2477,7 +2679,7 @@
       }
       requestAnimationFrame(tick);
       // le paywall s'ouvre par timer (pas par rAF : certains navigateurs le gèlent en arrière-plan)
-      setTimeout(()=>{clearInterval(t);go(1);openGate(mode);},3300);
+      setTimeout(()=>{clearInterval(t);showTeaseResult();},3300);
     }
     analyzeBtn.addEventListener('click',()=>{
       // anti-rebond : un double-tap rapide lançait deux analyses (2 crédits consommés)
@@ -2493,7 +2695,7 @@
       }
       if(!currentAccount){startTeaseAnalyse();return;} // pas de compte → suspense puis mur d'inscription
       // pré-check pour éviter une analyse inutile ; le serveur reste l'arbitre final
-      if(!quota.isPremium && usesLeft()<=0){openGate();return;}
+      if(!quota.isPremium && usesLeft()<=0){openGate('quota');return;}
       runAnalyse();
     });
   </script>

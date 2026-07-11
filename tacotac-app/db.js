@@ -94,6 +94,8 @@ db.exec(`
 try { db.exec("ALTER TABLE users ADD COLUMN bonus_remaining INTEGER NOT NULL DEFAULT 0"); } catch { /* déjà migré */ }
 try { db.exec("ALTER TABLE users ADD COLUMN email_bonus_claimed INTEGER NOT NULL DEFAULT 0"); } catch { /* déjà migré */ }
 try { db.exec("ALTER TABLE users ADD COLUMN account_id INTEGER"); } catch { /* déjà migré */ }
+// Cadeau "1 ton secret offert" : une seule fois par appareil, suivi côté serveur (localStorage contournable)
+try { db.exec("ALTER TABLE users ADD COLUMN gift_tone_used INTEGER NOT NULL DEFAULT 0"); } catch { /* déjà migré */ }
 // Suivi des emails de cycle de vie (welcome / relance J+1 / J+3)
 try { db.exec("ALTER TABLE accounts ADD COLUMN welcome_sent_at INTEGER"); } catch { /* déjà migré */ }
 try { db.exec("ALTER TABLE accounts ADD COLUMN d1_sent_at INTEGER"); } catch { /* déjà migré */ }
@@ -187,6 +189,7 @@ export function getStatus(deviceId, account = null) {
     remaining: Math.max(0, limit - used) + bonus,
     isPremium: plan === 'premium' || plan === 'founder',
     emailBonusClaimed: Boolean(user.email_bonus_claimed),
+    giftToneUsed: Boolean(user.gift_tone_used),
   };
 }
 
@@ -439,6 +442,18 @@ export function destroySession(token) { if (token) qDelSession.run(token); }
 // Comptes gratuits récents (pour la séquence welcome / J+1 / J+3).
 const qLifecycleAccounts = db.prepare("SELECT * FROM accounts WHERE plan = 'free' AND created_at > ? ORDER BY created_at DESC LIMIT 500");
 export function accountsForLifecycle(sinceTs) { return qLifecycleAccounts.all(sinceTs); }
+
+// ── Cadeau "1 ton secret offert" ────────────────────────────────
+// Réclamation ATOMIQUE : l'UPDATE ne passe que si le cadeau n'a jamais servi
+// (deux requêtes simultanées ne peuvent pas le consommer deux fois).
+const qClaimGiftTone = db.prepare('UPDATE users SET gift_tone_used = 1 WHERE device_id = ? AND gift_tone_used = 0');
+const qRefundGiftTone = db.prepare('UPDATE users SET gift_tone_used = 0 WHERE device_id = ?');
+export function claimGiftTone(deviceId) {
+  const user = getOrCreateUser(deviceId);
+  return qClaimGiftTone.run(user.device_id).changes === 1;
+}
+// Si l'appel IA échoue APRÈS la réclamation, on rend son cadeau à l'utilisateur.
+export function refundGiftTone(deviceId) { qRefundGiftTone.run(deviceId); }
 export function markAccountEmail(accountId, col) {
   if (!['welcome_sent_at', 'd1_sent_at', 'd3_sent_at'].includes(col)) return;
   db.prepare(`UPDATE accounts SET ${col} = ? WHERE id = ?`).run(Math.floor(Date.now() / 1000), accountId);

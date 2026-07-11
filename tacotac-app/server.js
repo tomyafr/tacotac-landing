@@ -19,7 +19,7 @@ import Stripe from 'stripe';
 import disposableDomains from 'disposable-email-domains/index.json' with { type: 'json' };
 import { consumeQuota, getStatus, activatePremium, syncSubscription, deactivatePremium, claimEmailBonus, claimFounderCode, seedFounderCodes, reserveGiftEmail, setGiftPromo, releaseGiftEmail,
          createAccount, getAccountByEmail, getAccountByGoogleId, attachGoogleToAccount, linkDeviceToAccount, createSession, getSessionAccount, destroySession, effectivePlan,
-         accountsForLifecycle, markAccountEmail, consumeTrainQuota, trainUsedToday } from './db.js';
+         accountsForLifecycle, markAccountEmail, consumeTrainQuota, trainUsedToday, claimGiftTone, refundGiftTone } from './db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -1326,11 +1326,18 @@ const LIFECYCLE = {
       <p style="color:#8A7F70;font-size:12.5px;line-height:1.6;margin:14px 0 0;text-align:center;">Astuce : installe l'app sur ton tel (bouton dans l'app) pour l'avoir toujours sous la main.</p>`),
   },
   d1: {
-    subject: "T'as une conv qui t'attend 👀",
-    html: () => emailShell(`
-      <h1 style="font-size:23px;margin:0 0 12px;text-align:center;color:#fff;">Une conv en galère ?</h1>
-      <p style="color:#B5ABA0;font-size:15px;line-height:1.65;margin:0 0 14px;">Tes <b style="color:#fff;">3 analyses gratuites</b> se sont rechargées cette nuit. La prochaine fois qu'un match te laisse sans réponse, laisse le renard s'en charger.</p>
-      <p style="color:#B5ABA0;font-size:15px;line-height:1.65;margin:0;">Balance ton screenshot → choisis ton ton → copie la réplique. 10 secondes chrono.</p>`),
+    subject: 'Elle attend toujours ta réponse 👀 (-20% pour toi, 24h)',
+    // `promo` = { code, link } si le code Stripe a pu être créé, sinon null → version sans promo
+    html: (promo) => emailShell(`
+      <h1 style="font-size:23px;margin:0 0 12px;text-align:center;color:#fff;">Elle attend toujours ta réponse 👀</h1>
+      <p style="color:#B5ABA0;font-size:15px;line-height:1.65;margin:0 0 14px;">Tes <b style="color:#fff;">3 analyses gratuites</b> se sont rechargées cette nuit. Et si tu veux arrêter de compter : le renard t'offre <b style="color:#FF7A45;">-20% sur le Mensuel</b> — mais seulement pendant <b style="color:#fff;">24h</b>.</p>
+      ${promo ? `<div style="background:#0d0d0d;border:1.5px dashed rgba(255,122,69,.5);border-radius:14px;padding:18px;text-align:center;">
+        <div style="color:#8A7F70;font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Ton code -20%</div>
+        <div style="font-size:27px;font-weight:800;letter-spacing:2px;color:#FF7A45;">${promo.code}</div>
+      </div>
+      <p style="color:#7A7062;font-size:12px;text-align:center;margin:14px 0 0;line-height:1.5;">Pré-rempli via le bouton ci-dessous. Après 24h, il s'évapore 🦊</p>`
+      : `<p style="color:#B5ABA0;font-size:15px;line-height:1.65;margin:0;">Balance ton screenshot → choisis ton ton → copie la réplique. 10 secondes chrono.</p>`}`,
+      promo ? { cta: "J'en profite (-20%) →", ctaLink: promo.link } : {}),
   },
   d3: {
     subject: 'Ce que tu rates en gratuit 🌶️',
@@ -1350,7 +1357,20 @@ const LIFECYCLE = {
 async function sendLifecycleEmail(account, kind) {
   const m = LIFECYCLE[kind];
   if (!m || !account?.email) return;
-  const ok = await sendEmail({ to: account.email, subject: m.subject, html: m.html() });
+  // J+1 : code promo -20% unique et périssable (24h) — si Stripe échoue, l'email part sans promo
+  let promo = null;
+  if (kind === 'd1' && stripe) {
+    try {
+      const pc = await stripe.promotionCodes.create({
+        coupon: await ensureD1Coupon(),
+        max_redemptions: 1,
+        expires_at: Math.floor(Date.now() / 1000) + 24 * 3600,
+        metadata: { email: account.email, kind: 'd1' },
+      });
+      promo = { code: pc.code, link: `${PUBLIC_URL}/app?promo=${encodeURIComponent(pc.code)}` };
+    } catch (e) { console.error('[lifecycle] promo d1', e?.message); }
+  }
+  const ok = await sendEmail({ to: account.email, subject: m.subject, html: m.html(promo) });
   if (ok) markAccountEmail(account.id, `${kind === 'welcome' ? 'welcome' : kind}_sent_at`);
 }
 
@@ -1407,6 +1427,18 @@ app.post('/api/gift-email', bonusLimiter, async (req, res) => {
   res.json({ ok: true, emailSent: sent, code: sent ? undefined : code });
 });
 
+// ── Coupons créés à la volée (id fixe → créé une fois, réutilisé ensuite) ──
+async function ensureCoupon(id, percentOff) {
+  try {
+    await stripe.coupons.create({ id, percent_off: percentOff, duration: 'once', name: `Tacotac -${percentOff}%` });
+  } catch (e) {
+    if (e?.code !== 'resource_already_exists') throw e; // déjà créé = cas normal
+  }
+  return id;
+}
+const ensureDownsellCoupon = () => ensureCoupon('TACOTAC_DOWNSELL_30', 30);
+const ensureD1Coupon = () => ensureCoupon('TACOTAC_D1_20', 20);
+
 // ── Créer une session de paiement Stripe (abonnement) ───────────
 app.post('/api/checkout', async (req, res) => {
   try {
@@ -1426,6 +1458,14 @@ app.post('/api/checkout', async (req, res) => {
         const list = await stripe.promotionCodes.list({ code: promoCode, active: true, limit: 1 });
         if (list.data[0]) discounts = [{ promotion_code: list.data[0].id }];
       } catch (e) { console.error('[checkout] promo lookup', e?.message); }
+    }
+
+    // Downsell "Revenir plus tard" : -30% sur la 1re semaine de l'Hebdo uniquement.
+    // Coupon partagé créé à la volée au 1er usage (duration:once = première facture seulement).
+    if (!discounts && req.body?.downsell === true && plan === 'weekly') {
+      try {
+        discounts = [{ coupon: await ensureDownsellCoupon() }];
+      } catch (e) { console.error('[checkout] downsell coupon', e?.message); }
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -1607,6 +1647,75 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
     console.error('[analyze] erreur:', err?.message || err);
     // On dégrade proprement plutôt que de casser l'app
     res.json({ replies: FALLBACK, source: 'fallback', warning: 'ia_indisponible' });
+  }
+});
+
+// ── Cadeau : 1 ton secret offert, UNE seule fois par appareil ───
+// Le gratuit goûte la vraie qualité premium sur SA conv (meilleur vendeur possible).
+// Réclamation atomique en base ; si l'appel IA échoue, le cadeau est rendu.
+app.post('/api/gift-tone', analyzeLimiter, async (req, res) => {
+  try {
+    const deviceId = attachDevice(req, res);
+    attachAccount(req);
+    if (!req.account) return res.status(401).json({ ok: false, error: 'Crée ton compte gratuit pour continuer.', code: 'auth_required' });
+    const tone = ['romantique', 'sexto', 'mystere'].includes(req.body?.tone) ? req.body.tone : null;
+    if (!tone) return res.status(400).json({ ok: false, error: 'Ton invalide.' });
+    let dataUrls = Array.isArray(req.body?.images) ? req.body.images.filter(isValidDataUrl).slice(0, 1) : [];
+    if (!dataUrls.length && isValidDataUrl(req.body?.image)) dataUrls = [req.body.image];
+    if (!dataUrls.length) return res.status(400).json({ ok: false, error: 'Image manquante.' });
+    if (getStatus(deviceId, req.account).isPremium) return res.status(400).json({ ok: false, error: "T'as déjà tout débloqué 😉" });
+    if (!process.env.OPENAI_API_KEY) return res.status(503).json({ ok: false, error: 'IA indisponible.' });
+    if (!claimGiftTone(deviceId)) {
+      return res.status(403).json({ ok: false, error: 'Ton cadeau a déjà servi 😏', code: 'gift_used' });
+    }
+
+    try {
+      const giftFn = {
+        type: 'function',
+        function: {
+          name: 'proposer_repliques_ton',
+          description: `Renvoie 3 relances du ton ${tone} que LE CLIENT (bulles à droite) envoie à la CIBLE (bulles à gauche).`,
+          strict: true,
+          parameters: {
+            type: 'object',
+            properties: {
+              dernier_message: { type: 'string', description: "Recopie MOT POUR MOT le dernier message (bulle la plus basse). 'ILLISIBLE' si illisible." },
+              repliques: { type: 'array', description: PREMIUM_TONES[tone], items: { type: 'string' } },
+            },
+            required: ['dernier_message', 'repliques'],
+            additionalProperties: false,
+          },
+        },
+      };
+      const completion = await openai.chat.completions.create({
+        model: MODEL_PREMIUM, // le cadeau doit montrer la VRAIE qualité premium
+        max_tokens: 700,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: `Voici le screenshot de ma conv. RAPPEL : les bulles à DROITE (colorées) c'est MOI — les bulles à GAUCHE c'est la personne que je veux séduire. Génère UNIQUEMENT 3 relances du ton ${tone.toUpperCase()} (mêmes règles de style que d'habitude), que MOI j'envoie en réponse à son dernier message.` + buildProfileContext(req.body?.profile) },
+              { type: 'image_url', image_url: { url: dataUrls[0], detail: 'high' } },
+            ],
+          },
+        ],
+        tools: [giftFn],
+        tool_choice: { type: 'function', function: { name: 'proposer_repliques_ton' } },
+      });
+      const call = completion.choices?.[0]?.message?.tool_calls?.[0];
+      let out = {};
+      try { out = JSON.parse(call?.function?.arguments || '{}'); } catch { out = {}; }
+      const list = Array.isArray(out.repliques) ? out.repliques.filter((s) => typeof s === 'string' && s.trim()).slice(0, 3) : [];
+      if (!list.length) throw new Error('sortie vide');
+      res.json({ ok: true, tone, replies: list });
+    } catch (e) {
+      refundGiftTone(deviceId); // l'échec IA ne brûle pas le cadeau
+      throw e;
+    }
+  } catch (err) {
+    console.error('[gift-tone] erreur:', err?.message || err);
+    res.status(500).json({ ok: false, error: 'Le renard a raté son cadeau, réessaie.' });
   }
 });
 
