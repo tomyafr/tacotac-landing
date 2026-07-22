@@ -37,7 +37,9 @@ import {
 const COMMISSION_PCT = Number(process.env.COLLAB_COMMISSION_PCT || 20);
 const AUDIENCE_DISCOUNT_PCT = Math.max(1, Math.min(100, Number(process.env.COLLAB_AUDIENCE_DISCOUNT_PCT || 10)));
 
-const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+// apiVersion figée, identique au serveur : le défaut du SDK vise une version
+// bleeding-edge où la forme de promotion_codes change (param `coupon` rejeté sinon).
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' }) : null;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 function die(msg) { console.error('❌ ' + msg); process.exit(1); }
