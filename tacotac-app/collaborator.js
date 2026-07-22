@@ -36,6 +36,7 @@ import {
 
 const COMMISSION_PCT = Number(process.env.COLLAB_COMMISSION_PCT || 20);
 const AUDIENCE_DISCOUNT_PCT = Math.max(1, Math.min(100, Number(process.env.COLLAB_AUDIENCE_DISCOUNT_PCT || 10)));
+const PUBLIC_URL = process.env.PUBLIC_URL || 'https://taco-tac.app';
 
 // apiVersion figée, identique au serveur : le défaut du SDK vise une version
 // bleeding-edge où la forme de promotion_codes change (param `coupon` rejeté sinon).
@@ -44,6 +45,59 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 function die(msg) { console.error('❌ ' + msg); process.exit(1); }
 function eur(cents) { return (cents / 100).toFixed(2) + '€'; }
+
+// ── Email de bienvenue collaborateur (même charte que les mails transactionnels) ──
+async function sendEmail({ to, subject, html }) {
+  const key = process.env.RESEND_API_KEY;
+  if (!key || key.includes('a_remplir')) { console.warn('[email] RESEND_API_KEY absente → non envoyé'); return false; }
+  const r = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from: process.env.GIFT_FROM_EMAIL || 'Tacotac <onboarding@resend.dev>', to, subject, html }),
+  });
+  if (!r.ok) { console.error('[email] resend', r.status, await r.text().catch(() => '')); return false; }
+  return true;
+}
+
+function collabWelcomeHtml({ name, code, discount, commission }) {
+  const hi = name ? name.split(/\s+/)[0] : 'toi';
+  const inner = `
+    <h1 style="font-size:23px;margin:0 0 10px;text-align:center;color:#fff;">Bienvenue dans l'équipe 🦊</h1>
+    <p style="color:#B5ABA0;font-size:15px;line-height:1.65;margin:0 0 20px;">Salut ${hi}, c'est officiel : ton <b style="color:#fff;">compte collaborateur Tacotac</b> est ouvert. Tu as accès à <b style="color:#fff;">tout le Premium gratuitement</b> — les 6 tons, l'analyse illimitée, tout.</p>
+    <div style="background:#0d0d0d;border:1.5px dashed rgba(255,122,69,.5);border-radius:14px;padding:18px;text-align:center;margin-bottom:20px;">
+      <div style="color:#8A7F70;font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Ton code promo (il marche déjà)</div>
+      <div style="font-size:27px;font-weight:800;letter-spacing:2px;color:#FF7A45;">${code}</div>
+      <div style="color:#8A7F70;font-size:12.5px;margin-top:8px;">${discount ? `-${discount}% pour ta communauté` : 'remise pour ta communauté'}</div>
+    </div>
+    <p style="color:#B5ABA0;font-size:14.5px;line-height:1.65;margin:0 0 6px;"><b style="color:#fff;">Pour commencer :</b> connecte-toi sur l'app avec <b style="color:#fff;">cet email</b> (Google ou mot de passe) et tout se débloque.</p>
+    <p style="color:#B5ABA0;font-size:14.5px;line-height:1.65;margin:0;">Chaque vente faite avec ton code t'est comptée${commission ? ` (${commission}% pour toi)` : ''}. Balance-le dans tes vidéos et fais-toi plaisir 🔥</p>`;
+  return `<div style="background:#0b0b0b;padding:32px 14px;font-family:Arial,Helvetica,sans-serif;">
+  <div style="max-width:480px;margin:0 auto;">
+    <div style="text-align:center;padding-bottom:20px;">
+      <a href="${PUBLIC_URL}" style="text-decoration:none;">
+        <img src="${PUBLIC_URL}/assets/icon-192.png" width="64" height="64" alt="Tacotac" style="border-radius:18px;border:0;display:inline-block;">
+        <div style="color:#ffffff;font-size:20px;font-weight:800;letter-spacing:-.3px;margin-top:10px;">Tacotac</div>
+      </a>
+    </div>
+    <div style="background:#161616;border:1px solid #262626;border-radius:20px;padding:32px 28px;color:#F4EEE2;">
+      ${inner}
+      <a href="${PUBLIC_URL}/app" style="display:block;text-align:center;background:#FF5C00;color:#ffffff;text-decoration:none;font-weight:700;font-size:16px;padding:16px;border-radius:13px;margin-top:26px;">Ouvrir Tacotac →</a>
+    </div>
+    <p style="color:#6e6a66;font-size:11.5px;text-align:center;margin:18px 0 0;line-height:1.7;">Tacotac · ton coach dating IA<br>Tu reçois cet email car ton compte collaborateur vient d'être créé sur <a href="${PUBLIC_URL}" style="color:#8a8580;">taco-tac.app</a></p>
+  </div></div>`;
+}
+
+async function cmdWelcome(email) {
+  const c = getCollaborator(email);
+  if (!c) die(`Aucun collaborateur pour ${email} — fais d'abord "add".`);
+  let discount = null;
+  if (stripe && c.stripe_coupon_id) {
+    try { discount = (await stripe.coupons.retrieve(c.stripe_coupon_id)).percent_off; } catch { /* pas grave */ }
+  }
+  const html = collabWelcomeHtml({ name: c.name, code: c.promo_code, discount, commission: c.commission_pct });
+  const ok = await sendEmail({ to: c.email, subject: 'Ton accès collaborateur Tacotac est ouvert 🦊', html });
+  console.log(ok ? `\n✅ Email de bienvenue envoyé à ${c.email}\n` : `\n❌ Email non envoyé (RESEND_API_KEY configurée ?)\n`);
+}
 
 // Dérive un code promo lisible à partir du nom (ou de l'email), en MAJUSCULES sans accents.
 function slugCode(nameOrEmail) {
@@ -150,10 +204,12 @@ try {
   else if (cmd === 'revoke') await cmdRevoke(args[0]);
   else if (cmd === 'list') cmdList();
   else if (cmd === 'sales') cmdSales();
+  else if (cmd === 'welcome') await cmdWelcome(args[0]);
   else {
     console.log(`
 Usage :
   node collaborator.js add <email> ["Nom"] [CODE]   ajouter/activer un collaborateur
+  node collaborator.js welcome <email>              (ré)envoyer l'email de bienvenue
   node collaborator.js revoke <email>               retirer l'accès + désactiver son code
   node collaborator.js list                         lister les collaborateurs
   node collaborator.js sales                        récap ventes + commissions
