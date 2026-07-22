@@ -87,7 +87,31 @@ db.exec(`
     count     INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (device_id, day)
   );
+  -- Collaborateurs / affiliés : accès complet SANS être un client payant, révocable,
+  -- exclu des métriques de revenu. 1 ligne par collaborateur (identifié par email).
+  CREATE TABLE IF NOT EXISTS collaborators (
+    email            TEXT PRIMARY KEY,                    -- normalisé lowercase
+    name             TEXT,
+    promo_code       TEXT,                                -- code promo lisible (ex: LEO10) partagé dans ses vidéos
+    stripe_coupon_id TEXT,
+    stripe_promo_id  TEXT,                                -- id du promotion_code Stripe (sert à rattacher les ventes)
+    commission_pct   INTEGER,                             -- % de commission figé à la création
+    created_at       INTEGER NOT NULL,
+    revoked_at       INTEGER                              -- NULL = actif ; sinon date de révocation
+  );
+  -- Journal des ventes attribuées à un collaborateur via son code promo.
+  CREATE TABLE IF NOT EXISTS collaborator_sales (
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    promo_code         TEXT,
+    collaborator_email TEXT,
+    amount_cents       INTEGER,                           -- montant payé (centimes)
+    currency           TEXT,
+    customer_email     TEXT,
+    stripe_session_id  TEXT UNIQUE,                       -- idempotence : jamais 2 fois la même vente
+    created_at         INTEGER NOT NULL
+  );
   CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+  CREATE INDEX IF NOT EXISTS idx_collab_promo ON collaborators(stripe_promo_id);
 `);
 
 // Migration douce pour la base prod existante (ALTER échoue si la colonne existe déjà → on ignore)
@@ -139,6 +163,7 @@ export function getOrCreateUser(deviceId) {
 export function effectivePlan(user) {
   if (!user) return 'free';
   if (user.plan === 'founder') return 'founder';
+  if (user.plan === 'collaborator') return 'collaborator'; // affilié : accès complet, jamais d'expiration
   if (user.plan === 'premium') {
     if (!user.plan_expires_at || user.plan_expires_at * 1000 > Date.now()) return 'premium';
     return 'free'; // abonnement expiré
@@ -146,8 +171,14 @@ export function effectivePlan(user) {
   return 'free';
 }
 
+// Plans qui débloquent toutes les fonctionnalités premium (accès), tri par priorité.
+// ⚠️ collaborator = MÊMES fonctions que premium, mais N'EST PAS un client payant :
+// il ne compte jamais dans le revenu (voir métriques Stripe / plan === 'premium').
+const PREMIUM_PLANS = ['premium', 'founder', 'collaborator'];
+export function hasPremiumAccess(plan) { return PREMIUM_PLANS.includes(plan); }
+
 // Le meilleur des deux mondes : un compte premium sur un appareil vierge = premium.
-const PLAN_RANK = { free: 0, premium: 1, founder: 2 };
+const PLAN_RANK = { free: 0, premium: 1, collaborator: 2, founder: 3 };
 function resolvePlan(user, account) {
   const devicePlan = effectivePlan(user);
   const accountPlan = effectivePlan(account);
@@ -156,7 +187,7 @@ function resolvePlan(user, account) {
 
 export function dailyLimitFor(plan) {
   if (plan === 'founder') return FOUNDER_DAILY_LIMIT;
-  if (plan === 'premium') return PREMIUM_DAILY_LIMIT;
+  if (plan === 'premium' || plan === 'collaborator') return PREMIUM_DAILY_LIMIT; // collab = même plafond qu'un abonné (25/j)
   return FREE_DAILY_LIMIT;
 }
 
@@ -187,7 +218,7 @@ export function getStatus(deviceId, account = null) {
     limit,
     bonus,
     remaining: Math.max(0, limit - used) + bonus,
-    isPremium: plan === 'premium' || plan === 'founder',
+    isPremium: hasPremiumAccess(plan),
     emailBonusClaimed: Boolean(user.email_bonus_claimed),
     giftToneUsed: Boolean(user.gift_tone_used),
   };
@@ -201,7 +232,7 @@ export function getStatus(deviceId, account = null) {
 export function consumeQuota(deviceId, ip, account = null) {
   const user = getOrCreateUser(deviceId);
   const plan = resolvePlan(user, account);
-  const isPremium = plan === 'premium' || plan === 'founder';
+  const isPremium = hasPremiumAccess(plan);
   const limit = dailyLimitFor(plan);
   const used = usageToday(user.device_id);
   const bonus = user.bonus_remaining || 0;
@@ -457,6 +488,81 @@ export function refundGiftTone(deviceId) { qRefundGiftTone.run(deviceId); }
 export function markAccountEmail(accountId, col) {
   if (!['welcome_sent_at', 'd1_sent_at', 'd3_sent_at'].includes(col)) return;
   db.prepare(`UPDATE accounts SET ${col} = ? WHERE id = ?`).run(Math.floor(Date.now() / 1000), accountId);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  COLLABORATEURS / AFFILIÉS
+//  Accès complet (comme premium) mais statut distinct : révocable, exclu du
+//  revenu, et chaque vente via son code promo lui est rattachée.
+// ══════════════════════════════════════════════════════════════
+const normEmail = (e) => String(e || '').trim().toLowerCase();
+const nowTs = () => Math.floor(Date.now() / 1000);
+
+// Passe un compte (créé s'il n'existe pas) en 'collaborator', actif immédiatement.
+// Le compte n'a ni mot de passe ni Google au départ : quand le collaborateur se
+// connectera avec CET email (Google ou mdp), il récupère ce compte (réconcilié par email).
+export function setCollaboratorPlan(email) {
+  const norm = normEmail(email);
+  let acc = qAccByEmail.get(norm);
+  if (!acc) { qInsertAcc.run(norm, null, null, nowTs()); acc = qAccByEmail.get(norm); }
+  db.prepare("UPDATE accounts SET plan = 'collaborator' WHERE id = ?").run(acc.id);
+  db.prepare("UPDATE users SET plan = 'collaborator' WHERE account_id = ?").run(acc.id); // appareils déjà reliés
+  return qAccByEmail.get(norm);
+}
+
+// Révoque : repasse en 'free' (uniquement si c'était bien un collaborateur, on ne
+// touche jamais un vrai premium payant). Renvoie false si l'email est inconnu.
+export function revokeCollaboratorPlan(email) {
+  const norm = normEmail(email);
+  const acc = qAccByEmail.get(norm);
+  if (!acc) return false;
+  db.prepare("UPDATE accounts SET plan = 'free' WHERE id = ? AND plan = 'collaborator'").run(acc.id);
+  db.prepare("UPDATE users SET plan = 'free' WHERE account_id = ? AND plan = 'collaborator'").run(acc.id);
+  return true;
+}
+
+export function upsertCollaborator({ email, name, promoCode, stripeCouponId, stripePromoId, commissionPct }) {
+  const norm = normEmail(email);
+  db.prepare(`
+    INSERT INTO collaborators (email, name, promo_code, stripe_coupon_id, stripe_promo_id, commission_pct, created_at, revoked_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, NULL)
+    ON CONFLICT(email) DO UPDATE SET
+      name = excluded.name, promo_code = excluded.promo_code,
+      stripe_coupon_id = excluded.stripe_coupon_id, stripe_promo_id = excluded.stripe_promo_id,
+      commission_pct = excluded.commission_pct, revoked_at = NULL
+  `).run(norm, name || null, promoCode || null, stripeCouponId || null, stripePromoId || null,
+         commissionPct == null ? null : commissionPct, nowTs());
+  return getCollaborator(norm);
+}
+
+export function getCollaborator(email) { return db.prepare('SELECT * FROM collaborators WHERE email = ?').get(normEmail(email)); }
+export function getCollaboratorByPromoId(promoId) { return promoId ? db.prepare('SELECT * FROM collaborators WHERE stripe_promo_id = ?').get(String(promoId)) : undefined; }
+export function markCollaboratorRevoked(email) { db.prepare('UPDATE collaborators SET revoked_at = ? WHERE email = ?').run(nowTs(), normEmail(email)); }
+export function listCollaborators() { return db.prepare('SELECT * FROM collaborators ORDER BY created_at DESC').all(); }
+
+// Enregistre une vente attribuée (idempotent sur la session Stripe). false = déjà loggée.
+export function recordSale({ promoCode, collaboratorEmail, amountCents, currency, customerEmail, sessionId }) {
+  try {
+    db.prepare(`
+      INSERT INTO collaborator_sales (promo_code, collaborator_email, amount_cents, currency, customer_email, stripe_session_id, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(promoCode || null, collaboratorEmail || null, amountCents || 0, currency || null,
+           customerEmail || null, sessionId || null, nowTs());
+    return true;
+  } catch (e) {
+    if (String(e.message).includes('UNIQUE')) return false; // vente déjà enregistrée
+    throw e;
+  }
+}
+
+// Récap par collaborateur : nb de ventes + total encaissé (par devise).
+export function salesSummary() {
+  return db.prepare(`
+    SELECT collaborator_email, currency, COUNT(*) AS n, SUM(amount_cents) AS total_cents
+      FROM collaborator_sales
+     GROUP BY collaborator_email, currency
+     ORDER BY total_cents DESC
+  `).all();
 }
 
 export default db;

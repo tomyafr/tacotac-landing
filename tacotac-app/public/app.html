@@ -2370,8 +2370,8 @@
         outV.style.display='none';inV.style.display='block';
         document.getElementById('authWho').textContent=currentAccount.email+(currentAccount.viaGoogle?' · via Google':'');
         const planEl=document.getElementById('authPlan');
-        const isP=currentAccount.plan==='premium'||currentAccount.plan==='founder';
-        planEl.textContent=currentAccount.plan==='founder'?'⭐ Fondateur — illimité':(isP?'✨ Premium — illimité':'Gratuit — 3 analyses/jour');
+        const isP=currentAccount.plan==='premium'||currentAccount.plan==='founder'||currentAccount.plan==='collaborator';
+        planEl.textContent=currentAccount.plan==='founder'?'⭐ Fondateur — illimité':(currentAccount.plan==='collaborator'?'🤝 Collaborateur — accès complet':(isP?'✨ Premium — illimité':'Gratuit — 3 analyses/jour'));
         planEl.style.background=isP?'rgba(255,92,0,.15)':'rgba(255,255,255,.06)';
         planEl.style.color=isP?'#FF7A33':'#8a8580';
         planEl.style.border=isP?'1px solid rgba(255,92,0,.4)':'1px solid #2a2a2a';

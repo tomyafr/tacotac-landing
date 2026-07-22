@@ -19,7 +19,8 @@ import Stripe from 'stripe';
 import disposableDomains from 'disposable-email-domains/index.json' with { type: 'json' };
 import { consumeQuota, getStatus, activatePremium, syncSubscription, deactivatePremium, claimEmailBonus, claimFounderCode, seedFounderCodes, reserveGiftEmail, setGiftPromo, releaseGiftEmail,
          createAccount, getAccountByEmail, getAccountByGoogleId, attachGoogleToAccount, linkDeviceToAccount, createSession, getSessionAccount, destroySession, effectivePlan,
-         accountsForLifecycle, markAccountEmail, consumeTrainQuota, trainUsedToday, claimGiftTone, refundGiftTone } from './db.js';
+         accountsForLifecycle, markAccountEmail, consumeTrainQuota, trainUsedToday, claimGiftTone, refundGiftTone,
+         getCollaboratorByPromoId, recordSale } from './db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -56,6 +57,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
       case 'checkout.session.completed': {
         const s = event.data.object;
         activateFromSession(s).catch((e) => console.error('[webhook] activate:', e.message));
+        recordCollaboratorSale(s).catch((e) => console.error('[webhook] collab sale:', e.message));
         break;
       }
       case 'customer.subscription.updated':
@@ -134,6 +136,50 @@ async function activateFromSession(session) {
     subscriptionId: session.subscription,
     expiresAt,
   });
+}
+
+// Rattache une vente payée à un collaborateur si un code promo (le sien) a été utilisé.
+// Idempotent (clé = session Stripe). Seules les vraies ventes payées comptent — pas les trials.
+async function recordCollaboratorSale(session) {
+  if (!session || session.payment_status !== 'paid') return;
+  let promoId = session.discounts?.[0]?.promotion_code;
+  if (!promoId) {
+    // le webhook ne remplit pas toujours `discounts` → on re-récupère la session avec expand
+    try {
+      const full = await stripe.checkout.sessions.retrieve(session.id, { expand: ['discounts'] });
+      promoId = full.discounts?.[0]?.promotion_code;
+      session = full;
+    } catch { /* pas de discount = vente directe, rien à attribuer */ }
+  }
+  if (promoId && typeof promoId === 'object') promoId = promoId.id;
+  if (!promoId) return;
+
+  const collab = getCollaboratorByPromoId(promoId);
+  if (!collab || collab.revoked_at) return; // code inconnu ou collaborateur révoqué
+
+  const saved = recordSale({
+    promoCode: collab.promo_code,
+    collaboratorEmail: collab.email,
+    amountCents: session.amount_total,
+    currency: session.currency,
+    customerEmail: session.customer_details?.email || session.customer_email || null,
+    sessionId: session.id,
+  });
+  if (saved) pushSaleToSheet(collab, session); // miroir dans le Google Sheet
+}
+
+// Envoie la vente collaborateur dans le Google Sheet (non bloquant).
+function pushSaleToSheet(collab, session) {
+  const p = new URLSearchParams({
+    email: session.customer_details?.email || session.customer_email || '',
+    source: 'collab-sale',
+    timestamp: new Date().toISOString(),
+    collaborator: collab.email,
+    code: collab.promo_code || '',
+    amount: ((session.amount_total || 0) / 100).toFixed(2),
+    currency: String(session.currency || '').toUpperCase(),
+  });
+  fetch(`${WAITLIST_WEBHOOK}?${p}`).catch((e) => console.error('[collab] sheet:', e?.message));
 }
 
 // ── Identité anonyme : un cookie signé device_id par visiteur ────
