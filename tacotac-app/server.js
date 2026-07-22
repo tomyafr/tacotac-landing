@@ -170,14 +170,18 @@ async function recordCollaboratorSale(session) {
 
 // Envoie la vente collaborateur dans le Google Sheet (non bloquant).
 function pushSaleToSheet(collab, session) {
+  const amountEur = (session.amount_total || 0) / 100;
+  const pct = collab.commission_pct || 0;
   const p = new URLSearchParams({
     email: session.customer_details?.email || session.customer_email || '',
     source: 'collab-sale',
     timestamp: new Date().toISOString(),
     collaborator: collab.email,
     code: collab.promo_code || '',
-    amount: ((session.amount_total || 0) / 100).toFixed(2),
+    amount: amountEur.toFixed(2),
     currency: String(session.currency || '').toUpperCase(),
+    commission: (amountEur * pct / 100).toFixed(2),
+    commission_pct: String(pct),
   });
   fetch(`${WAITLIST_WEBHOOK}?${p}`).catch((e) => console.error('[collab] sheet:', e?.message));
 }
