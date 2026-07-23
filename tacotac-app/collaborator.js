@@ -116,6 +116,36 @@ async function uniquePromoCodeString(desired) {
   return desired + Date.now().toString().slice(-4);
 }
 
+// Pousse la liste complète des collaborateurs vers l'onglet "Collaborateurs" du Sheet.
+// (Nb ventes / CA / commission due sont calculés par des formules côté Sheet.)
+async function pushRosterToSheet() {
+  const webhook = process.env.WAITLIST_WEBHOOK;
+  if (!webhook) { console.warn('   (WAITLIST_WEBHOOK absente → onglet Collaborateurs non mis à jour)'); return false; }
+  const rows = listCollaborators();
+  const out = [];
+  for (const c of rows) {
+    let discount = null;
+    if (stripe && c.stripe_coupon_id) {
+      try { discount = (await stripe.coupons.retrieve(c.stripe_coupon_id)).percent_off; } catch { /* pas grave */ }
+    }
+    out.push({
+      name: c.name || '',
+      email: c.email,
+      code: c.promo_code || '',
+      discountPct: discount,
+      commissionPct: c.commission_pct,
+      status: c.revoked_at ? 'Révoqué' : 'Actif',
+      createdAt: c.created_at ? new Date(c.created_at).toLocaleDateString('fr-FR') : '',
+    });
+  }
+  try {
+    const r = await fetch(`${webhook}?source=collab-roster&data=${encodeURIComponent(JSON.stringify(out))}`);
+    const j = await r.json().catch(() => ({}));
+    console.log(`   Onglet Collaborateurs : ${j.message || 'mis à jour'}`);
+    return true;
+  } catch (e) { console.error('   (sync Sheet échoué : ' + e?.message + ')'); return false; }
+}
+
 async function cmdAdd(email, name, wantedCode) {
   if (!EMAIL_RE.test(email)) die(`Email invalide : ${email}`);
   if (!stripe) die('STRIPE_SECRET_KEY manquant dans .env — impossible de générer le code promo.');
@@ -150,7 +180,9 @@ async function cmdAdd(email, name, wantedCode) {
   console.log(`   Code promo   : ${promo.code}   (-${AUDIENCE_DISCOUNT_PCT}% pour ses followers)`);
   console.log(`   Commission   : ${COMMISSION_PCT}% des ventes via ce code`);
   console.log(`\n   → Il se connecte sur l'app avec CET email (Google ou mot de passe) et il a tout.`);
-  console.log(`   → Il partage le code « ${promo.code} » dans ses vidéos ; les ventes te remontent via « node collaborator.js sales ».\n`);
+  console.log(`   → Il partage le code « ${promo.code} » dans ses vidéos ; les ventes te remontent via « node collaborator.js sales ».`);
+  await pushRosterToSheet();
+  console.log('');
 }
 
 async function cmdRevoke(email) {
@@ -165,7 +197,9 @@ async function cmdRevoke(email) {
   }
   if (!existed && !collab) die(`Aucun collaborateur trouvé pour ${email}.`);
   console.log(`\n✅ ${email.toLowerCase()} révoqué — repassé en gratuit, code promo désactivé.`);
-  console.log(`   (son historique de ventes est conservé pour le calcul de commission)\n`);
+  console.log(`   (son historique de ventes est conservé pour le calcul de commission)`);
+  await pushRosterToSheet();
+  console.log('');
 }
 
 function cmdList() {
@@ -205,6 +239,7 @@ try {
   else if (cmd === 'list') cmdList();
   else if (cmd === 'sales') cmdSales();
   else if (cmd === 'welcome') await cmdWelcome(args[0]);
+  else if (cmd === 'sync') { console.log('\n🔄 Sync onglet Collaborateurs…'); await pushRosterToSheet(); console.log(''); }
   else {
     console.log(`
 Usage :
@@ -213,6 +248,7 @@ Usage :
   node collaborator.js revoke <email>               retirer l'accès + désactiver son code
   node collaborator.js list                         lister les collaborateurs
   node collaborator.js sales                        récap ventes + commissions
+  node collaborator.js sync                         rafraîchir l'onglet Collaborateurs du Sheet
 `);
   }
 } catch (e) {
