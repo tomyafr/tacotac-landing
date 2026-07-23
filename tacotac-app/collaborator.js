@@ -125,12 +125,18 @@ async function pushRosterToSheet() {
   const webhook = WAITLIST_WEBHOOK;
   if (!webhook) { console.warn('   (webhook absent → onglet Collaborateurs non mis à jour)'); return false; }
   const rows = listCollaborators();
+  const salesByEmail = {};
+  try { for (const s of salesSummary()) salesByEmail[s.collaborator_email] = s; } catch { /* pas de vente */ }
   const out = [];
   for (const c of rows) {
     let discount = null;
     if (stripe && c.stripe_coupon_id) {
       try { discount = (await stripe.coupons.retrieve(c.stripe_coupon_id)).percent_off; } catch { /* pas grave */ }
     }
+    const s = salesByEmail[c.email];
+    const nbVentes = s ? s.n : 0;
+    const ca = s ? s.total_cents / 100 : 0;
+    const commissionDue = s ? (s.total_cents * (c.commission_pct || 0) / 100) / 100 : 0;
     out.push({
       name: c.name || '',
       email: c.email,
@@ -138,7 +144,11 @@ async function pushRosterToSheet() {
       discountPct: discount,
       commissionPct: c.commission_pct,
       status: c.revoked_at ? 'Révoqué' : 'Actif',
-      createdAt: c.created_at ? new Date(c.created_at).toLocaleDateString('fr-FR') : '',
+      nbVentes,
+      ca: Number(ca.toFixed(2)),
+      commissionDue: Number(commissionDue.toFixed(2)),
+      // created_at est en SECONDES (nowTs) → ×1000 pour un vrai Date
+      createdAt: c.created_at ? new Date(c.created_at * 1000).toLocaleDateString('fr-FR') : '',
     });
   }
   try {
