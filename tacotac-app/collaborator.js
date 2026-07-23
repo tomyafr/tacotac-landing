@@ -37,6 +37,9 @@ import {
 const COMMISSION_PCT = Number(process.env.COLLAB_COMMISSION_PCT || 20);
 const AUDIENCE_DISCOUNT_PCT = Math.max(1, Math.min(100, Number(process.env.COLLAB_AUDIENCE_DISCOUNT_PCT || 10)));
 const PUBLIC_URL = process.env.PUBLIC_URL || 'https://taco-tac.app';
+// Même endpoint que server.js (le projet Apps Script "Tacotac Waitlist"). Hardcodé côté serveur,
+// donc pas dans .env — on le reprend ici pour pousser le roster vers l'onglet Collaborateurs.
+const WAITLIST_WEBHOOK = process.env.WAITLIST_WEBHOOK || 'https://script.google.com/macros/s/AKfycbzuCip2KWPlPw7kudrsvP2DuZ94-W6yw6aJ7c_HiSFZysXaPfsvG57uq6lhDsDpGYudtw/exec';
 
 // apiVersion figée, identique au serveur : le défaut du SDK vise une version
 // bleeding-edge où la forme de promotion_codes change (param `coupon` rejeté sinon).
@@ -119,8 +122,8 @@ async function uniquePromoCodeString(desired) {
 // Pousse la liste complète des collaborateurs vers l'onglet "Collaborateurs" du Sheet.
 // (Nb ventes / CA / commission due sont calculés par des formules côté Sheet.)
 async function pushRosterToSheet() {
-  const webhook = process.env.WAITLIST_WEBHOOK;
-  if (!webhook) { console.warn('   (WAITLIST_WEBHOOK absente → onglet Collaborateurs non mis à jour)'); return false; }
+  const webhook = WAITLIST_WEBHOOK;
+  if (!webhook) { console.warn('   (webhook absent → onglet Collaborateurs non mis à jour)'); return false; }
   const rows = listCollaborators();
   const out = [];
   for (const c of rows) {
