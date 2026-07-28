@@ -124,6 +124,10 @@ try { db.exec("ALTER TABLE users ADD COLUMN gift_tone_used INTEGER NOT NULL DEFA
 try { db.exec("ALTER TABLE accounts ADD COLUMN welcome_sent_at INTEGER"); } catch { /* déjà migré */ }
 try { db.exec("ALTER TABLE accounts ADD COLUMN d1_sent_at INTEGER"); } catch { /* déjà migré */ }
 try { db.exec("ALTER TABLE accounts ADD COLUMN d3_sent_at INTEGER"); } catch { /* déjà migré */ }
+// Funnel "hard paywall" (test A/B réversible, voir FUNNEL_MODE dans server.js) : QCM de
+// personnalité fait une seule fois par appareil, archétype mémorisé pour l'affichage.
+try { db.exec("ALTER TABLE users ADD COLUMN quiz_done INTEGER NOT NULL DEFAULT 0"); } catch { /* déjà migré */ }
+try { db.exec("ALTER TABLE users ADD COLUMN quiz_archetype TEXT"); } catch { /* déjà migré */ }
 
 // ── Jour courant en Europe/Paris (le quota se remet à zéro à minuit FR) ──
 export function parisDay(d = new Date()) {
@@ -221,6 +225,8 @@ export function getStatus(deviceId, account = null) {
     isPremium: hasPremiumAccess(plan),
     emailBonusClaimed: Boolean(user.email_bonus_claimed),
     giftToneUsed: Boolean(user.gift_tone_used),
+    quizDone: Boolean(user.quiz_done),
+    quizArchetype: user.quiz_archetype || null,
   };
 }
 
@@ -485,6 +491,13 @@ export function claimGiftTone(deviceId) {
 }
 // Si l'appel IA échoue APRÈS la réclamation, on rend son cadeau à l'utilisateur.
 export function refundGiftTone(deviceId) { qRefundGiftTone.run(deviceId); }
+
+// ── Funnel "hard paywall" : QCM de personnalité (1 fois par appareil) ──
+const qSetQuizDone = db.prepare('UPDATE users SET quiz_done = 1, quiz_archetype = ? WHERE device_id = ?');
+export function completeQuiz(deviceId, archetype) {
+  const user = getOrCreateUser(deviceId);
+  qSetQuizDone.run(archetype || null, user.device_id);
+}
 export function markAccountEmail(accountId, col) {
   if (!['welcome_sent_at', 'd1_sent_at', 'd3_sent_at'].includes(col)) return;
   db.prepare(`UPDATE accounts SET ${col} = ? WHERE id = ?`).run(Math.floor(Date.now() / 1000), accountId);

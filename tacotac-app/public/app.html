@@ -366,6 +366,38 @@
       </div>
     </aside>
 
+    <!-- ═══════════════ QCM — profil de drague (funnel hard paywall, voir FUNNEL_MODE) ═══════════════ -->
+    <section class="screen" id="screen-quiz">
+      <div class="glow-top"></div>
+      <div style="position:relative;z-index:2;">
+        <div style="height:4px;background:#1c1c1c;border-radius:99px;overflow:hidden;">
+          <div id="quizBar" style="height:100%;width:0%;background:linear-gradient(90deg,#FF7A18,#FFA23D);transition:width .3s ease;"></div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;">
+          <div class="tt-avatar" style="width:34px;height:34px;"><img src="assets/fox_chill.png" alt="Tacotac"></div>
+          <div id="quizStep" style="color:#6e6a66;font-size:12px;font-weight:700;">1/8</div>
+        </div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:2;">
+        <div class="display" id="quizQ" style="color:#fff;font-size:24px;line-height:1.15;margin-bottom:22px;"></div>
+        <div id="quizOpts" style="display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ RÉVÉLATION — profil de drague ═══════════════ -->
+    <section class="screen" id="screen-qreveal" style="align-items:center;text-align:center;">
+      <div class="glow-center"></div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;z-index:2;">
+        <div style="width:120px;height:120px;border-radius:32px;background:rgba(255,92,0,.1);border:1.5px solid rgba(255,122,24,.35);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+          <img id="quizFox" src="assets/fox_chill.png" style="width:88%;height:88%;object-fit:contain;">
+        </div>
+        <div style="color:#8a8580;font-size:12.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-top:20px;">Ton profil de drague</div>
+        <div class="display" id="quizArchTitle" style="color:#fff;font-size:30px;margin-top:8px;"></div>
+        <p id="quizArchDesc" style="color:#9a9aa4;font-size:14.5px;line-height:1.55;margin:14px auto 0;max-width:320px;"></p>
+      </div>
+      <button class="cta cta-big" id="quizRevealCta" style="position:relative;z-index:2;">Voir mon plan Tacotac ⚡</button>
+    </section>
+
     <!-- ═══════════════ ÉCRAN 1 — UPLOAD ═══════════════ -->
     <section class="screen active" id="screen-1">
       <div class="glow-top"></div>
@@ -1046,6 +1078,79 @@
       mystere:    { emoji:'🎭', label:'Mystère',    fox:'assets/fox_chill.png',  premium:true },
     };
 
+    // ══════════════ FUNNEL HARD PAYWALL : QCM de personnalité ══════════════
+    // 8 questions → un des 3 archétypes déjà présents dans l'app (les tons Chill/Classe/Spicy).
+    const QUIZ_QUESTIONS=[
+      {q:"T'es à l'aise comment pour aborder ?",opts:[
+        {l:'😰 Pas trop, je stresse',a:'chill'},{l:'🤔 Ça dépend du feeling',a:'classe'},{l:"🔥 Très à l'aise, je fonce",a:'spicy'}]},
+      {q:"Ton style d'humour en conv ?",opts:[
+        {l:'😄 Léger, je fais rire',a:'chill'},{l:'🎩 Je vanne avec classe',a:'classe'},{l:'😈 Direct, un peu piquant',a:'spicy'}]},
+      {q:'Où ça bloque le plus ?',opts:[
+        {l:'✍️ Le premier message',a:'chill'},{l:'💬 Relancer sans être lourd',a:'classe'},{l:'🌶️ Faire monter la température',a:'spicy'}]},
+      {q:'Le pire moment ?',opts:[
+        {l:'😶 Les blancs dans la conv',a:'chill'},{l:'⏳ Elle met du temps à répondre',a:'classe'},{l:'📅 Passer au date',a:'spicy'}]},
+      {q:'Ton objectif principal ?',opts:[
+        {l:"📈 Matcher plus, m'améliorer",a:'chill'},{l:'💞 Des connexions plus sérieuses',a:'classe'},{l:'⚡ Aller droit au but',a:'spicy'}]},
+      {q:'Ton style de message préféré ?',opts:[
+        {l:'😊 Simple et sympa',a:'chill'},{l:'🎩 Élégant, qui sort du lot',a:'classe'},{l:"😏 Osé, qui met l'ambiance",a:'spicy'}]},
+      {q:'Si tout roulait, ça donnerait quoi ?',opts:[
+        {l:'🌊 Détendu, naturel',a:'chill'},{l:'✨ Je marquerais les esprits',a:'classe'},{l:'🔥 Une vraie tension direct',a:'spicy'}]},
+      {q:'Tu peux y consacrer combien par jour ?',opts:[
+        {l:'⚡ 5 minutes',a:'chill'},{l:'📖 15 minutes',a:'classe'},{l:'🎯 Flexible, quand je peux',a:'spicy'}]},
+    ];
+    const QUIZ_ARCHETYPES={
+      chill:{title:'Le Renard Chill',fox:'assets/fox_chill.png',desc:"T'as un humour qui détend tout le monde. Ton axe : transformer ta décontraction en relances qui gardent la conv vivante."},
+      classe:{title:'Le Renard Classe',fox:'assets/fox_classe.png',desc:'Tu marques les esprits sans en faire trop. Ton axe : des messages qui sortent du lot, sans jamais forcer.'},
+      spicy:{title:'Le Renard Spicy',fox:'assets/fox_spicy.png',desc:'Tu sais créer de la tension. Ton axe : des répliques qui font monter la température au bon moment.'},
+    };
+    let quizAnswers=[],quizArchetype=null;
+    function startQuiz(){
+      quizAnswers=[];
+      track('qcm_start');
+      renderQuizStep(0);
+      go('quiz');
+    }
+    function renderQuizStep(i){
+      const step=QUIZ_QUESTIONS[i];
+      document.getElementById('quizBar').style.width=Math.round((i/QUIZ_QUESTIONS.length)*100)+'%';
+      document.getElementById('quizStep').textContent=(i+1)+'/'+QUIZ_QUESTIONS.length;
+      document.getElementById('quizQ').textContent=step.q;
+      const wrap=document.getElementById('quizOpts');
+      wrap.innerHTML='';
+      step.opts.forEach(o=>{
+        const b=document.createElement('button');
+        b.className='plan-opt';
+        b.innerHTML='<span style="font-size:15px;font-weight:600;color:#fff;">'+o.l+'</span>';
+        b.addEventListener('click',()=>{
+          quizAnswers.push(o.a);
+          if(i+1<QUIZ_QUESTIONS.length){renderQuizStep(i+1);}else{finishQuiz();}
+        });
+        wrap.appendChild(b);
+      });
+    }
+    function archToTone(a){return a==='chill'?'drole':a==='spicy'?'spicy':'classe';}
+    function finishQuiz(){
+      document.getElementById('quizBar').style.width='100%';
+      const tally={chill:0,classe:0,spicy:0};
+      quizAnswers.forEach(a=>{if(a in tally)tally[a]++;});
+      let archetype='chill';
+      if(tally.classe>tally[archetype])archetype='classe';
+      if(tally.spicy>tally[archetype])archetype='spicy';
+      quizArchetype=archetype;
+      track('qcm_complete');
+      const A=QUIZ_ARCHETYPES[archetype];
+      document.getElementById('quizFox').src=A.fox;
+      document.getElementById('quizArchTitle').textContent=A.title;
+      document.getElementById('quizArchDesc').textContent=A.desc;
+      go('qreveal');
+      track('archetype_shown',{archetype});
+      fetch('/api/quiz/complete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({archetype})}).catch(()=>{});
+    }
+    document.getElementById('quizRevealCta').addEventListener('click',()=>{
+      if(quizArchetype)selectedTone=archToTone(quizArchetype);
+      go(1);
+    });
+
     // Notification maison (remplace les alert() natifs — cohérent avec le reste de l'UI)
     const celebOverlay=document.getElementById('celeb');
     function showNotice(title,msg,opts){
@@ -1084,11 +1189,16 @@
     // cache local `quota` pour l'affichage, rafraîchi à chaque réponse serveur.
     let quota = { remaining: null, limit: null, isPremium: false };
 
+    // Funnel "hard paywall" (test réversible, voir FUNNEL_MODE côté serveur) : quand actif,
+    // aucune analyse gratuite (même la 1ère), UI sans cadenas visibles, pas d'essai au checkout.
+    let FUNNEL_HARD = false;
+
     let currentAccount = null; // {email, plan, viaGoogle} ou null
     function applyQuota(q) {
       if (q) {
         quota = q;
         if ('account' in q) currentAccount = q.account;
+        if ('funnelHard' in q) FUNNEL_HARD = Boolean(q.funnelHard);
       }
       renderQuota();
       updatePrefsAccess();
@@ -1097,6 +1207,24 @@
       // cadenas sur les outils premium pour les gratuits (ils peuvent entrer : le paywall tombe à la réponse)
       document.querySelectorAll('.mode-lock').forEach(l=>l.style.display=quota.isPremium?'none':'inline');
       updatePhoto2Btn(); // rafraîchit le cadenas du bouton "photo 2"
+      applyHardModeChrome();
+    }
+    // "Comme un premium arriverait" : cache les cadenas/compteur et adapte la copie du paywall
+    // mensuel (pas d'essai pendant le test). Purement cosmétique — le vrai gating ne change pas ici.
+    function applyHardModeChrome(){
+      if(!FUNNEL_HARD)return;
+      document.querySelectorAll('.mode-lock').forEach(l=>l.style.display='none');
+      const q=document.getElementById('quota');
+      if(q&&!quota.isPremium)q.style.display='none';
+      const m=document.querySelector('.plan-opt[data-plan="monthly"]');
+      if(m&&!m.dataset.hardPatched){
+        m.dataset.cta='Passer au Premium mensuel';
+        m.dataset.sub='9,99€/mois · Résiliable à tout moment';
+        const badge=m.querySelector('.plan-badge');if(badge)badge.style.display='none';
+        const subEl=m.querySelector('span[style*="margin-top:2px"]');
+        if(subEl)subEl.textContent='Résiliable à tout moment';
+        m.dataset.hardPatched='1';
+      }
     }
     function renderAccountBtn() {
       const b = document.getElementById('accountBtn');
@@ -1125,7 +1253,10 @@
     }
 
     // Au chargement : on demande l'état réel au serveur (pose aussi le cookie device_id).
-    fetch('/api/me').then(r => r.json()).then(applyQuota).catch(() => renderQuota());
+    fetch('/api/me').then(r => r.json()).then(q => {
+      applyQuota(q);
+      if (FUNNEL_HARD && !q.quizDone) startQuiz(); // 1ère visite en funnel hard paywall → QCM avant tout
+    }).catch(() => renderQuota());
     renderQuota();
 
     // ══════════════ NAV ══════════════
@@ -2023,7 +2154,9 @@
       try{
         if(localStorage.getItem('tacotac_seen_demo'))return;
         localStorage.setItem('tacotac_seen_demo','1');
-        setTimeout(()=>{if(!hasImage&&!currentAccount)playDemo();},1100);
+        // Funnel hard paywall : pas de démo auto, elle couperait le QCM en cours de route et
+        // montre du contenu gratuit alors que l'objectif est zéro aperçu avant paiement.
+        setTimeout(()=>{if(!hasImage&&!currentAccount&&!FUNNEL_HARD)playDemo();},1100);
       }catch(e){}
     })();
 
@@ -2099,8 +2232,8 @@
       }else if(mode==='bio'){
         bioData=DEMO_BIO;showBio();
         applyTeaseBlur(['#screen-6 .bio-card','#bioAnalyse'],['#bioReset']);
-      }else{
-        replies=DEMO_OPENER;selectedTone='drole';variant=0;showResults(false);
+      }else{ // reply (funnel hard paywall) & opener partagent le même écran/flou
+        replies=(mode==='reply')?DEMO_REPLIES:DEMO_OPENER;selectedTone='drole';variant=0;showResults(false);
         applyTeaseBlur(['#screen-4 .result-card'],['#copyBtn','#shareBtn','#copyUpsell','#premiumTease','#resetBtn']);
       }
       track('tease_view',{mode});
@@ -2149,6 +2282,7 @@
       else{cd.style.display='none';stopGateCountdown();}
       if(teasing){
         const T={
+          reply:['Ta réplique est prête 🔒','Ta meilleure réponse est écrite, juste derrière le flou. Débloque pour la lire.'],
           opener:['Tes DM sont prêts 🔒','3 premiers messages écrits pour <b style="color:#FF9A45;">son</b> profil sont là, juste derrière le flou. Débloque pour les lire.'],
           coach:['Ton diagnostic est prêt 🔒','Son niveau d\'intérêt est calculé, ton meilleur move est trouvé — juste derrière le flou.'],
           bio:['Ta nouvelle bio est prête 🔒','3 versions réécrites qui donnent envie de matcher — juste derrière le flou.'],
@@ -2688,7 +2822,8 @@
       if(MODES[mode].input==='text'){
         if(bioInput.value.trim().length<5)return;
       }else if(!hasImage)return;
-      if(MODES[mode].premium&&!quota.isPremium){startTeasePaywall();return;} // outil premium + gratuit → paywall à la réponse
+      // outil premium + gratuit → paywall à la réponse (funnel hard paywall : reply aussi, dès la 1ère fois)
+      if((MODES[mode].premium||(FUNNEL_HARD&&mode==='reply'))&&!quota.isPremium){startTeasePaywall();return;}
       if(mode==='bio'){
         if(!currentAccount){pendingAnalysis=true;openAuth('analysis');return;}
         runBio();return;

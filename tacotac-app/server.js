@@ -20,7 +20,7 @@ import disposableDomains from 'disposable-email-domains/index.json' with { type:
 import { consumeQuota, getStatus, activatePremium, syncSubscription, deactivatePremium, claimEmailBonus, claimFounderCode, seedFounderCodes, reserveGiftEmail, setGiftPromo, releaseGiftEmail,
          createAccount, getAccountByEmail, getAccountByGoogleId, attachGoogleToAccount, linkDeviceToAccount, createSession, getSessionAccount, destroySession, effectivePlan,
          accountsForLifecycle, markAccountEmail, consumeTrainQuota, trainUsedToday, claimGiftTone, refundGiftTone,
-         getCollaboratorByPromoId, recordSale } from './db.js';
+         getCollaboratorByPromoId, recordSale, completeQuiz } from './db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -39,6 +39,12 @@ const stripe = process.env.STRIPE_SECRET_KEY
 const PRICES = { weekly: process.env.STRIPE_PRICE_WEEKLY, monthly: process.env.STRIPE_PRICE_MONTHLY, annual: process.env.STRIPE_PRICE_ANNUAL };
 // Essai gratuit : seul le mensuel démarre par 3 jours offerts (annuel = paiement direct, hebdo direct)
 const TRIAL_DAYS = { monthly: 3 };
+
+// ── Funnel "hard paywall" (test réversible, 3 semaines) ──────────
+// FUNNEL_MODE=hard : QCM + zéro contenu IA gratuit (tease flouté direct) + zéro essai Stripe.
+// Absent/toute autre valeur → comportement freemium actuel, inchangé. Revenir en arrière =
+// repasser la variable et redémarrer, aucun rollback de code nécessaire.
+const FUNNEL_HARD = process.env.FUNNEL_MODE === 'hard';
 
 // ⚠️ Le webhook Stripe DOIT recevoir le corps BRUT (non parsé) pour vérifier la signature.
 // On le déclare donc AVANT express.json().
@@ -227,7 +233,7 @@ function accountView(account) {
   return { email: account.email, plan: effectivePlan(account), viaGoogle: Boolean(account.google_id) };
 }
 function fullStatus(req) {
-  return { ...getStatus(req.deviceId, req.account), account: accountView(req.account) };
+  return { ...getStatus(req.deviceId, req.account), account: accountView(req.account), funnelHard: FUNNEL_HARD };
 }
 
 // ── Mots de passe : scrypt natif Node (pas de dépendance à compiler) ──
@@ -1023,6 +1029,13 @@ unmatch=true si ton intérêt tombe ≤ 8, ou au 3e message lourd/needy d'affil�
   },
 };
 
+// Funnel hard paywall : réponse du 1er message, scriptée (zéro appel IA, zéro coût), avant paywall.
+const CANNED_FIRST_REPLY = {
+  lea: ["Hey toi 😊 ça va ?"],
+  chloe: ['Salut 👀 toi c\'est qui ?'],
+  maeva: ['Salut.'],
+};
+
 const trainLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 80, // une conversation humaine rapide = ~5 msg/min, large marge
@@ -1038,11 +1051,6 @@ app.post('/api/train', trainLimiter, async (req, res) => {
     if (!req.account) {
       return res.status(401).json({ error: 'Crée ton compte pour continuer.', code: 'auth_required' });
     }
-    // Essai gratuit : 1 message offert par jour (elle répond une fois), puis paywall.
-    // Compté côté serveur (train_usage) → intriturable en vidant le localStorage.
-    if (!getStatus(deviceId, req.account).isPremium && trainUsedToday(deviceId) >= 1) {
-      return res.status(403).json({ error: 'La suite de la conversation est réservée aux Premium.', code: 'premium_required' });
-    }
     const persona = TRAIN_PERSONAS[req.body?.persona];
     if (!persona) return res.status(400).json({ error: 'Persona inconnu.' });
 
@@ -1057,6 +1065,26 @@ app.post('/api/train', trainLimiter, async (req, res) => {
     // Position dans la conv (sert au verrou anti-date-express). ⚠️ L'historique est tronqué
     // aux 30 derniers messages : userMsgCount est un plancher, suffisant pour le verrou.
     const userMsgCount = history.filter((m) => m.role === 'user').length;
+
+    const isPremium = getStatus(deviceId, req.account).isPremium;
+
+    // Funnel hard paywall : message 1 = réponse scriptée (zéro appel IA, zéro coût),
+    // message 2+ = hardpaywall direct — jamais de vrai message IA gratuit.
+    if (FUNNEL_HARD && !isPremium) {
+      if (userMsgCount <= 1) {
+        return res.json({
+          messages: CANNED_FIRST_REPLY[req.body.persona] || ["Hey salut 😊"],
+          interet: persona.start, date_acceptee: false, unmatch: false, source: 'canned',
+        });
+      }
+      return res.status(403).json({ error: 'La suite de la conversation est réservée aux Premium.', code: 'premium_required' });
+    }
+
+    // Essai gratuit (freemium) : 1 message offert par jour (elle répond une fois), puis paywall.
+    // Compté côté serveur (train_usage) → intriturable en vidant le localStorage.
+    if (!isPremium && trainUsedToday(deviceId) >= 1) {
+      return res.status(403).json({ error: 'La suite de la conversation est réservée aux Premium.', code: 'premium_required' });
+    }
 
     const interest = Math.max(0, Math.min(100, parseInt(req.body?.interest, 10) || persona.start));
 
@@ -1182,6 +1210,14 @@ app.get('/api/me', (req, res) => {
   attachDevice(req, res);
   attachAccount(req);
   res.json(fullStatus(req));
+});
+
+// ── Funnel "hard paywall" : fin du QCM de personnalité (avant tout compte requis) ──
+app.post('/api/quiz/complete', (req, res) => {
+  const deviceId = attachDevice(req, res);
+  const archetype = ['chill', 'classe', 'spicy'].includes(req.body?.archetype) ? req.body.archetype : null;
+  completeQuiz(deviceId, archetype);
+  res.json({ ok: true });
 });
 
 // ══════════════ AUTH : email + mot de passe ══════════════
@@ -1618,7 +1654,8 @@ app.post('/api/checkout', async (req, res) => {
       ...(req.account ? { customer_email: req.account.email } : {}),
       subscription_data: {
         metadata: { device_id: deviceId, account_email: req.account?.email || '' },
-        ...(TRIAL_DAYS[plan] ? { trial_period_days: TRIAL_DAYS[plan] } : {}),
+        // Funnel hard paywall : jamais d'essai pendant le test, paiement direct sur tous les plans.
+        ...(!FUNNEL_HARD && TRIAL_DAYS[plan] ? { trial_period_days: TRIAL_DAYS[plan] } : {}),
       },
       ...(discounts ? { discounts } : { allow_promotion_codes: true }),
       success_url: `${PUBLIC_URL}/app?paid=1&session_id={CHECKOUT_SESSION_ID}`,
@@ -1676,7 +1713,8 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
     // un gratuit qui force l'appel ne perd pas un crédit.
     const mode = ['opener', 'coach'].includes(req.body?.mode) ? req.body.mode : 'reply';
     const isPremiumUser = getStatus(deviceId, req.account).isPremium;
-    if (mode !== 'reply' && !isPremiumUser) {
+    // Funnel hard paywall : le mode reply aussi passe premium-only (zéro analyse gratuite, même la 1ère).
+    if ((mode !== 'reply' || FUNNEL_HARD) && !isPremiumUser) {
       return res.status(403).json({ error: 'Cet outil est réservé aux Premium.', code: 'premium_required' });
     }
     if (!isPremiumUser && dataUrls.length > 1) dataUrls = dataUrls.slice(0, 1); // la 2e photo est un avantage premium
