@@ -35,6 +35,7 @@
   <p class="sub">Console interne — connecte tes comptes TikTok et publie les vidéos produites par le pipeline.</p>
 
   <div id="banner" class="banner" hidden></div>
+  <div id="connected-banner" class="banner" style="background:#122a12;border-color:#2e6b2e;color:#8fe6a0;" hidden></div>
 
   <div class="card">
     <h2>Comptes connectés</h2>
@@ -60,7 +61,19 @@ const fmtExp = (ts) => {
   return mins > 0 ? `token valide ${mins} min` : 'token expiré (rafraîchi au besoin)';
 };
 
+function showConnectedBanner() {
+  const params = new URLSearchParams(location.search);
+  const connected = params.get('connected');
+  if (!connected) return;
+  const b = document.getElementById('connected-banner');
+  b.hidden = false;
+  b.textContent = `✓ Compte "${connected}" connecté avec succès.`;
+  // Nettoie l'URL pour que le message ne réapparaisse pas à un rechargement.
+  history.replaceState({}, '', location.pathname);
+}
+
 async function load() {
+  showConnectedBanner();
   const r = await fetch('/admin/tiktok/data');
   data = await r.json();
 

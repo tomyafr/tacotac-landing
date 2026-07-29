@@ -179,7 +179,8 @@ app.get('/auth/tiktok/callback', async (req, res) => {
     saveTikTokTokens(tokens);
     // Retour direct sur la console d'admin (si le cookie admin est encore valide)
     // plutôt qu'une page morte — bien plus lisible pour la démo d'intégration.
-    if (adminOk(req, res)) return res.redirect('/admin/tiktok');
+    // ?connected= déclenche un message de confirmation visible côté front.
+    if (adminOk(req, res)) return res.redirect(`/admin/tiktok?connected=${encodeURIComponent(state)}`);
     res.send(`<h2>Compte "${state}" connecté ✅</h2><p>Tu peux fermer cette page.</p>`);
   } catch (e) {
     console.error('[tiktok] callback:', e.message);
