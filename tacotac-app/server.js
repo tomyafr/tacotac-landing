@@ -9,7 +9,7 @@
 import 'dotenv/config';
 import express from 'express';
 import path from 'node:path';
-import { statSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { statSync, readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { randomUUID, randomBytes, scryptSync, timingSafeEqual, createHmac } from 'node:crypto';
 import cookieParser from 'cookie-parser';
@@ -221,6 +221,149 @@ app.get('/internal/tiktok-accounts', (req, res) => {
   }
   const tokens = loadTikTokTokens();
   res.json(Object.keys(tokens).map((k) => ({ account: k, open_id: tokens[k].open_id, expires_at: tokens[k].expires_at })));
+});
+
+// ── Console d'administration TikTok ────────────────────────────
+// Interface interne (un seul utilisateur : le créateur) pour connecter ses comptes
+// TikTok et publier une vidéo rendue par le pipeline. Sert aussi de support à la
+// démo exigée par la review TikTok, qui veut voir une vraie UI et de vraies
+// interactions — pas seulement un cron invisible.
+// Protection : jeton ADMIN_TOKEN passé en query (?t=) puis conservé en cookie.
+const ADMIN_COOKIE = 'tacotac_admin';
+const VIDEO_DIR = process.env.TIKTOK_VIDEO_DIR || '';
+
+function adminOk(req, res) {
+  const expected = process.env.ADMIN_TOKEN;
+  if (!expected) return false;
+  if (req.query.t === expected) {
+    res.cookie(ADMIN_COOKIE, expected, {
+      httpOnly: true, signed: true, sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 1000 * 60 * 60 * 12,
+    });
+    return true;
+  }
+  return req.signedCookies?.[ADMIN_COOKIE] === expected;
+}
+function requireAdmin(req, res, next) {
+  if (!adminOk(req, res)) return res.status(403).send('Accès refusé.');
+  next();
+}
+
+// Les vidéos proposées viennent d'un dossier local (les rendus du pipeline).
+// On ne renvoie que des noms de fichiers .mp4, et toute publication revalide que
+// le nom demandé fait bien partie de cette liste : pas de traversée de chemin.
+function listVideos() {
+  if (!VIDEO_DIR || !existsSync(VIDEO_DIR)) return [];
+  try {
+    return readdirSync(VIDEO_DIR)
+      .filter((f) => f.toLowerCase().endsWith('.mp4'))
+      .map((f) => ({ name: f, size: statSync(path.join(VIDEO_DIR, f)).size }))
+      .sort((a, b) => b.name.localeCompare(a.name))
+      .slice(0, 30);
+  } catch { return []; }
+}
+
+// Servie depuis views/ (hors public/) : sinon le static middleware l'exposerait
+// directement par son nom de fichier, sans passer par requireAdmin.
+app.get('/admin/tiktok', requireAdmin, (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'admin-tiktok.html'));
+});
+
+app.get('/admin/tiktok/data', requireAdmin, (req, res) => {
+  const tokens = loadTikTokTokens();
+  res.json({
+    accounts: Object.keys(tokens).map((k) => ({
+      account: k,
+      open_id: tokens[k].open_id,
+      scope: tokens[k].scope,
+      expires_at: tokens[k].expires_at,
+    })),
+    videos: listVideos(),
+    privacy: process.env.TIKTOK_PRIVACY || 'SELF_ONLY',
+    videoDirConfigured: Boolean(VIDEO_DIR),
+  });
+});
+
+// Démarre l'autorisation d'un compte : construit l'URL TikTok et redirige.
+app.get('/admin/tiktok/connect', requireAdmin, (req, res) => {
+  const label = String(req.query.label || '').replace(/[^a-zA-Z0-9_-]/g, '');
+  if (!label) return res.status(400).send('Nom de compte manquant ou invalide.');
+  const { client_key } = tiktokCreds(label);
+  if (!client_key) return res.status(500).send('client_key TikTok absent du .env.');
+  const url = new URL('https://www.tiktok.com/v2/auth/authorize/');
+  url.searchParams.set('client_key', client_key);
+  url.searchParams.set('scope', 'user.info.basic,video.publish,video.upload');
+  url.searchParams.set('response_type', 'code');
+  url.searchParams.set('redirect_uri', `${PUBLIC_URL}/auth/tiktok/callback`);
+  url.searchParams.set('state', label);
+  res.redirect(url.toString());
+});
+
+// Publie une vidéo du dossier sur un compte autorisé (init → upload → statut).
+app.post('/admin/tiktok/publish', requireAdmin, async (req, res) => {
+  const { account, video } = req.body || {};
+  const tokens = loadTikTokTokens();
+  if (!tokens[account]) return res.status(400).json({ error: 'compte non autorisé' });
+  const known = listVideos().some((v) => v.name === video);
+  if (!known) return res.status(400).json({ error: 'vidéo inconnue' });
+
+  const file = path.join(VIDEO_DIR, video);
+  try {
+    const tokenRes = await fetch(`${PUBLIC_URL}/internal/tiktok-token?account=${encodeURIComponent(account)}`, {
+      headers: { 'x-internal-secret': process.env.TIKTOK_INTERNAL_SECRET },
+    });
+    const { access_token } = await tokenRes.json();
+    if (!access_token) throw new Error('token indisponible');
+
+    const size = statSync(file).size;
+    const initRes = await fetch('https://open.tiktokapis.com/v2/post/publish/video/init/', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${access_token}`, 'Content-Type': 'application/json; charset=UTF-8' },
+      body: JSON.stringify({
+        post_info: {
+          title: path.basename(video, '.mp4'),
+          privacy_level: process.env.TIKTOK_PRIVACY || 'SELF_ONLY',
+          disable_duet: false, disable_comment: false, disable_stitch: false,
+        },
+        source_info: { source: 'FILE_UPLOAD', video_size: size, chunk_size: size, total_chunk_count: 1 },
+      }),
+    });
+    const init = await initRes.json();
+    if (init.error?.code !== 'ok') throw new Error(`${init.error?.code}: ${init.error?.message}`);
+
+    const put = await fetch(init.data.upload_url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'video/mp4', 'Content-Range': `bytes 0-${size - 1}/${size}` },
+      body: readFileSync(file),
+    });
+    if (!put.ok) throw new Error(`upload HTTP ${put.status}`);
+
+    res.json({ ok: true, publish_id: init.data.publish_id });
+  } catch (e) {
+    console.error('[tiktok] publish:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Statut d'une publication (l'encodage TikTok prend quelques secondes).
+app.get('/admin/tiktok/status', requireAdmin, async (req, res) => {
+  const { account, publish_id } = req.query;
+  try {
+    const tokenRes = await fetch(`${PUBLIC_URL}/internal/tiktok-token?account=${encodeURIComponent(account)}`, {
+      headers: { 'x-internal-secret': process.env.TIKTOK_INTERNAL_SECRET },
+    });
+    const { access_token } = await tokenRes.json();
+    const r = await fetch('https://open.tiktokapis.com/v2/post/publish/status/fetch/', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${access_token}`, 'Content-Type': 'application/json; charset=UTF-8' },
+      body: JSON.stringify({ publish_id }),
+    });
+    const st = await r.json();
+    res.json({ status: st.data?.status || 'UNKNOWN', fail_reason: st.data?.fail_reason });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
