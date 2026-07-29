@@ -9,3 +9,6 @@ Thumbs.db
 *.db-wal
 *.db-shm
 *.sqlite
+
+# Tokens TikTok (access/refresh token en clair — jamais versionné)
+tiktok-tokens.json

@@ -9,7 +9,7 @@
 import 'dotenv/config';
 import express from 'express';
 import path from 'node:path';
-import { statSync } from 'node:fs';
+import { statSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { randomUUID, randomBytes, scryptSync, timingSafeEqual, createHmac } from 'node:crypto';
 import cookieParser from 'cookie-parser';
@@ -113,6 +113,103 @@ try { APP_VERSION = String(Math.floor(statSync(path.join(__dirname, 'public', 'a
 app.get('/api/version', (req, res) => {
   res.set('Cache-Control', 'no-cache');
   res.json({ v: APP_VERSION });
+});
+
+// ══════════════════════════════════════════════════════════════
+//  TikTok Content Posting API — OAuth + stockage/rafraîchissement des tokens
+//  Un seul fichier JSON, un token par compte (clé = "state" passé à l'autorisation,
+//  ex: tomya_agency / perso1 / perso2). n8n ne parle jamais directement à TikTok
+//  pour l'OAuth : il appelle juste /internal/tiktok-token qui renvoie un token
+//  toujours valide (rafraîchi automatiquement si besoin).
+// ══════════════════════════════════════════════════════════════
+const TIKTOK_TOKENS_FILE = path.join(__dirname, 'tiktok-tokens.json');
+
+function loadTikTokTokens() {
+  try { return JSON.parse(readFileSync(TIKTOK_TOKENS_FILE, 'utf8')); } catch { return {}; }
+}
+function saveTikTokTokens(tokens) {
+  writeFileSync(TIKTOK_TOKENS_FILE, JSON.stringify(tokens, null, 2));
+}
+
+async function tiktokTokenRequest(params) {
+  const res = await fetch('https://open.tiktokapis.com/v2/oauth/token/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cache-Control': 'no-cache' },
+    body: new URLSearchParams({
+      client_key: process.env.TIKTOK_CLIENT_KEY,
+      client_secret: process.env.TIKTOK_CLIENT_SECRET,
+      ...params,
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok || data.error) throw new Error(`tiktok token error: ${JSON.stringify(data)}`);
+  return data;
+}
+
+// Étape finale de l'autorisation : TikTok redirige ici avec ?code=&state=<compte>.
+app.get('/auth/tiktok/callback', async (req, res) => {
+  const { code, state, error, error_description } = req.query;
+  if (error) return res.status(400).send(`Autorisation refusée : ${error_description || error}`);
+  if (!code || !state) return res.status(400).send('Paramètres manquants (code/state).');
+  try {
+    const data = await tiktokTokenRequest({
+      code,
+      grant_type: 'authorization_code',
+      redirect_uri: `${PUBLIC_URL}/auth/tiktok/callback`,
+    });
+    const tokens = loadTikTokTokens();
+    tokens[state] = {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      open_id: data.open_id,
+      scope: data.scope,
+      expires_at: Date.now() + data.expires_in * 1000,
+    };
+    saveTikTokTokens(tokens);
+    res.send(`<h2>Compte "${state}" connecté ✅</h2><p>Tu peux fermer cette page.</p>`);
+  } catch (e) {
+    console.error('[tiktok] callback:', e.message);
+    res.status(500).send(`Erreur lors de l'échange du token : ${e.message}`);
+  }
+});
+
+// Utilisé par n8n : renvoie un access_token toujours valide pour un compte donné,
+// en le rafraîchissant automatiquement s'il expire dans moins de 5 minutes.
+app.get('/internal/tiktok-token', async (req, res) => {
+  if (req.get('x-internal-secret') !== process.env.TIKTOK_INTERNAL_SECRET) {
+    return res.status(403).json({ error: 'forbidden' });
+  }
+  const { account } = req.query;
+  const tokens = loadTikTokTokens();
+  const t = tokens[account];
+  if (!t) return res.status(404).json({ error: 'compte inconnu — pas encore autorisé' });
+
+  if (Date.now() > t.expires_at - 5 * 60 * 1000) {
+    try {
+      const data = await tiktokTokenRequest({ grant_type: 'refresh_token', refresh_token: t.refresh_token });
+      tokens[account] = {
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+        open_id: data.open_id,
+        scope: data.scope,
+        expires_at: Date.now() + data.expires_in * 1000,
+      };
+      saveTikTokTokens(tokens);
+    } catch (e) {
+      console.error('[tiktok] refresh:', e.message);
+      return res.status(500).json({ error: 'refresh failed', detail: e.message });
+    }
+  }
+  res.json({ access_token: tokens[account].access_token, open_id: tokens[account].open_id });
+});
+
+// Liste les comptes déjà autorisés (pratique pour vérifier sans lire le fichier).
+app.get('/internal/tiktok-accounts', (req, res) => {
+  if (req.get('x-internal-secret') !== process.env.TIKTOK_INTERNAL_SECRET) {
+    return res.status(403).json({ error: 'forbidden' });
+  }
+  const tokens = loadTikTokTokens();
+  res.json(Object.keys(tokens).map((k) => ({ account: k, open_id: tokens[k].open_id, expires_at: tokens[k].expires_at })));
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
