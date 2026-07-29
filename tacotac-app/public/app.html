@@ -230,6 +230,7 @@
     /* ── QCM (funnel hard paywall) : intro façon jeu vidéo + questionnaire ── */
     .speech-bubble{position:relative;background:#17171a;border:1.5px solid #2a2a2e;border-radius:20px;padding:18px 20px;text-align:left;max-width:320px}
     .speech-bubble::before{content:'';position:absolute;top:-8px;left:50%;margin-left:-8px;width:16px;height:16px;background:#17171a;border-left:1.5px solid #2a2a2e;border-top:1.5px solid #2a2a2e;transform:rotate(45deg)}
+    .speech-bubble.tail-down::before{top:auto;bottom:-8px;border-left:none;border-top:none;border-right:1.5px solid #2a2a2e;border-bottom:1.5px solid #2a2a2e}
     @keyframes tt-bubble-in{0%{opacity:0;transform:translateY(14px) scale(.95)}100%{opacity:1;transform:translateY(0) scale(1)}}
     @keyframes tt-q-in{0%{opacity:0;transform:translateX(16px)}100%{opacity:1;transform:translateX(0)}}
     .quiz-fade{animation:tt-q-in .35s ease both}
@@ -381,12 +382,12 @@
     <!-- ═══════════════ INTRO QCM — le renard te parle (funnel hard paywall) ═══════════════ -->
     <section class="screen" id="screen-quiz-intro" style="align-items:center;text-align:center;">
       <div class="glow-center"></div>
-      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;position:relative;z-index:2;">
-        <img id="introFox" src="assets/fox_chill.png" alt="Tacotac" style="width:150px;height:150px;object-fit:contain;filter:drop-shadow(0 14px 34px rgba(255,92,0,.4));animation:tt-pop .6s cubic-bezier(.34,1.56,.64,1) both;">
-        <div class="speech-bubble" style="animation:tt-bubble-in .5s .22s cubic-bezier(.22,.68,0,1) both;">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;z-index:2;">
+        <div class="speech-bubble tail-down" style="animation:tt-bubble-in .5s .1s cubic-bezier(.22,.68,0,1) both;">
           <div style="color:#fff;font-size:17px;font-weight:800;">Hey, moi c'est le renard 🦊</div>
           <p style="color:#B5ABA0;font-size:14.5px;line-height:1.55;margin-top:9px;">Avant de te lâcher dans l'app, analysons la personne que tu es. Réponds à ce petit questionnaire pour que je personnalise tout, rien que pour toi.</p>
         </div>
+        <img id="introFox" src="assets/fox_chill.png" alt="Tacotac" style="width:220px;height:220px;object-fit:contain;filter:drop-shadow(0 20px 42px rgba(255,92,0,.45));opacity:0;animation:tt-pop .6s .25s cubic-bezier(.34,1.56,.64,1) both;">
       </div>
       <button class="cta cta-big" id="quizIntroCta" style="position:relative;z-index:2;">C'est parti <span style="font-size:20px;">🚀</span></button>
     </section>
@@ -398,14 +399,15 @@
         <div style="height:4px;background:#1c1c1c;border-radius:99px;overflow:hidden;">
           <div id="quizBar" style="height:100%;width:0%;background:linear-gradient(90deg,#FF7A18,#FFA23D);transition:width .3s ease;"></div>
         </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;">
-          <div class="tt-avatar" style="width:34px;height:34px;"><img src="assets/fox_chill.png" alt="Tacotac"></div>
-          <div id="quizStep" style="color:#6e6a66;font-size:12px;font-weight:700;">1/8</div>
+        <div style="display:flex;align-items:center;justify-content:flex-end;margin-top:14px;">
+          <div id="quizStep" style="color:#6e6a66;font-size:12px;font-weight:700;">1/7</div>
         </div>
       </div>
-      <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-start;padding-top:14vh;position:relative;z-index:2;">
-        <div id="quizQWrap" class="speech-bubble quiz-fade" style="margin-bottom:26px;max-width:none;">
-          <div class="display" id="quizQ" style="color:#fff;font-size:22px;line-height:1.22;"></div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;position:relative;z-index:2;">
+        <img id="quizStepFox" src="assets/fox_chill.png" alt="" style="width:78px;height:78px;object-fit:contain;margin:0 auto;filter:drop-shadow(0 10px 22px rgba(255,92,0,.35));">
+        <div id="quizQWrap" class="speech-bubble quiz-fade" style="max-width:none;">
+          <div class="display" id="quizQ" style="color:#fff;font-size:21px;line-height:1.22;"></div>
+          <div id="quizQSub" style="color:#8a8580;font-size:13px;margin-top:8px;line-height:1.4;"></div>
         </div>
         <div id="quizOpts" style="display:flex;flex-direction:column;gap:12px;"></div>
       </div>
@@ -1106,24 +1108,51 @@
     };
 
     // ══════════════ FUNNEL HARD PAYWALL : QCM de personnalité ══════════════
-    // 8 questions → un des 3 archétypes déjà présents dans l'app (les tons Chill/Classe/Spicy).
+    // 7 questions centrées sur TES conversations (pas sur l'aisance à aborder en vrai) →
+    // un des 3 archétypes déjà présents dans l'app (les tons Chill/Classe/Spicy).
     const QUIZ_QUESTIONS=[
-      {q:"T'es à l'aise comment pour aborder ?",opts:[
-        {l:'😰 Pas trop, je stresse',a:'chill'},{l:'🤔 Ça dépend du feeling',a:'classe'},{l:"🔥 Très à l'aise, je fonce",a:'spicy'}]},
-      {q:"Ton style d'humour en conv ?",opts:[
-        {l:'😄 Léger, je fais rire',a:'chill'},{l:'🎩 Je vanne avec classe',a:'classe'},{l:'😈 Direct, un peu piquant',a:'spicy'}]},
-      {q:'Où ça bloque le plus ?',opts:[
-        {l:'✍️ Le premier message',a:'chill'},{l:'💬 Relancer sans être lourd',a:'classe'},{l:'🌶️ Faire monter la température',a:'spicy'}]},
-      {q:'Le pire moment ?',opts:[
-        {l:'😶 Les blancs dans la conv',a:'chill'},{l:'⏳ Elle met du temps à répondre',a:'classe'},{l:'📅 Passer au date',a:'spicy'}]},
-      {q:'Ton objectif principal ?',opts:[
-        {l:"📈 Matcher plus, m'améliorer",a:'chill'},{l:'💞 Des connexions plus sérieuses',a:'classe'},{l:'⚡ Aller droit au but',a:'spicy'}]},
-      {q:'Ton style de message préféré ?',opts:[
-        {l:'😊 Simple et sympa',a:'chill'},{l:'🎩 Élégant, qui sort du lot',a:'classe'},{l:"😏 Osé, qui met l'ambiance",a:'spicy'}]},
-      {q:'Si tout roulait, ça donnerait quoi ?',opts:[
-        {l:'🌊 Détendu, naturel',a:'chill'},{l:'✨ Je marquerais les esprits',a:'classe'},{l:'🔥 Une vraie tension direct',a:'spicy'}]},
-      {q:'Tu peux y consacrer combien par jour ?',opts:[
-        {l:'⚡ 5 minutes',a:'chill'},{l:'📖 15 minutes',a:'classe'},{l:'🎯 Flexible, quand je peux',a:'spicy'}]},
+      {q:'Elle t\'envoie juste "ça va ?" — tu réponds quoi ?',
+       sub:'Ta 1ère réaction en dit long sur ton style.',
+       opts:[
+        {l:'😄 Un truc marrant qui relance tout de suite',a:'chill'},
+        {l:'🎯 Une réponse qui donne juste assez envie de creuser',a:'classe'},
+        {l:'😏 Un truc qui la fait sourire toute seule',a:'spicy'}]},
+      {q:'Blanc de 2 jours dans la conv. Tu relances avec…',
+       sub:'Le timing compte, mais le ton encore plus.',
+       opts:[
+        {l:'😌 Une vanne, sans pression',a:'chill'},
+        {l:'🧐 Une question qui montre que t\'as capté un détail sur elle',a:'classe'},
+        {l:'🔥 Un message qui remet un peu de tension',a:'spicy'}]},
+      {q:'Ta meilleure réplique de tous les temps ressemblait à…',
+       sub:'Celle qui a le mieux marché jusqu\'ici.',
+       opts:[
+        {l:'😂 Une vanne qui a fait rire aux éclats',a:'chill'},
+        {l:'✨ Une phrase sortie du lot, qui a marqué',a:'classe'},
+        {l:'😈 Une ligne avec un sous-entendu bien placé',a:'spicy'}]},
+      {q:'Le premier message à un nouveau match, tu préfères…',
+       sub:'L\'ouverture donne le ton de toute la conv.',
+       opts:[
+        {l:'👋 Simple et sympa',a:'chill'},
+        {l:'🔍 Ancré dans un détail précis de son profil',a:'classe'},
+        {l:'😏 Direct, qui donne le ton tout de suite',a:'spicy'}]},
+      {q:'Elle met 3 jours à répondre à ton message. Ta réaction :',
+       sub:'Ça arrive à tout le monde — la question, c\'est comment tu gères.',
+       opts:[
+        {l:'😅 Tu relances soft, pas de stress',a:'chill'},
+        {l:'⏱️ Tu attends d\'avoir un truc qui vaut le coup',a:'classe'},
+        {l:'⚡ Tu envoies un message qui la fait réagir illico',a:'spicy'}]},
+      {q:'Ce qui coince le plus dans tes conversations en ce moment :',
+       sub:'Sois honnête, ça sert à mieux cibler ton plan.',
+       opts:[
+        {l:'😶 Le silence qui s\'installe après 3-4 messages',a:'chill'},
+        {l:'📱 Sonner comme n\'importe quel autre mec sur l\'appli',a:'classe'},
+        {l:'🌶️ Rester trop sage alors que le vibe pourrait chauffer',a:'spicy'}]},
+      {q:'Si le renard devait résumer ton style en un mot :',
+       sub:'Le mot qui te ressemble le plus, pas celui qui sonne bien.',
+       opts:[
+        {l:'😄 Décontracté',a:'chill'},
+        {l:'🎩 Affûté',a:'classe'},
+        {l:'😈 Osé',a:'spicy'}]},
     ];
     const QUIZ_ARCHETYPES={
       chill:{title:'Le Renard Chill',fox:'assets/fox_chill.png',desc:"T'as un humour qui détend tout le monde. Ton axe : transformer ta décontraction en relances qui gardent la conv vivante."},
@@ -1146,6 +1175,7 @@
       document.getElementById('quizBar').style.width=Math.round((i/QUIZ_QUESTIONS.length)*100)+'%';
       document.getElementById('quizStep').textContent=(i+1)+'/'+QUIZ_QUESTIONS.length;
       document.getElementById('quizQ').textContent=step.q;
+      document.getElementById('quizQSub').textContent=step.sub||'';
       replayAnim(document.getElementById('quizQWrap'),'quiz-fade');
       const wrap=document.getElementById('quizOpts');
       wrap.innerHTML='';
