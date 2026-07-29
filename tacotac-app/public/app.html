@@ -227,6 +227,18 @@
     .gate-input:focus{border-color:#FF5C00}
     .gate-input::placeholder{color:#56524e}
 
+    /* ── QCM (funnel hard paywall) : intro façon jeu vidéo + questionnaire ── */
+    .speech-bubble{position:relative;background:#17171a;border:1.5px solid #2a2a2e;border-radius:20px;padding:18px 20px;text-align:left;max-width:320px}
+    .speech-bubble::before{content:'';position:absolute;top:-8px;left:50%;margin-left:-8px;width:16px;height:16px;background:#17171a;border-left:1.5px solid #2a2a2e;border-top:1.5px solid #2a2a2e;transform:rotate(45deg)}
+    @keyframes tt-bubble-in{0%{opacity:0;transform:translateY(14px) scale(.95)}100%{opacity:1;transform:translateY(0) scale(1)}}
+    @keyframes tt-q-in{0%{opacity:0;transform:translateX(16px)}100%{opacity:1;transform:translateX(0)}}
+    .quiz-fade{animation:tt-q-in .35s ease both}
+    .quiz-opt{position:relative;display:block;width:100%;text-align:left;cursor:pointer;border-radius:16px;padding:15px 17px;background:#17171a;border:1.5px solid #2a2a2e;font-family:inherit;font-size:15px;font-weight:600;color:#fff;transition:border-color .15s,background .15s,transform .12s}
+    .quiz-opt:hover{border-color:#3a3a40}
+    .quiz-opt:active{transform:scale(.98)}
+    .quiz-opt.sel{border-color:#FF7A18;background:#1a0d02;transform:scale(.98)}
+    .quiz-opt:disabled{pointer-events:none}
+
     /* ── PWA : bouton installer + guide iOS ── */
     .install-btn{display:none;width:100%;margin-top:12px;position:relative;z-index:2;align-items:center;justify-content:center;gap:8px;height:46px;border-radius:14px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:600;color:#FF7A33;background:rgba(255,92,0,.07);border:1px solid rgba(255,92,0,.35);transition:background .2s,border-color .2s,transform .15s}
     .install-btn:hover{background:rgba(255,92,0,.12);border-color:rgba(255,92,0,.55)}
@@ -366,6 +378,19 @@
       </div>
     </aside>
 
+    <!-- ═══════════════ INTRO QCM — le renard te parle (funnel hard paywall) ═══════════════ -->
+    <section class="screen" id="screen-quiz-intro" style="align-items:center;text-align:center;">
+      <div class="glow-center"></div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;position:relative;z-index:2;">
+        <img id="introFox" src="assets/fox_chill.png" alt="Tacotac" style="width:150px;height:150px;object-fit:contain;filter:drop-shadow(0 14px 34px rgba(255,92,0,.4));animation:tt-pop .6s cubic-bezier(.34,1.56,.64,1) both;">
+        <div class="speech-bubble" style="animation:tt-bubble-in .5s .22s cubic-bezier(.22,.68,0,1) both;">
+          <div style="color:#fff;font-size:17px;font-weight:800;">Hey, moi c'est le renard 🦊</div>
+          <p style="color:#B5ABA0;font-size:14.5px;line-height:1.55;margin-top:9px;">Avant de te lâcher dans l'app, analysons la personne que tu es. Réponds à ce petit questionnaire pour que je personnalise tout, rien que pour toi.</p>
+        </div>
+      </div>
+      <button class="cta cta-big" id="quizIntroCta" style="position:relative;z-index:2;">C'est parti <span style="font-size:20px;">🚀</span></button>
+    </section>
+
     <!-- ═══════════════ QCM — profil de drague (funnel hard paywall, voir FUNNEL_MODE) ═══════════════ -->
     <section class="screen" id="screen-quiz">
       <div class="glow-top"></div>
@@ -378,9 +403,11 @@
           <div id="quizStep" style="color:#6e6a66;font-size:12px;font-weight:700;">1/8</div>
         </div>
       </div>
-      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:2;">
-        <div class="display" id="quizQ" style="color:#fff;font-size:24px;line-height:1.15;margin-bottom:22px;"></div>
-        <div id="quizOpts" style="display:flex;flex-direction:column;gap:10px;"></div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-start;padding-top:14vh;position:relative;z-index:2;">
+        <div id="quizQWrap" class="speech-bubble quiz-fade" style="margin-bottom:26px;max-width:none;">
+          <div class="display" id="quizQ" style="color:#fff;font-size:22px;line-height:1.22;"></div>
+        </div>
+        <div id="quizOpts" style="display:flex;flex-direction:column;gap:12px;"></div>
       </div>
     </section>
 
@@ -388,7 +415,7 @@
     <section class="screen" id="screen-qreveal" style="align-items:center;text-align:center;">
       <div class="glow-center"></div>
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;z-index:2;">
-        <div style="width:120px;height:120px;border-radius:32px;background:rgba(255,92,0,.1);border:1.5px solid rgba(255,122,24,.35);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+        <div id="quizFoxWrap" style="width:120px;height:120px;border-radius:32px;background:rgba(255,92,0,.1);border:1.5px solid rgba(255,122,24,.35);display:flex;align-items:center;justify-content:center;overflow:hidden;">
           <img id="quizFox" src="assets/fox_chill.png" style="width:88%;height:88%;object-fit:contain;">
         </div>
         <div style="color:#8a8580;font-size:12.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-top:20px;">Ton profil de drague</div>
@@ -983,15 +1010,13 @@
 
         <!-- Plans (sélection) -->
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:22px;">
-          <button class="plan-opt sel" data-plan="annual" data-cta="Passer au Premium annuel" data-sub="Un seul paiement de 69,99€ · ≈ 5,83€/mois">
-            <span class="plan-badge" style="color:#0f2c1e;background:#34d399;">-42%</span>
+          <button class="plan-opt sel" data-plan="weekly" data-cta="Passer au Premium" data-sub="4,99€/semaine · Résiliable à tout moment">
             <span class="plan-dot"></span>
             <span style="flex:1;min-width:0;">
               <span style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;">
-                <span style="font-size:15.5px;font-weight:700;color:#fff;">Annuel</span>
-                <span style="font-size:15px;font-weight:600;color:#fff;">69,99€<span style="font-size:12px;color:#86868f;font-weight:500;"> /an</span></span>
+                <span style="font-size:15.5px;font-weight:700;color:#fff;">Hebdo</span>
+                <span style="font-size:15px;font-weight:600;color:#fff;">4,99€<span style="font-size:12px;color:#86868f;font-weight:500;"> /semaine</span></span>
               </span>
-              <span style="display:block;font-size:12px;color:#86868f;margin-top:2px;">≈ 5,83€ / mois — facturé une fois</span>
             </span>
           </button>
 
@@ -1007,13 +1032,15 @@
             </span>
           </button>
 
-          <button class="plan-opt" data-plan="weekly" data-cta="Passer au Premium" data-sub="4,99€/semaine · Résiliable à tout moment">
+          <button class="plan-opt" data-plan="annual" data-cta="Passer au Premium annuel" data-sub="Un seul paiement de 69,99€ · ≈ 5,83€/mois">
+            <span class="plan-badge" style="color:#0f2c1e;background:#34d399;">-42%</span>
             <span class="plan-dot"></span>
             <span style="flex:1;min-width:0;">
               <span style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;">
-                <span style="font-size:15.5px;font-weight:700;color:#fff;">Hebdo</span>
-                <span style="font-size:15px;font-weight:600;color:#fff;">4,99€<span style="font-size:12px;color:#86868f;font-weight:500;"> /semaine</span></span>
+                <span style="font-size:15.5px;font-weight:700;color:#fff;">Annuel</span>
+                <span style="font-size:15px;font-weight:600;color:#fff;">69,99€<span style="font-size:12px;color:#86868f;font-weight:500;"> /an</span></span>
               </span>
+              <span style="display:block;font-size:12px;color:#86868f;margin-top:2px;">≈ 5,83€ / mois — facturé une fois</span>
             </span>
           </button>
         </div>
@@ -1104,26 +1131,37 @@
       spicy:{title:'Le Renard Spicy',fox:'assets/fox_spicy.png',desc:'Tu sais créer de la tension. Ton axe : des répliques qui font monter la température au bon moment.'},
     };
     let quizAnswers=[],quizArchetype=null;
-    function startQuiz(){
+    // Intro façon jeu vidéo (le renard qui parle) avant la 1ère question du QCM.
+    function showQuizIntro(){ go('quiz-intro'); }
+    document.getElementById('quizIntroCta').addEventListener('click',()=>{
       quizAnswers=[];
       track('qcm_start');
       renderQuizStep(0);
       go('quiz');
-    }
+    });
+    // Rejoue l'animation d'entrée d'un élément (retire/relit/rajoute la classe → force le navigateur à la relancer).
+    function replayAnim(el,cls){ el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
     function renderQuizStep(i){
       const step=QUIZ_QUESTIONS[i];
       document.getElementById('quizBar').style.width=Math.round((i/QUIZ_QUESTIONS.length)*100)+'%';
       document.getElementById('quizStep').textContent=(i+1)+'/'+QUIZ_QUESTIONS.length;
       document.getElementById('quizQ').textContent=step.q;
+      replayAnim(document.getElementById('quizQWrap'),'quiz-fade');
       const wrap=document.getElementById('quizOpts');
       wrap.innerHTML='';
-      step.opts.forEach(o=>{
+      step.opts.forEach((o,oi)=>{
         const b=document.createElement('button');
-        b.className='plan-opt';
-        b.innerHTML='<span style="font-size:15px;font-weight:600;color:#fff;">'+o.l+'</span>';
+        b.className='quiz-opt quiz-fade';
+        b.style.animationDelay=(oi*45)+'ms';
+        b.textContent=o.l;
         b.addEventListener('click',()=>{
+          // feedback tactile : on montre le choix sélectionné avant d'enchaîner (ça donne le rythme d'un jeu, pas d'un formulaire)
+          wrap.querySelectorAll('.quiz-opt').forEach(x=>x.disabled=true);
+          b.classList.add('sel');
           quizAnswers.push(o.a);
-          if(i+1<QUIZ_QUESTIONS.length){renderQuizStep(i+1);}else{finishQuiz();}
+          setTimeout(()=>{
+            if(i+1<QUIZ_QUESTIONS.length){renderQuizStep(i+1);}else{finishQuiz();}
+          },260);
         });
         wrap.appendChild(b);
       });
@@ -1143,6 +1181,9 @@
       document.getElementById('quizArchTitle').textContent=A.title;
       document.getElementById('quizArchDesc').textContent=A.desc;
       go('qreveal');
+      // rejoue l'effet d'entrée du renard au moment du reveal (sinon l'animation ne joue qu'une fois, au chargement de la page)
+      const foxWrap=document.getElementById('quizFoxWrap');
+      foxWrap.style.animation='none';void foxWrap.offsetWidth;foxWrap.style.animation='tt-pop .55s cubic-bezier(.34,1.56,.64,1) both';
       track('archetype_shown',{archetype});
       fetch('/api/quiz/complete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({archetype})}).catch(()=>{});
     }
@@ -1255,7 +1296,7 @@
     // Au chargement : on demande l'état réel au serveur (pose aussi le cookie device_id).
     fetch('/api/me').then(r => r.json()).then(q => {
       applyQuota(q);
-      if (FUNNEL_HARD && !q.quizDone) startQuiz(); // 1ère visite en funnel hard paywall → QCM avant tout
+      if (FUNNEL_HARD && !q.quizDone) showQuizIntro(); // 1ère visite en funnel hard paywall → le renard te parle, puis QCM
     }).catch(() => renderQuota());
     renderQuota();
 
@@ -2237,7 +2278,9 @@
         applyTeaseBlur(['#screen-4 .result-card'],['#copyBtn','#shareBtn','#copyUpsell','#premiumTease','#resetBtn']);
       }
       track('tease_view',{mode});
-      openGate(mode);
+      // On laisse d'abord voir la page normale avec le résultat flouté (3s), le paywall
+      // ne tombe qu'ensuite — l'utilisateur voit d'abord "sa" réponse juste sous le flou.
+      setTimeout(()=>{ openGate(mode); },3000);
     }
     function endTease(){
       if(!teasing)return;
@@ -2253,7 +2296,7 @@
     const gate=document.getElementById('gate');
     // Code promo cadeau (?promo=CODE venant de l'email -10%)
     let promoCode=new URLSearchParams(location.search).get('promo')||null;
-    let selectedPlan='annual'; // plan mis en avant par défaut
+    let selectedPlan='weekly'; // plan mis en avant par défaut
     // Compte à rebours jusqu'à minuit (Europe/Paris = reset du quota)
     let gateCdInt=null;
     function msToParisMidnight(){
@@ -2320,7 +2363,7 @@
       // le cadeau -10% s'applique au Mensuel → on pré-sélectionne le mensuel, sinon l'annuel (recommandé)
       const promoOn=Boolean(promoCode);
       document.getElementById('promoBanner').style.display=promoOn?'block':'none';
-      selectPlan(document.querySelector('.plan-opt[data-plan="'+(promoOn?'monthly':'annual')+'"]'));
+      selectPlan(document.querySelector('.plan-opt[data-plan="'+(promoOn?'monthly':'weekly')+'"]'));
       gate.classList.add('show');
       track('paywall_view',{context:context||'quota'});
     }
@@ -2489,6 +2532,13 @@
     let authMode='login'; // 'login' | 'signup'
     let authContext=null; // null | 'analysis' (mur d'inscription avant résultats)
     let pendingAnalysis=false; // une analyse attend que l'utilisateur crée son compte
+    // Après création de compte : lance la VRAIE analyse si l'outil est accessible, sinon
+    // le tease flouté (funnel hard paywall, ou outil premium en freemium) — jamais les deux.
+    function resumeAfterAuth(){
+      if((MODES[mode].premium||(FUNNEL_HARD&&mode==='reply'))&&!quota.isPremium){startTeasePaywall();}
+      else if(mode==='bio'){runBio();}
+      else{runAnalyse();}
+    }
 
     function renderAuth(){
       const title=document.getElementById('authTitle'),sub=document.getElementById('authSubText');
@@ -2551,8 +2601,8 @@
           renderAuth();
           setTimeout(()=>{
             authOverlay.classList.remove('show');
-            // une analyse attendait l'inscription → on la lance pour de vrai
-            if(pendingAnalysis){pendingAnalysis=false;authContext=null;if(mode==='bio')runBio();else runAnalyse();}
+            // une analyse attendait l'inscription → on reprend là où c'était resté
+            if(pendingAnalysis){pendingAnalysis=false;authContext=null;resumeAfterAuth();}
             else if(teasing){
               // connecté pendant le tease : si son compte est premium, on lance la VRAIE analyse
               const nowPremium=quota.isPremium;endTease();
@@ -2581,7 +2631,7 @@
           if(img){
             imageDataUrl=img;hasImage=true;
             dzPreview.src=img;dzPreview.style.display='block';dzEmpty.style.display='none';dropzone.classList.add('has-img');analyzeBtn.disabled=false;
-            runAnalyse();
+            resumeAfterAuth();
           }else{
             openAuth(); // montre "Connecté ✓"
           }
@@ -2633,7 +2683,7 @@
           try{localStorage.removeItem(GPENDING_KEY);}catch(e){}
           applyQuota(d.status);
           renderAuth();
-          if(pendingAnalysis){authOverlay.classList.remove('show');pendingAnalysis=false;authContext=null;if(mode==='bio')runBio();else runAnalyse();}
+          if(pendingAnalysis){authOverlay.classList.remove('show');pendingAnalysis=false;authContext=null;resumeAfterAuth();}
           else showNotice('Connecté ✓','Ton compte Google est maintenant actif dans l\'app.',{fox:true,cta:'Nickel 🦊'});
         }
       }catch(e){}
@@ -2823,7 +2873,11 @@
         if(bioInput.value.trim().length<5)return;
       }else if(!hasImage)return;
       // outil premium + gratuit → paywall à la réponse (funnel hard paywall : reply aussi, dès la 1ère fois)
-      if((MODES[mode].premium||(FUNNEL_HARD&&mode==='reply'))&&!quota.isPremium){startTeasePaywall();return;}
+      const gated=(MODES[mode].premium||(FUNNEL_HARD&&mode==='reply'))&&!quota.isPremium;
+      // Funnel hard paywall : compte (Google/email) obligatoire avant même de voir le tease, sur tous les outils —
+      // comme le mur d'inscription qui existe déjà pour le mode Réplique en freemium.
+      if(FUNNEL_HARD&&gated&&!currentAccount){startTeaseAnalyse();return;}
+      if(gated){startTeasePaywall();return;}
       if(mode==='bio'){
         if(!currentAccount){pendingAnalysis=true;openAuth('analysis');return;}
         runBio();return;
