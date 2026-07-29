@@ -131,13 +131,24 @@ function saveTikTokTokens(tokens) {
   writeFileSync(TIKTOK_TOKENS_FILE, JSON.stringify(tokens, null, 2));
 }
 
-async function tiktokTokenRequest(params) {
+// Tant que l'app Production n'est pas validée par TikTok, l'OAuth n'y fonctionne pas
+// du tout ("client_key" error) : on passe donc par le Sandbox, qui autorise jusqu'à
+// 10 comptes testeurs déclarés. Convention : un `state` suffixé `_sandbox` utilise
+// les identifiants Sandbox, sinon Production. Ça permet de basculer sans rien changer
+// le jour où la review passe.
+function tiktokCreds(account = '') {
+  const sandbox = String(account).endsWith('_sandbox');
+  return sandbox
+    ? { client_key: process.env.TIKTOK_SANDBOX_CLIENT_KEY, client_secret: process.env.TIKTOK_SANDBOX_CLIENT_SECRET }
+    : { client_key: process.env.TIKTOK_CLIENT_KEY, client_secret: process.env.TIKTOK_CLIENT_SECRET };
+}
+
+async function tiktokTokenRequest(params, account) {
   const res = await fetch('https://open.tiktokapis.com/v2/oauth/token/', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cache-Control': 'no-cache' },
     body: new URLSearchParams({
-      client_key: process.env.TIKTOK_CLIENT_KEY,
-      client_secret: process.env.TIKTOK_CLIENT_SECRET,
+      ...tiktokCreds(account),
       ...params,
     }),
   });
@@ -156,7 +167,7 @@ app.get('/auth/tiktok/callback', async (req, res) => {
       code,
       grant_type: 'authorization_code',
       redirect_uri: `${PUBLIC_URL}/auth/tiktok/callback`,
-    });
+    }, state);
     const tokens = loadTikTokTokens();
     tokens[state] = {
       access_token: data.access_token,
@@ -186,7 +197,7 @@ app.get('/internal/tiktok-token', async (req, res) => {
 
   if (Date.now() > t.expires_at - 5 * 60 * 1000) {
     try {
-      const data = await tiktokTokenRequest({ grant_type: 'refresh_token', refresh_token: t.refresh_token });
+      const data = await tiktokTokenRequest({ grant_type: 'refresh_token', refresh_token: t.refresh_token }, account);
       tokens[account] = {
         access_token: data.access_token,
         refresh_token: data.refresh_token,
