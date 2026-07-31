@@ -607,6 +607,7 @@
       <div class="glow-top"></div>
       <div class="tt-head">
         <div class="tt-logo">
+          <button id="resultBackBtn" class="chat-iconbtn" title="Retour">‹</button>
           <div class="tt-avatar" style="width:34px;height:34px;"><img src="assets/fox_chill.png" alt="Tacotac"></div>
           <div style="color:#fff;font-size:17px;font-weight:700;letter-spacing:-.4px;">Tes répliques</div>
         </div>
@@ -677,6 +678,7 @@
       <div class="glow-top"></div>
       <div class="tt-head">
         <div class="tt-logo">
+          <button id="coachBackBtn" class="chat-iconbtn" title="Retour">‹</button>
           <div class="tt-avatar" style="width:34px;height:34px;"><img src="assets/fox_chill.png" alt="Tacotac"></div>
           <div style="color:#fff;font-size:17px;font-weight:700;letter-spacing:-.4px;">Ton diagnostic</div>
         </div>
@@ -733,6 +735,7 @@
       <div class="glow-top"></div>
       <div class="tt-head">
         <div class="tt-logo">
+          <button id="bioBackBtn" class="chat-iconbtn" title="Retour">‹</button>
           <div class="tt-avatar" style="width:34px;height:34px;"><img src="assets/fox_chill.png" alt="Tacotac"></div>
           <div style="color:#fff;font-size:17px;font-weight:700;letter-spacing:-.4px;">Ta nouvelle bio</div>
         </div>
@@ -1829,6 +1832,7 @@
       track('copy_reply',{tone:'coach'});
     });
     document.getElementById('coachReset').addEventListener('click',()=>go(1));
+    document.getElementById('coachBackBtn').addEventListener('click',()=>go(1));
 
     // ══════════════ MODE BIO — appel /api/bio + ÉCRAN 6 ══════════════
     async function runBio(){
@@ -1885,6 +1889,7 @@
       go(6);
     }
     document.getElementById('bioReset').addEventListener('click',()=>go(1));
+    document.getElementById('bioBackBtn').addEventListener('click',()=>go(1));
 
     // ══════════════ HISTORIQUE (localStorage — rien côté serveur) ══════════════
     const HIST_KEY='tacotac_history';
@@ -2193,6 +2198,7 @@
       go(1);
     }
     document.getElementById('resetBtn').addEventListener('click',resetToUpload);
+    document.getElementById('resultBackBtn').addEventListener('click',resetToUpload);
 
     // ══════════════ DÉMO (exemple pré-rempli, sans upload ni compte) ══════════════
     const DEMO_REPLIES={
@@ -2322,13 +2328,13 @@
       teasing=true;
       if(mode==='coach'){
         coachData={...DEMO_COACH,score:61};showCoach();
-        applyTeaseBlur(['#screen-5 .coach-card','#screen-5 .bubble'],['#coachCopy','#coachReset']);
+        applyTeaseBlur(['#screen-5 .coach-card','#screen-5 .bubble'],['#coachCopy','#coachReset','#coachBackBtn']);
       }else if(mode==='bio'){
         bioData=DEMO_BIO;showBio();
-        applyTeaseBlur(['#screen-6 .bio-card','#bioAnalyse'],['#bioReset']);
+        applyTeaseBlur(['#screen-6 .bio-card','#bioAnalyse'],['#bioReset','#bioBackBtn']);
       }else{ // reply (funnel hard paywall) & opener partagent le même écran/flou
         replies=(mode==='reply')?DEMO_REPLIES:DEMO_OPENER;selectedTone='drole';variant=0;showResults(false);
-        applyTeaseBlur(['#screen-4 .result-card'],['#copyBtn','#shareBtn','#copyUpsell','#premiumTease','#resetBtn']);
+        applyTeaseBlur(['#screen-4 .result-card'],['#copyBtn','#shareBtn','#copyUpsell','#premiumTease','#resetBtn','#resultBackBtn']);
       }
       track('tease_view',{mode});
       // On laisse d'abord voir la page normale avec le résultat flouté (3s), le paywall
