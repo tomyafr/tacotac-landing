@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>Espace collaborateur · Tacotac</title>
+<link rel="icon" href="/assets/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ══════════════ Base ══════════════ */
+*,*::before,*::after{box-sizing:border-box}
+:root{
+  --bg:#08080A; --bg2:#0E0E11; --card:#131317; --card2:#17171C;
+  --line:rgba(255,255,255,.075); --line2:rgba(255,255,255,.13);
+  --txt:#F5F2EC; --muted:#8C8880; --muted2:#605C57;
+  --o:#FF5C00; --o2:#FF8A3D; --o-soft:rgba(255,92,0,.14);
+  --green:#3DDC8A; --red:#FF5470; --blue:#5B8DEF; --violet:#A77BFF;
+  --r:18px;
+}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{min-height:100dvh;overflow-x:hidden}
+input,select,textarea,button{font-family:inherit;font-size:16px}
+::selection{background:rgba(255,92,0,.85);color:#fff}
+a{color:inherit}
+.display{font-family:'Bricolage Grotesque','Space Grotesk',sans-serif;font-weight:800;letter-spacing:-.035em;line-height:1.02}
+.mono{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+/* Fond "aurora" animé — discret, donne le côté futuriste sans nuire à la lecture */
+.aurora{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.aurora i{position:absolute;display:block;border-radius:50%;filter:blur(90px);opacity:.5;animation:float 22s ease-in-out infinite}
+.aurora i:nth-child(1){width:52vw;height:52vw;background:radial-gradient(circle,rgba(255,92,0,.32),transparent 65%);top:-16vw;left:-10vw}
+.aurora i:nth-child(2){width:44vw;height:44vw;background:radial-gradient(circle,rgba(167,123,255,.20),transparent 65%);bottom:-14vw;right:-8vw;animation-delay:-8s}
+.aurora i:nth-child(3){width:36vw;height:36vw;background:radial-gradient(circle,rgba(91,141,239,.16),transparent 65%);top:38%;right:22%;animation-delay:-15s}
+@keyframes float{0%,100%{transform:translate3d(0,0,0) scale(1)}33%{transform:translate3d(4vw,-3vw,0) scale(1.08)}66%{transform:translate3d(-3vw,3vw,0) scale(.95)}}
+.grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);
+  background-size:56px 56px;mask-image:radial-gradient(ellipse 90% 70% at 50% 0%,#000,transparent 75%)}
+@media (prefers-reduced-motion:reduce){.aurora i{animation:none}}
+
+/* ══════════════ Login ══════════════ */
+#login{position:relative;z-index:1;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px 18px}
+.lbox{width:100%;max-width:420px}
+.lcard{background:linear-gradient(180deg,rgba(23,23,28,.92),rgba(15,15,18,.92));border:1px solid var(--line2);border-radius:26px;padding:30px 26px 26px;backdrop-filter:blur(22px);box-shadow:0 40px 90px -30px rgba(0,0,0,.9),0 0 0 1px rgba(255,92,0,.07) inset}
+.logo-row{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:22px}
+.logo-row img{width:66px;height:66px;border-radius:20px;box-shadow:0 12px 40px -10px rgba(255,92,0,.6)}
+.badge-pro{display:inline-flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--o2);background:var(--o-soft);border:1px solid rgba(255,92,0,.28);padding:5px 11px;border-radius:999px;font-weight:600}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:6px;font-weight:500}
+.input{width:100%;background:#0C0C0F;border:1px solid var(--line2);border-radius:13px;padding:13px 14px;color:var(--txt);outline:none;transition:border-color .16s,box-shadow .16s}
+.input:focus{border-color:rgba(255,92,0,.6);box-shadow:0 0 0 3px rgba(255,92,0,.13)}
+.btn{width:100%;border:0;border-radius:13px;padding:14px;font-weight:700;font-size:15.5px;cursor:pointer;transition:transform .12s,filter .16s;color:#fff;background:linear-gradient(135deg,var(--o),#FF8A3D)}
+.btn:hover{filter:brightness(1.08)}.btn:active{transform:scale(.985)}
+.btn[disabled]{opacity:.55;cursor:not-allowed}
+.btn-ghost{background:transparent;border:1px solid var(--line2);color:var(--txt)}
+.btn-ghost:hover{background:rgba(255,255,255,.045);filter:none}
+.btn-sm{width:auto;padding:9px 14px;font-size:13.5px;border-radius:11px}
+.sep{display:flex;align-items:center;gap:12px;color:var(--muted2);font-size:12px;margin:18px 0}
+.sep::before,.sep::after{content:'';flex:1;height:1px;background:var(--line)}
+.link{color:var(--o2);text-decoration:none;font-size:13.5px;cursor:pointer;background:none;border:0;padding:0;font-weight:500}
+.link:hover{text-decoration:underline}
+.msg{border-radius:12px;padding:11px 13px;font-size:13.5px;line-height:1.5;margin-bottom:14px;display:none}
+.msg.err{background:rgba(255,84,112,.11);border:1px solid rgba(255,84,112,.3);color:#FF9AAC;display:block}
+.msg.ok{background:rgba(61,220,138,.1);border:1px solid rgba(61,220,138,.28);color:#8DEEBB;display:block}
+.google-btn{display:flex;align-items:center;justify-content:center;gap:10px;text-decoration:none;width:100%;background:#fff;color:#1a1a1a;border-radius:13px;padding:13px;font-weight:600;font-size:15px}
+
+/* ══════════════ App shell ══════════════ */
+#app{display:none;position:relative;z-index:1;min-height:100dvh}
+.topbar{position:sticky;top:0;z-index:40;backdrop-filter:blur(18px);background:rgba(8,8,10,.78);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:1240px;margin:0 auto;padding:12px 18px;display:flex;align-items:center;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.02em}
+.brand img{width:32px;height:32px;border-radius:10px}
+.brand small{display:block;font-size:10.5px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.tabs{display:flex;gap:4px;margin-left:auto;background:rgba(255,255,255,.04);padding:4px;border-radius:13px;border:1px solid var(--line)}
+.tab{border:0;background:transparent;color:var(--muted);padding:8px 14px;border-radius:10px;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap}
+.tab.on{background:linear-gradient(135deg,var(--o),#FF8A3D);color:#fff;box-shadow:0 6px 18px -6px rgba(255,92,0,.7)}
+.who{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--muted);white-space:nowrap}
+.brand small{white-space:nowrap}
+.avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--o),#FF8A3D);display:grid;place-items:center;font-weight:700;color:#fff;font-size:13px}
+/* Sous 1080px : les onglets passent sur une 2e ligne (et défilent) — sinon
+   le bloc "qui suis-je" est coupé sur tablette / téléphone. */
+@media(max-width:1080px){
+  .topbar-in{flex-wrap:wrap;gap:10px 12px}
+  .tabs{order:3;width:100%;margin-left:0;overflow-x:auto;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .who{margin-left:auto}
+}
+main{max-width:1240px;margin:0 auto;padding:22px 18px 90px}
+.view{display:none}.view.on{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ══════════════ Cards / grid ══════════════ */
+.card{background:linear-gradient(180deg,rgba(23,23,28,.72),rgba(15,15,18,.72));border:1px solid var(--line);border-radius:var(--r);padding:18px;backdrop-filter:blur(14px)}
+.card h3{margin:0 0 2px;font-size:15px;font-weight:700;letter-spacing:-.01em}
+.card .sub{color:var(--muted);font-size:12.5px;margin:0 0 14px}
+.grid{display:grid;gap:14px}
+.g-kpi{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.g-2{grid-template-columns:1.55fr 1fr}
+@media(max-width:900px){.g-2{grid-template-columns:1fr}}
+
+/* padding-bottom : réserve la place de la sparkline sous le texte (sinon elle passe dessus) */
+.kpi{position:relative;overflow:hidden;padding-bottom:46px}
+.kpi>*{position:relative;z-index:1}
+.kpi::after{content:'';position:absolute;inset:0;background:radial-gradient(120% 90% at 100% 0%,rgba(255,92,0,.13),transparent 60%);pointer-events:none}
+.kpi .lab{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:7px}
+.kpi .val{font-size:31px;margin:8px 0 2px;letter-spacing:-.04em}
+.kpi .foot{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.delta{display:inline-flex;align-items:center;gap:3px;font-weight:600;font-size:12px;padding:2px 7px;border-radius:999px}
+.delta.up{color:#8DEEBB;background:rgba(61,220,138,.12)}
+.delta.down{color:#FF9AAC;background:rgba(255,84,112,.12)}
+.delta.flat{color:var(--muted);background:rgba(255,255,255,.05)}
+.kpi .spark{position:absolute;right:0;bottom:0;left:0;height:38px;opacity:.7;z-index:0}
+
+/* Ruban code promo */
+.promo{display:flex;flex-wrap:wrap;align-items:center;gap:14px;background:linear-gradient(120deg,rgba(255,92,0,.16),rgba(167,123,255,.09) 60%,transparent);border:1px solid rgba(255,92,0,.24);border-radius:var(--r);padding:18px;margin-bottom:16px;position:relative;overflow:hidden}
+.promo::before{content:'';position:absolute;top:-60%;left:-30%;width:60%;height:220%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent);transform:rotate(18deg);animation:shine 6.5s ease-in-out infinite}
+@keyframes shine{0%,70%{left:-40%}100%{left:130%}}
+.code-pill{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:26px;letter-spacing:.12em;color:#fff;background:#0C0C0F;border:1.5px dashed rgba(255,122,69,.55);border-radius:14px;padding:10px 18px}
+.copy{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.07);border:1px solid var(--line2);color:var(--txt);border-radius:10px;padding:8px 12px;font-size:13px;cursor:pointer;font-weight:600}
+.copy:hover{background:rgba(255,255,255,.12)}
+@media(max-width:620px){.promo>div:last-child{text-align:left;min-width:0}.code-pill{font-size:22px}}
+
+/* Filtres */
+.chips{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.chip{border:1px solid var(--line2);background:rgba(255,255,255,.035);color:var(--muted);border-radius:999px;padding:7px 14px;font-size:13px;cursor:pointer;font-weight:600;white-space:nowrap}
+.chip.on{background:var(--o-soft);border-color:rgba(255,92,0,.45);color:#FFB183}
+.toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.toolbar .spacer{flex:1}
+
+/* Tableaux */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:520px}
+th{text-align:left;color:var(--muted);font-weight:600;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;padding:0 12px 10px;white-space:nowrap}
+td{padding:12px;border-top:1px solid var(--line);white-space:nowrap}
+tbody tr:hover{background:rgba(255,255,255,.028)}
+.tag{display:inline-block;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid var(--line2);color:var(--muted)}
+.tag.hebdo{color:#9DC0FF;border-color:rgba(91,141,239,.4);background:rgba(91,141,239,.1)}
+.tag.mensuel{color:#FFB183;border-color:rgba(255,92,0,.4);background:rgba(255,92,0,.1)}
+.tag.annuel{color:#C9AEFF;border-color:rgba(167,123,255,.4);background:rgba(167,123,255,.1)}
+.tag.active{color:#8DEEBB;border-color:rgba(61,220,138,.4);background:rgba(61,220,138,.1)}
+.tag.revoked{color:#FF9AAC;border-color:rgba(255,84,112,.4);background:rgba(255,84,112,.1)}
+.empty{text-align:center;color:var(--muted);padding:38px 16px;font-size:14px}
+.empty .big{font-size:38px;margin-bottom:10px;opacity:.65}
+
+/* Modale */
+.modal{position:fixed;inset:0;z-index:80;background:rgba(4,4,6,.72);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:18px}
+.modal.on{display:flex}
+.modal-in{width:100%;max-width:520px;max-height:88dvh;overflow:auto;background:linear-gradient(180deg,#1A1A1F,#111114);border:1px solid var(--line2);border-radius:22px;padding:24px}
+.modal-in h3{margin:0 0 4px;font-size:19px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:520px){.row2{grid-template-columns:1fr}}
+
+/* Toast */
+#toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,26px);z-index:120;background:#17171C;border:1px solid var(--line2);border-radius:13px;padding:12px 18px;font-size:14px;font-weight:600;opacity:0;transition:.25s;pointer-events:none;box-shadow:0 20px 50px -20px #000}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+.skel{background:linear-gradient(90deg,rgba(255,255,255,.045),rgba(255,255,255,.09),rgba(255,255,255,.045));background-size:200% 100%;animation:sk 1.3s linear infinite;border-radius:8px;color:transparent}
+@keyframes sk{to{background-position:-200% 0}}
+svg{display:block;overflow:visible}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:10px}
+.legend i{width:9px;height:9px;border-radius:3px;display:inline-block;margin-right:6px}
+.hint{font-size:12.5px;color:var(--muted2);line-height:1.6}
+.trust{display:flex;gap:10px;align-items:flex-start;background:rgba(91,141,239,.07);border:1px solid rgba(91,141,239,.2);border-radius:14px;padding:13px 15px;font-size:13px;color:#A9C2F5;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="aurora"><i></i><i></i><i></i></div>
+<div class="grid-bg"></div>
+
+<!-- ══════════════ CONNEXION ══════════════ -->
+<section id="login">
+  <div class="lbox">
+    <div class="lcard">
+      <div class="logo-row">
+        <img src="/assets/icon-192.png" alt="Tacotac">
+        <span class="badge-pro">● Espace collaborateur</span>
+      </div>
+      <h1 class="display" style="font-size:26px;text-align:center;margin:0 0 6px">Tes gains, en direct.</h1>
+      <p style="text-align:center;color:var(--muted);font-size:14px;margin:0 0 22px;line-height:1.55">Connecte-toi avec l'email de ton compte Tacotac.</p>
+
+      <div id="lmsg" class="msg"></div>
+
+      <form id="lform" autocomplete="on">
+        <div class="field">
+          <label for="lemail">Email</label>
+          <input class="input" id="lemail" type="email" autocomplete="username" placeholder="toi@exemple.com" required>
+        </div>
+        <div class="field" id="pwfield">
+          <label for="lpw">Mot de passe</label>
+          <input class="input" id="lpw" type="password" autocomplete="current-password" placeholder="••••••••">
+        </div>
+        <button class="btn" id="lbtn" type="submit">Se connecter</button>
+      </form>
+
+      <div style="text-align:center;margin-top:14px">
+        <button class="link" id="magicBtn" type="button">Première connexion / mot de passe oublié →</button>
+      </div>
+
+      <div class="sep" id="gsep" style="display:none">ou</div>
+      <a class="google-btn" id="gbtn" href="/api/auth/google?next=/partner" style="display:none">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.6 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.8 6.1C12.3 13.2 17.6 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.6c0-1.6-.1-3.1-.4-4.6H24v9.1h12.4c-.5 2.9-2.2 5.3-4.6 7l7.6 5.9c4.4-4.1 6.7-10.1 6.7-17.4z"/><path fill="#FBBC05" d="M10.4 28.7c-.5-1.4-.8-2.9-.8-4.7s.3-3.3.8-4.7l-7.8-6.1C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.8l7.8-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.8 2.3-8.3 2.3-6.4 0-11.7-3.7-13.6-9.7l-7.8 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
+        Continuer avec Google
+      </a>
+
+      <p class="hint" style="text-align:center;margin:20px 0 0">Accès réservé aux collaborateurs Tacotac.<br>Ce lien est personnel — ne le partage pas.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ APPLICATION ══════════════ -->
+<div id="app">
+  <header class="topbar">
+    <div class="topbar-in">
+      <div class="brand">
+        <img src="/assets/icon-192.png" alt="">
+        <div>Tacotac<small>Espace collaborateur</small></div>
+      </div>
+      <div class="tabs" id="tabs">
+        <button class="tab on" data-view="dash">Tableau de bord</button>
+        <button class="tab" data-view="sales">Mes ventes</button>
+        <button class="tab" data-view="profile">Mon profil</button>
+        <button class="tab" data-view="admin" id="tabAdmin" style="display:none">Console admin</button>
+      </div>
+      <div class="who" id="who"></div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ── Tableau de bord ── -->
+    <section class="view on" id="v-dash">
+      <div id="viewingBanner" style="display:none" class="trust" data-role="banner"></div>
+      <div class="promo" id="promoBar"></div>
+
+      <div class="toolbar">
+        <div class="chips" id="periodChips">
+          <button class="chip" data-days="7">7 jours</button>
+          <button class="chip on" data-days="30">30 jours</button>
+          <button class="chip" data-days="90">90 jours</button>
+          <button class="chip" data-days="365">12 mois</button>
+          <button class="chip" data-days="0">Depuis le début</button>
+        </div>
+        <div class="spacer"></div>
+        <button class="copy" id="exportBtn">⤓ Exporter en CSV</button>
+      </div>
+
+      <div class="grid g-kpi" id="kpis" style="margin-bottom:14px"></div>
+
+      <div class="grid g-2" style="margin-bottom:14px">
+        <div class="card">
+          <h3>Évolution de tes gains</h3>
+          <p class="sub" id="evoSub">Commission gagnée et nombre d'abonnements, jour par jour.</p>
+          <div id="chartMain"></div>
+          <div class="legend">
+            <span><i style="background:linear-gradient(135deg,#FF5C00,#FF8A3D)"></i>Ta commission</span>
+            <span><i style="background:rgba(167,123,255,.85)"></i>Abonnements</span>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Répartition par formule</h3>
+          <p class="sub">Ce que ta communauté choisit le plus.</p>
+          <div id="chartDonut"></div>
+        </div>
+      </div>
+
+      <div class="grid g-2">
+        <div class="card">
+          <h3>Commission cumulée</h3>
+          <p class="sub">La courbe qui compte : ton total qui monte.</p>
+          <div id="chartCum"></div>
+        </div>
+        <div class="card">
+          <h3>Tes meilleurs jours</h3>
+          <p class="sub">Quand ta communauté achète le plus.</p>
+          <div id="chartDow"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <h3>Historique des versements</h3>
+        <p class="sub">Chaque commission qui t'a été payée est notée ici. Transparence totale.</p>
+        <div class="tbl-wrap"><table id="payTbl"></table></div>
+      </div>
+    </section>
+
+    <!-- ── Mes ventes ── -->
+    <section class="view" id="v-sales">
+      <div class="card">
+        <h3>Toutes les ventes générées par ton code</h3>
+        <p class="sub">Chaque ligne = une personne qui s'est abonnée grâce à toi.</p>
+        <div class="toolbar">
+          <div class="chips" id="formulaChips">
+            <button class="chip on" data-f="">Toutes</button>
+            <button class="chip" data-f="Hebdo">Hebdo</button>
+            <button class="chip" data-f="Mensuel">Mensuel</button>
+            <button class="chip" data-f="Annuel">Annuel</button>
+          </div>
+          <div class="spacer"></div>
+          <input class="input" id="saleSearch" placeholder="Rechercher un client…" style="max-width:230px">
+        </div>
+        <div class="tbl-wrap"><table id="salesTbl"></table></div>
+        <div style="text-align:center;margin-top:16px"><button class="btn btn-ghost btn-sm" id="moreBtn" style="display:none">Voir plus</button></div>
+      </div>
+    </section>
+
+    <!-- ── Profil ── -->
+    <section class="view" id="v-profile">
+      <div class="grid g-2">
+        <div class="card">
+          <h3>Mes informations</h3>
+          <p class="sub">Ce que Tacotac affiche à ton sujet.</p>
+          <div class="field"><label>Nom affiché</label><input class="input" id="pName" placeholder="Ton nom / ton pseudo"></div>
+          <div class="field"><label>Réseau principal (@)</label><input class="input" id="pHandle" placeholder="@toncompte"></div>
+          <div class="field"><label>Comment te payer ta commission</label><input class="input" id="pPayout" placeholder="PayPal, Revolut, RIB…"></div>
+          <button class="btn" id="pSave">Enregistrer</button>
+          <p class="hint" style="margin-top:12px">Ces infos servent uniquement à te verser tes commissions.</p>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:14px">
+            <h3>Sécurité</h3>
+            <p class="sub">Définis un mot de passe pour te reconnecter sans email.</p>
+            <div class="field"><label>Nouveau mot de passe</label><input class="input" id="pPw" type="password" placeholder="8 caractères minimum"></div>
+            <button class="btn" id="pwSave">Mettre à jour</button>
+          </div>
+          <div class="card">
+            <h3>Mon contrat</h3>
+            <div id="contract"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Console admin ── -->
+    <section class="view" id="v-admin">
+      <div class="toolbar">
+        <div>
+          <h2 class="display" style="font-size:23px;margin:0">Console administrateur</h2>
+          <p style="color:var(--muted);font-size:13px;margin:4px 0 0">Tous les collaborateurs, leurs ventes et leurs commissions.</p>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn btn-sm" id="addCollabBtn">+ Ajouter un collaborateur</button>
+      </div>
+      <div class="grid g-kpi" id="adminKpis" style="margin-bottom:14px"></div>
+      <div class="card" style="margin-bottom:14px">
+        <h3>Ventes du programme d'affiliation</h3>
+        <p class="sub">Toutes ventes attribuées confondues, 90 derniers jours.</p>
+        <div id="chartAdmin"></div>
+      </div>
+      <div class="card">
+        <h3>Collaborateurs</h3>
+        <p class="sub">Clique sur une ligne pour ouvrir la fiche complète.</p>
+        <div class="tbl-wrap"><table id="collabTbl"></table></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Modales -->
+<div class="modal" id="modal"><div class="modal-in" id="modalIn"></div></div>
+<div id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   ESPACE COLLABORATEUR — logique front (aucune dépendance externe :
+   les graphiques sont du SVG généré à la main, donc rapides et offline-safe)
+   ══════════════════════════════════════════════════════════════ */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const eur = (c) => (c / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: (Math.abs(c) >= 10000 ? 0 : 2) });
+const eur0 = (c) => (c / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+const nf = (n) => n.toLocaleString('fr-FR');
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+const dayKey = (ts) => new Date(ts * 1000).toISOString().slice(0, 10);
+const fmtDate = (ts) => new Date(ts * 1000).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: '2-digit' });
+const fmtDateTime = (ts) => new Date(ts * 1000).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+let STATE = { session: null, data: null, days: 30, formula: '', search: '', page: 1, admin: null, viewAs: null };
+
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), 2400);
+}
+async function api(url, opts) {
+  const r = await fetch(url, { credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, ...opts });
+  let j = {}; try { j = await r.json(); } catch { /* réponse vide */ }
+  return { status: r.status, ...j };
+}
+
+/* ══════════════ GRAPHIQUES (SVG maison) ══════════════ */
+
+// Courbe lissée (Catmull-Rom → Bézier) : rend les graphes "produit fini" au lieu de casser en zigzag.
+function smoothPath(pts) {
+  if (pts.length < 2) return '';
+  let d = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+    const c1x = p1[0] + (p2[0] - p0[0]) / 6, c1y = p1[1] + (p2[1] - p0[1]) / 6;
+    const c2x = p2[0] - (p3[0] - p1[0]) / 6, c2y = p2[1] - (p3[1] - p1[1]) / 6;
+    d += ` C${c1x},${c1y} ${c2x},${c2y} ${p2[0]},${p2[1]}`;
+  }
+  return d;
+}
+
+// Graphe principal : aire (commission) + barres (nb d'abonnements) sur le même axe temps.
+function drawCombo(el, series, opt = {}) {
+  const W = 720, H = 260, PL = 46, PR = 16, PT = 14, PB = 26;
+  const iw = W - PL - PR, ih = H - PT - PB;
+  const n = series.length;
+  if (!n) { el.innerHTML = emptyChart("Aucune donnée sur la période"); return; }
+  const maxV = Math.max(1, ...series.map((s) => s.commission));
+  const maxC = Math.max(1, ...series.map((s) => s.count));
+  const x = (i) => PL + (n === 1 ? iw / 2 : (i * iw) / (n - 1));
+  const y = (v) => PT + ih - (v / maxV) * ih;
+  const pts = series.map((s, i) => [x(i), y(s.commission)]);
+  const line = smoothPath(pts);
+  const area = line + ` L${x(n - 1)},${PT + ih} L${x(0)},${PT + ih} Z`;
+  const bw = Math.max(2, Math.min(14, iw / n - 2));
+  const bars = series.map((s, i) => {
+    const h = (s.count / maxC) * (ih * 0.42);
+    return `<rect x="${x(i) - bw / 2}" y="${PT + ih - h}" width="${bw}" height="${h}" rx="${Math.min(3, bw / 2)}" fill="rgba(167,123,255,.5)"/>`;
+  }).join('');
+  // 4 repères horizontaux + libellés d'axe en euros
+  let gy = '';
+  for (let i = 0; i <= 3; i++) {
+    const v = (maxV / 3) * i, yy = y(v);
+    gy += `<line x1="${PL}" x2="${W - PR}" y1="${yy}" y2="${yy}" stroke="rgba(255,255,255,.055)"/>
+           <text x="${PL - 8}" y="${yy + 4}" text-anchor="end" fill="#605C57" font-size="10.5">${eur0(v)}</text>`;
+  }
+  const step = Math.max(1, Math.ceil(n / 6));
+  let gx = '';
+  for (let i = 0; i < n; i += step) {
+    gx += `<text x="${x(i)}" y="${H - 6}" text-anchor="middle" fill="#605C57" font-size="10.5">${esc(series[i].label)}</text>`;
+  }
+  const dots = series.map((s, i) => `<circle class="hp" data-i="${i}" cx="${x(i)}" cy="${y(s.commission)}" r="9" fill="transparent"/>`).join('');
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="height:260px">
+    <defs>
+      <linearGradient id="gA" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#FF5C00" stop-opacity=".45"/><stop offset="100%" stop-color="#FF5C00" stop-opacity="0"/>
+      </linearGradient>
+      <linearGradient id="gL" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#FF5C00"/><stop offset="100%" stop-color="#FF8A3D"/>
+      </linearGradient>
+    </defs>
+    ${gy}${bars}
+    <path d="${area}" fill="url(#gA)"/>
+    <path d="${line}" fill="none" stroke="url(#gL)" stroke-width="2.5" stroke-linecap="round"/>
+    ${gx}
+    <g id="cursor" style="display:none"><line stroke="rgba(255,255,255,.25)" y1="${PT}" y2="${PT + ih}"/><circle r="4.5" fill="#FF5C00" stroke="#0A0A0C" stroke-width="2"/></g>
+    ${dots}
+  </svg><div class="tip" style="position:absolute;pointer-events:none;opacity:0;transition:.12s;background:#1A1A1F;border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:8px 11px;font-size:12.5px;white-space:nowrap;z-index:5;box-shadow:0 14px 34px -14px #000"></div>`;
+  el.style.position = 'relative';
+  const tip = $('.tip', el), svg = el.querySelector('svg'), cur = $('#cursor', el);
+  $$('.hp', el).forEach((c) => {
+    c.addEventListener('mouseenter', () => {
+      const s = series[+c.dataset.i];
+      tip.innerHTML = `<b>${esc(s.label)}</b><br><span style="color:#FF8A3D">${eur(s.commission)}</span> · ${s.count} abo${s.count > 1 ? 's' : ''}`;
+      tip.style.opacity = 1;
+      const bb = svg.getBoundingClientRect(), eb = el.getBoundingClientRect();
+      const px = (+c.getAttribute('cx') / W) * bb.width;
+      tip.style.left = Math.max(4, Math.min(bb.width - 150, px - 60)) + 'px';
+      tip.style.top = (bb.top - eb.top + (+c.getAttribute('cy') / H) * bb.height - 52) + 'px';
+      cur.style.display = ''; cur.querySelector('line').setAttribute('x1', c.getAttribute('cx'));
+      cur.querySelector('line').setAttribute('x2', c.getAttribute('cx'));
+      cur.querySelector('circle').setAttribute('cx', c.getAttribute('cx'));
+      cur.querySelector('circle').setAttribute('cy', c.getAttribute('cy'));
+    });
+    c.addEventListener('mouseleave', () => { tip.style.opacity = 0; cur.style.display = 'none'; });
+  });
+}
+
+// Courbe cumulée simple (sans barres) — la "montée" du total gagné.
+function drawCum(el, series) {
+  const W = 640, H = 210, PL = 46, PR = 14, PT = 12, PB = 24;
+  const iw = W - PL - PR, ih = H - PT - PB, n = series.length;
+  if (!n) { el.innerHTML = emptyChart("Rien à cumuler pour l'instant"); return; }
+  let acc = 0; const cum = series.map((s) => (acc += s.commission));
+  const max = Math.max(1, ...cum);
+  const x = (i) => PL + (n === 1 ? iw / 2 : (i * iw) / (n - 1));
+  const y = (v) => PT + ih - (v / max) * ih;
+  const pts = cum.map((v, i) => [x(i), y(v)]);
+  const line = smoothPath(pts);
+  let gy = '';
+  for (let i = 0; i <= 3; i++) { const v = (max / 3) * i, yy = y(v);
+    gy += `<line x1="${PL}" x2="${W - PR}" y1="${yy}" y2="${yy}" stroke="rgba(255,255,255,.055)"/><text x="${PL - 8}" y="${yy + 4}" text-anchor="end" fill="#605C57" font-size="10.5">${eur0(v)}</text>`; }
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="height:210px">
+    <defs><linearGradient id="gC" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3DDC8A" stop-opacity=".35"/><stop offset="100%" stop-color="#3DDC8A" stop-opacity="0"/></linearGradient></defs>
+    ${gy}
+    <path d="${line} L${x(n - 1)},${PT + ih} L${x(0)},${PT + ih} Z" fill="url(#gC)"/>
+    <path d="${line}" fill="none" stroke="#3DDC8A" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="${x(n - 1)}" cy="${y(cum[n - 1])}" r="4.5" fill="#3DDC8A" stroke="#0A0A0C" stroke-width="2"/>
+    <text x="${W - PR - 4}" y="${Math.max(13, y(cum[n - 1]) - 17)}" text-anchor="end" fill="#8DEEBB" font-size="13" font-weight="700">${eur(cum[n - 1])}</text>
+  </svg>`;
+}
+
+// Donut de répartition (formules d'abonnement)
+function drawDonut(el, segs) {
+  const total = segs.reduce((n, s) => n + s.value, 0);
+  if (!total) { el.innerHTML = emptyChart('Pas encore de vente'); return; }
+  const R = 78, r = 52, cx = 100, cy = 100;
+  let a0 = -Math.PI / 2, paths = '';
+  for (const s of segs) {
+    if (!s.value) continue;
+    const a1 = a0 + (s.value / total) * Math.PI * 2;
+    const big = a1 - a0 > Math.PI ? 1 : 0;
+    const p = (rad, ang) => [cx + rad * Math.cos(ang), cy + rad * Math.sin(ang)];
+    const [x1, y1] = p(R, a0), [x2, y2] = p(R, a1), [x3, y3] = p(r, a1), [x4, y4] = p(r, a0);
+    paths += `<path d="M${x1},${y1} A${R},${R} 0 ${big} 1 ${x2},${y2} L${x3},${y3} A${r},${r} 0 ${big} 0 ${x4},${y4} Z" fill="${s.color}" opacity=".92"><title>${esc(s.label)} — ${s.value}</title></path>`;
+    a0 = a1;
+  }
+  const rows = segs.filter((s) => s.value).map((s) =>
+    `<div style="display:flex;align-items:center;gap:9px;font-size:13px;padding:5px 0">
+      <i style="width:9px;height:9px;border-radius:3px;background:${s.color}"></i>
+      <span style="flex:1">${esc(s.label)}</span>
+      <b class="mono">${s.value}</b>
+      <span style="color:var(--muted);width:42px;text-align:right">${Math.round((s.value / total) * 100)}%</span>
+    </div>`).join('');
+  el.innerHTML = `<div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+    <svg viewBox="0 0 200 200" style="width:170px;height:170px;flex:none">${paths}
+      <text x="100" y="96" text-anchor="middle" fill="#F5F2EC" font-size="27" font-weight="800" font-family="Bricolage Grotesque,sans-serif">${total}</text>
+      <text x="100" y="116" text-anchor="middle" fill="#8C8880" font-size="11">abonnements</text>
+    </svg>
+    <div style="flex:1;min-width:150px">${rows}</div></div>`;
+}
+
+// Barres verticales génériques (jours de la semaine)
+function drawBars(el, items) {
+  const max = Math.max(1, ...items.map((i) => i.value));
+  const bars = items.map((i) => {
+    const h = Math.round((i.value / max) * 108);
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px">
+      <b class="mono" style="font-size:12px;color:${i.value ? '#FFB183' : 'var(--muted2)'}">${i.value || ''}</b>
+      <div style="width:100%;max-width:34px;height:${Math.max(3, h)}px;border-radius:8px 8px 4px 4px;background:${i.value ? 'linear-gradient(180deg,#FF8A3D,rgba(255,92,0,.28))' : 'rgba(255,255,255,.05)'}"></div>
+      <span style="font-size:11px;color:var(--muted)">${esc(i.label)}</span>
+    </div>`;
+  }).join('');
+  el.innerHTML = `<div style="display:flex;align-items:flex-end;gap:8px;height:170px;padding-top:10px">${bars}</div>`;
+}
+
+function sparkline(values, color = '#FF8A3D') {
+  const n = values.length; if (n < 2) return '';
+  const max = Math.max(1, ...values), W = 240, H = 38;
+  const pts = values.map((v, i) => [(i * W) / (n - 1), H - (v / max) * (H - 6) - 3]);
+  const d = smoothPath(pts);
+  const id = 'sp' + Math.random().toString(36).slice(2, 8);
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${color}" stop-opacity=".3"/><stop offset="100%" stop-color="${color}" stop-opacity="0"/></linearGradient></defs>
+    <path d="${d} L${W},${H} L0,${H} Z" fill="url(#${id})"/><path d="${d}" fill="none" stroke="${color}" stroke-width="2" opacity=".8"/></svg>`;
+}
+
+const emptyChart = (t) => `<div class="empty"><div class="big">📈</div>${esc(t)}</div>`;
+
+/* ══════════════ AGRÉGATION ══════════════ */
+
+// Découpe la période en "buckets" (jour, semaine ou mois selon la longueur) pour
+// que le graphe reste lisible : 30 jours → jour, 12 mois → mois.
+function bucketize(sales, days) {
+  const now = Date.now() / 1000;
+  const from = days ? now - days * 86400 : 0;
+  const kept = sales.filter((s) => s.at >= from);
+  const span = days || Math.max(1, (now - Math.min(...(kept.length ? kept.map((s) => s.at) : [now]))) / 86400);
+  const mode = span <= 45 ? 'day' : span <= 200 ? 'week' : 'month';
+  const map = new Map();
+  const keyOf = (ts) => {
+    const d = new Date(ts * 1000);
+    if (mode === 'day') return d.toISOString().slice(0, 10);
+    if (mode === 'month') return d.toISOString().slice(0, 7);
+    const t = new Date(d); t.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+    return t.toISOString().slice(0, 10);
+  };
+  // Squelette dense : chaque intervalle existe même sans vente (0), sinon le rythme est faussé.
+  const buckets = [];
+  const start = days ? now - days * 86400 : (kept.length ? Math.min(...kept.map((s) => s.at)) : now - 30 * 86400);
+  const stepSec = mode === 'day' ? 86400 : mode === 'week' ? 7 * 86400 : 30 * 86400;
+  for (let t = start; t <= now + 1; t += stepSec) {
+    const k = keyOf(t);
+    if (!map.has(k)) { map.set(k, { key: k, commission: 0, revenue: 0, count: 0 }); buckets.push(map.get(k)); }
+  }
+  for (const s of kept) {
+    const k = keyOf(s.at);
+    let b = map.get(k);
+    if (!b) { b = { key: k, commission: 0, revenue: 0, count: 0 }; map.set(k, b); buckets.push(b); }
+    b.commission += s.commissionCents; b.revenue += s.amountCents; b.count += 1;
+  }
+  buckets.sort((a, b) => a.key.localeCompare(b.key));
+  const labelOf = (k) => {
+    const d = new Date(k.length === 7 ? k + '-01' : k);
+    if (mode === 'month') return d.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
+    return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+  };
+  return { series: buckets.map((b) => ({ ...b, label: labelOf(b.key) })), kept, mode };
+}
+
+function periodTotals(sales, days) {
+  const now = Date.now() / 1000;
+  const from = days ? now - days * 86400 : 0;
+  const prevFrom = days ? from - days * 86400 : 0;
+  const cur = sales.filter((s) => s.at >= from);
+  const prev = days ? sales.filter((s) => s.at >= prevFrom && s.at < from) : [];
+  const sum = (arr, f) => arr.reduce((n, s) => n + f(s), 0);
+  return {
+    count: cur.length, prevCount: prev.length,
+    revenue: sum(cur, (s) => s.amountCents), prevRevenue: sum(prev, (s) => s.amountCents),
+    commission: sum(cur, (s) => s.commissionCents), prevCommission: sum(prev, (s) => s.commissionCents),
+    avg: cur.length ? Math.round(sum(cur, (s) => s.amountCents) / cur.length) : 0,
+  };
+}
+
+function deltaHtml(cur, prev, days) {
+  if (!days) return '<span class="delta flat">total</span>';
+  if (!prev) return cur ? '<span class="delta up">▲ nouveau</span>' : '<span class="delta flat">—</span>';
+  const pct = Math.round(((cur - prev) / prev) * 100);
+  if (pct === 0) return '<span class="delta flat">= stable</span>';
+  return `<span class="delta ${pct > 0 ? 'up' : 'down'}">${pct > 0 ? '▲' : '▼'} ${Math.abs(pct)}%</span>`;
+}
+
+/* ══════════════ RENDU DASHBOARD ══════════════ */
+
+function renderDash() {
+  const d = STATE.data;
+  if (!d || d.adminOnly) return;
+  const p = d.profile, days = STATE.days;
+
+  // Bandeau "tu regardes le compte de X" (mode admin)
+  const banner = $('#viewingBanner');
+  if (d.viewingOther) {
+    banner.style.display = 'flex';
+    banner.innerHTML = `<span>👁️</span><div>Tu consultes l'espace de <b>${esc(p.name || p.email)}</b> (${esc(p.email)}). <button class="link" onclick="exitViewAs()">Revenir à ma vue</button></div>`;
+  } else banner.style.display = 'none';
+
+  // Ruban code promo
+  $('#promoBar').innerHTML = `
+    <div style="flex:1;min-width:220px">
+      <div style="font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:8px">Ton code promo</div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span class="code-pill">${esc(p.promoCode || '—')}</span>
+        <button class="copy" onclick="copy('${esc(p.promoCode)}')">📋 Copier le code</button>
+        <button class="copy" onclick="copy('${esc(p.shareLink)}')">🔗 Copier mon lien</button>
+      </div>
+    </div>
+    <div style="text-align:right;min-width:190px">
+      <div style="font-size:12.5px;color:var(--muted);line-height:1.9">
+        <span class="tag ${p.status === 'active' ? 'active' : 'revoked'}">${p.status === 'active' ? '● Collaborateur actif' : '● Accès clôturé'}</span><br>
+        <b style="color:var(--txt)">${p.commissionPct}%</b> de commission pour toi<br>
+        <b style="color:var(--txt)">-${p.discountPct}%</b> pour ta communauté
+      </div>
+    </div>`;
+
+  const t = periodTotals(d.sales, days);
+  const { series } = bucketize(d.sales, days);
+  const spark = (key) => sparkline(series.map((s) => s[key]));
+
+  $('#kpis').innerHTML = [
+    { lab: '👥 Abonnements via ton code', val: nf(t.count), foot: deltaHtml(t.count, t.prevCount, days) + `<span>${days ? 'vs période précédente' : 'depuis le début'}</span>`, sp: spark('count') },
+    { lab: '💸 Ta commission', val: eur(t.commission), foot: deltaHtml(t.commission, t.prevCommission, days) + `<span>à ${p.commissionPct}%</span>`, sp: spark('commission') },
+    { lab: '📈 CA généré', val: eur(t.revenue), foot: deltaHtml(t.revenue, t.prevRevenue, days) + `<span>encaissé par Tacotac</span>`, sp: spark('revenue') },
+    { lab: '✅ Déjà versé', val: eur(d.totals.paidCents), foot: `<span>${d.payouts.length} versement${d.payouts.length > 1 ? 's' : ''}</span>`, sp: '' },
+    { lab: '⏳ Reste à recevoir', val: eur(d.totals.dueCents), foot: `<span>sur ${eur(d.totals.commissionCents)} gagnés au total</span>`, sp: '' },
+  ].map((k) => `<div class="card kpi">
+      <div class="lab">${k.lab}</div>
+      <div class="val display mono">${k.val}</div>
+      <div class="foot">${k.foot}</div>${k.sp}
+    </div>`).join('');
+
+  $('#evoSub').textContent = days ? `Commission et abonnements sur les ${days === 365 ? '12 derniers mois' : days + ' derniers jours'}.` : "Depuis ton tout premier jour de collaboration.";
+  drawCombo($('#chartMain'), series);
+  drawCum($('#chartCum'), series);
+
+  const inPeriod = d.sales.filter((s) => !days || s.at >= Date.now() / 1000 - days * 86400);
+  drawDonut($('#chartDonut'), [
+    { label: 'Mensuel', value: inPeriod.filter((s) => s.formula === 'Mensuel').length, color: '#FF7A33' },
+    { label: 'Annuel', value: inPeriod.filter((s) => s.formula === 'Annuel').length, color: '#A77BFF' },
+    { label: 'Hebdo', value: inPeriod.filter((s) => s.formula === 'Hebdo').length, color: '#5B8DEF' },
+    { label: 'Autre', value: inPeriod.filter((s) => !['Mensuel', 'Annuel', 'Hebdo'].includes(s.formula)).length, color: '#4A4A52' },
+  ]);
+
+  const dows = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((label, i) => ({
+    label, value: inPeriod.filter((s) => (new Date(s.at * 1000).getDay() + 6) % 7 === i).length,
+  }));
+  drawBars($('#chartDow'), dows);
+
+  // Versements
+  $('#payTbl').innerHTML = d.payouts.length
+    ? `<thead><tr><th>Date</th><th>Montant</th><th>Note</th></tr></thead><tbody>${
+      d.payouts.map((x) => `<tr><td>${fmtDate(x.at)}</td><td class="mono" style="color:#8DEEBB;font-weight:700">${eur(x.amountCents)}</td><td style="color:var(--muted);white-space:normal">${esc(x.note) || '—'}</td></tr>`).join('')
+    }</tbody>`
+    : `<tbody><tr><td colspan="3"><div class="empty"><div class="big">🪙</div>Aucun versement pour le moment.<br><span style="font-size:12.5px">Ta commission s'accumule et apparaîtra ici dès le premier virement.</span></div></td></tr></tbody>`;
+
+  renderSales();
+  renderProfile();
+}
+
+function renderSales() {
+  const d = STATE.data; if (!d) return;
+  let rows = d.sales;
+  if (STATE.formula) rows = rows.filter((s) => s.formula === STATE.formula);
+  if (STATE.search) rows = rows.filter((s) => s.customer.toLowerCase().includes(STATE.search.toLowerCase()));
+  const shown = rows.slice(0, STATE.page * 25);
+  $('#salesTbl').innerHTML = shown.length
+    ? `<thead><tr><th>Date</th><th>Client</th><th>Formule</th><th style="text-align:right">Montant</th><th style="text-align:right">Ta commission</th></tr></thead><tbody>${
+      shown.map((s) => `<tr>
+        <td style="color:var(--muted)">${fmtDateTime(s.at)}</td>
+        <td>${esc(s.customer)}</td>
+        <td><span class="tag ${s.formula.toLowerCase()}">${esc(s.formula)}</span></td>
+        <td class="mono" style="text-align:right">${eur(s.amountCents)}</td>
+        <td class="mono" style="text-align:right;color:#FFB183;font-weight:700">${eur(s.commissionCents)}</td>
+      </tr>`).join('')
+    }</tbody>`
+    : `<tbody><tr><td><div class="empty"><div class="big">🦊</div><b>Pas encore de vente.</b><br><span style="font-size:13px">Balance ton code <b>${esc(d.profile.promoCode)}</b> dans tes vidéos — chaque abonnement apparaîtra ici en direct.</span></div></td></tr></tbody>`;
+  $('#moreBtn').style.display = rows.length > shown.length ? '' : 'none';
+}
+
+function renderProfile() {
+  const d = STATE.data; if (!d) return;
+  $('#pName').value = d.profile.name || '';
+  $('#pHandle').value = d.profile.handle || '';
+  $('#pPayout').value = d.profile.payoutMethod || '';
+  $('#contract').innerHTML = `
+    <div style="font-size:13.5px;line-height:2.1;color:var(--muted)">
+      <div>Email &nbsp;·&nbsp; <b style="color:var(--txt)">${esc(d.profile.email)}</b></div>
+      <div>Code promo &nbsp;·&nbsp; <b style="color:#FFB183">${esc(d.profile.promoCode || '—')}</b></div>
+      <div>Ta commission &nbsp;·&nbsp; <b style="color:var(--txt)">${d.profile.commissionPct}%</b> de chaque abonnement</div>
+      <div>Remise communauté &nbsp;·&nbsp; <b style="color:var(--txt)">-${d.profile.discountPct}%</b></div>
+      <div>Collaborateur depuis &nbsp;·&nbsp; <b style="color:var(--txt)">${d.profile.createdAt ? fmtDate(d.profile.createdAt) : '—'}</b></div>
+      <div>Ton accès Premium &nbsp;·&nbsp; <b style="color:#8DEEBB">offert, illimité</b></div>
+    </div>
+    <div class="trust" style="margin-top:14px"><span>🔒</span><div>Les chiffres affichés viennent directement des paiements Stripe encaissés avec ton code. Rien n'est saisi à la main : ce que tu vois, c'est ce qui a réellement été payé.</div></div>`;
+}
+
+/* ══════════════ CONSOLE ADMIN ══════════════ */
+
+async function loadAdmin() {
+  const r = await api('/api/partner/admin/overview');
+  if (!r.ok) return;
+  STATE.admin = r;
+  const t = r.totals;
+  $('#adminKpis').innerHTML = [
+    { lab: '🧑‍🤝‍🧑 Collaborateurs actifs', val: nf(r.collaborators.filter((c) => c.status === 'active').length), foot: `${r.collaborators.length} au total` },
+    { lab: '🛒 Ventes attribuées', val: nf(t.sales), foot: 'toutes périodes' },
+    { lab: '📈 CA affilié', val: eur(t.revenueCents), foot: 'encaissé via les codes' },
+    { lab: '💸 Commissions dues', val: eur(t.dueCents), foot: `${eur(t.paidCents)} déjà versés` },
+  ].map((k) => `<div class="card kpi"><div class="lab">${k.lab}</div><div class="val display mono">${k.val}</div><div class="foot">${esc(k.foot)}</div></div>`).join('');
+
+  drawCombo($('#chartAdmin'), r.series.map((s) => ({
+    label: new Date(s.day).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),
+    commission: s.revenueCents, count: s.count,
+  })));
+
+  $('#collabTbl').innerHTML = `<thead><tr>
+      <th>Collaborateur</th><th>Code</th><th>Statut</th><th style="text-align:right">Ventes</th>
+      <th style="text-align:right">CA</th><th style="text-align:right">Commission</th><th style="text-align:right">Reste dû</th><th></th>
+    </tr></thead><tbody>${r.collaborators.map((c) => `<tr style="cursor:pointer" onclick="openCollab('${esc(c.email)}')">
+      <td><b>${esc(c.name || c.email.split('@')[0])}</b><br><span style="color:var(--muted);font-size:12px">${esc(c.email)}</span></td>
+      <td><span class="tag mensuel">${esc(c.promoCode || '—')}</span></td>
+      <td><span class="tag ${c.status}">${c.status === 'active' ? 'Actif' : 'Révoqué'}</span>${c.connected ? '' : '<br><span style="color:var(--muted2);font-size:11px">jamais connecté</span>'}</td>
+      <td class="mono" style="text-align:right">${c.sales}</td>
+      <td class="mono" style="text-align:right">${eur(c.revenueCents)}</td>
+      <td class="mono" style="text-align:right">${eur(c.commissionCents)} <span style="color:var(--muted);font-size:11.5px">(${c.commissionPct}%)</span></td>
+      <td class="mono" style="text-align:right;color:${c.dueCents ? '#FFB183' : 'var(--muted)'};font-weight:700">${eur(c.dueCents)}</td>
+      <td style="color:var(--muted)">›</td>
+    </tr>`).join('') || `<tr><td colspan="8"><div class="empty"><div class="big">🤝</div>Aucun collaborateur. Clique sur « Ajouter un collaborateur ».</div></td></tr>`}</tbody>`;
+}
+
+function openModal(html) { $('#modalIn').innerHTML = html; $('#modal').classList.add('on'); }
+function closeModal() { $('#modal').classList.remove('on'); }
+$('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') closeModal(); });
+
+window.openCollab = (email) => {
+  const c = STATE.admin.collaborators.find((x) => x.email === email);
+  if (!c) return;
+  openModal(`
+    <h3>${esc(c.name || c.email)}</h3>
+    <p class="sub" style="color:var(--muted);font-size:13px;margin:0 0 16px">${esc(c.email)} · code <b style="color:#FFB183">${esc(c.promoCode || '—')}</b></p>
+    <div class="grid" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
+      ${[['Ventes', c.sales], ['CA', eur(c.revenueCents)], ['Commission', eur(c.commissionCents)], ['Reste dû', eur(c.dueCents)]]
+        .map(([l, v]) => `<div style="background:#0D0D10;border:1px solid var(--line);border-radius:13px;padding:12px"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">${l}</div><div class="display mono" style="font-size:20px;margin-top:4px">${v}</div></div>`).join('')}
+    </div>
+    <div class="row2">
+      <div class="field"><label>Commission (%)</label><input class="input" id="acPct" type="number" min="0" max="100" value="${c.commissionPct}"></div>
+      <div class="field"><label>Nom affiché</label><input class="input" id="acName" value="${esc(c.name)}"></div>
+    </div>
+    <button class="btn btn-ghost btn-sm" style="width:100%;margin-bottom:16px" onclick="saveCollab('${esc(c.email)}')">Enregistrer les modifications</button>
+
+    <div style="border-top:1px solid var(--line);padding-top:16px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">Noter un versement de commission</div>
+      <div class="row2">
+        <div class="field"><label>Montant (€)</label><input class="input" id="acAmt" type="number" step="0.01" placeholder="${(c.dueCents / 100).toFixed(2)}"></div>
+        <div class="field"><label>Note</label><input class="input" id="acNote" placeholder="Virement du 05/08"></div>
+      </div>
+      <button class="btn btn-sm" style="width:100%" onclick="payCollab('${esc(c.email)}')">Enregistrer le versement</button>
+      <p class="hint" style="margin-top:8px">Le collaborateur verra ce versement dans son espace, et son « reste à recevoir » baissera d'autant.</p>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:16px">
+      <button class="btn btn-ghost btn-sm" onclick="viewAs('${esc(c.email)}')">👁️ Voir son tableau de bord</button>
+      <button class="btn btn-ghost btn-sm" onclick="inviteCollab('${esc(c.email)}')">✉️ Renvoyer son lien d'accès</button>
+      ${c.status === 'active'
+        ? `<button class="btn btn-ghost btn-sm" style="color:#FF9AAC;border-color:rgba(255,84,112,.35)" onclick="revokeCollab('${esc(c.email)}')">Révoquer l'accès</button>`
+        : `<button class="btn btn-ghost btn-sm" style="color:#8DEEBB;border-color:rgba(61,220,138,.35)" onclick="reactivateCollab('${esc(c.email)}')">Réactiver</button>`}
+      <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="closeModal()">Fermer</button>
+    </div>`);
+};
+
+window.saveCollab = async (email) => {
+  await api('/api/partner/admin/update', { method: 'POST', body: JSON.stringify({ email, commissionPct: +$('#acPct').value, name: $('#acName').value }) });
+  toast('Modifications enregistrées'); closeModal(); loadAdmin();
+};
+window.payCollab = async (email) => {
+  const amountEur = parseFloat($('#acAmt').value);
+  if (!(amountEur > 0)) return toast('Montant invalide');
+  const r = await api('/api/partner/admin/payout', { method: 'POST', body: JSON.stringify({ email, amountEur, note: $('#acNote').value }) });
+  toast(r.ok ? 'Versement enregistré' : (r.error || 'Erreur')); closeModal(); loadAdmin();
+};
+window.revokeCollab = async (email) => {
+  if (!confirm("Révoquer l'accès de " + email + " ? Son code promo sera désactivé.")) return;
+  await api('/api/partner/admin/revoke', { method: 'POST', body: JSON.stringify({ email }) });
+  toast('Accès révoqué'); closeModal(); loadAdmin();
+};
+window.reactivateCollab = async (email) => {
+  await api('/api/partner/admin/reactivate', { method: 'POST', body: JSON.stringify({ email }) });
+  toast('Collaborateur réactivé'); closeModal(); loadAdmin();
+};
+window.inviteCollab = async (email) => {
+  const r = await api('/api/partner/admin/invite', { method: 'POST', body: JSON.stringify({ email }) });
+  if (r.ok) { toast(r.emailSent ? 'Lien envoyé par email ✅' : 'Email non configuré — lien copié'); if (!r.emailSent) copy(r.link); }
+};
+window.viewAs = async (email) => { closeModal(); STATE.viewAs = email; await loadDashboard(); switchView('dash'); };
+window.exitViewAs = async () => { STATE.viewAs = null; await loadDashboard(); };
+
+$('#addCollabBtn').addEventListener('click', () => {
+  const dft = STATE.admin?.defaults || { commissionPct: 20, discountPct: 10 };
+  openModal(`
+    <h3>Ajouter un collaborateur</h3>
+    <p style="color:var(--muted);font-size:13px;margin:4px 0 18px">Crée son accès Premium, son code promo Stripe, et lui envoie son lien d'espace.</p>
+    <div class="field"><label>Email (celui de son compte Tacotac)</label><input class="input" id="ncEmail" type="email" placeholder="collab@exemple.com"></div>
+    <div class="row2">
+      <div class="field"><label>Nom / pseudo</label><input class="input" id="ncName" placeholder="Léo"></div>
+      <div class="field"><label>Code promo (auto si vide)</label><input class="input" id="ncCode" placeholder="LEO10" style="text-transform:uppercase"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Sa commission (%)</label><input class="input" id="ncPct" type="number" value="${dft.commissionPct}" min="0" max="100"></div>
+      <div class="field"><label>Remise communauté (%)</label><input class="input" id="ncDisc" type="number" value="${dft.discountPct}" min="1" max="100"></div>
+    </div>
+    <label style="display:flex;gap:9px;align-items:center;font-size:13.5px;color:var(--muted);margin:6px 0 16px">
+      <input type="checkbox" id="ncMail" checked style="width:17px;height:17px;accent-color:#FF5C00"> Lui envoyer l'email de bienvenue avec son lien d'accès
+    </label>
+    <div id="ncMsg" class="msg"></div>
+    <div style="display:flex;gap:9px">
+      <button class="btn" id="ncGo">Créer le collaborateur</button>
+      <button class="btn btn-ghost" onclick="closeModal()" style="max-width:120px">Annuler</button>
+    </div>`);
+  $('#ncGo').addEventListener('click', async () => {
+    const btn = $('#ncGo'); btn.disabled = true; btn.textContent = 'Création…';
+    const r = await api('/api/partner/admin/collaborators', { method: 'POST', body: JSON.stringify({
+      email: $('#ncEmail').value, name: $('#ncName').value, code: $('#ncCode').value,
+      commissionPct: +$('#ncPct').value, discountPct: +$('#ncDisc').value, sendWelcome: $('#ncMail').checked,
+    }) });
+    if (!r.ok) { const m = $('#ncMsg'); m.className = 'msg err'; m.textContent = r.error || 'Erreur'; btn.disabled = false; btn.textContent = 'Créer le collaborateur'; return; }
+    toast(`Collaborateur créé · code ${r.code}`); closeModal(); loadAdmin();
+  });
+});
+
+/* ══════════════ NAVIGATION / CHARGEMENT ══════════════ */
+
+function switchView(v) {
+  $$('.tab').forEach((t) => t.classList.toggle('on', t.dataset.view === v));
+  $$('.view').forEach((s) => s.classList.toggle('on', s.id === 'v-' + v));
+  if (v === 'admin' && !STATE.admin) loadAdmin();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+$('#tabs').addEventListener('click', (e) => { const b = e.target.closest('.tab'); if (b) switchView(b.dataset.view); });
+
+$('#periodChips').addEventListener('click', (e) => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  $$('#periodChips .chip').forEach((c) => c.classList.toggle('on', c === b));
+  STATE.days = +b.dataset.days; renderDash();
+});
+$('#formulaChips').addEventListener('click', (e) => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  $$('#formulaChips .chip').forEach((c) => c.classList.toggle('on', c === b));
+  STATE.formula = b.dataset.f; STATE.page = 1; renderSales();
+});
+$('#saleSearch').addEventListener('input', (e) => { STATE.search = e.target.value; STATE.page = 1; renderSales(); });
+$('#moreBtn').addEventListener('click', () => { STATE.page++; renderSales(); });
+$('#exportBtn').addEventListener('click', () => {
+  location.href = '/api/partner/export.csv' + (STATE.viewAs ? '?as=' + encodeURIComponent(STATE.viewAs) : '');
+});
+
+window.copy = (txt) => {
+  navigator.clipboard?.writeText(txt).then(() => toast('Copié ✅'), () => toast('Copie impossible'));
+};
+
+$('#pSave').addEventListener('click', async () => {
+  const r = await api('/api/partner/profile', { method: 'POST', body: JSON.stringify({
+    name: $('#pName').value, handle: $('#pHandle').value, payoutMethod: $('#pPayout').value }) });
+  toast(r.ok ? 'Profil enregistré ✅' : 'Erreur'); if (r.ok) loadDashboard();
+});
+$('#pwSave').addEventListener('click', async () => {
+  const pw = $('#pPw').value;
+  const r = await api('/api/partner/password', { method: 'POST', body: JSON.stringify({ password: pw }) });
+  toast(r.ok ? 'Mot de passe mis à jour ✅' : (r.error || 'Erreur'));
+  if (r.ok) $('#pPw').value = '';
+});
+
+async function loadDashboard() {
+  const r = await api('/api/partner/dashboard' + (STATE.viewAs ? '?as=' + encodeURIComponent(STATE.viewAs) : ''));
+  if (!r.ok) return;
+  STATE.data = r;
+  if (r.adminOnly) {
+    // Admin pur (pas de code promo) : on l'envoie directement sur sa console.
+    $$('.tab').forEach((t) => { if (['dash', 'sales', 'profile'].includes(t.dataset.view)) t.style.display = 'none'; });
+    switchView('admin');
+    return;
+  }
+  renderDash();
+}
+
+async function boot() {
+  const s = await api('/api/partner/session');
+  if (!s.ok) { showLogin(); return; }
+  STATE.session = s;
+  $('#login').style.display = 'none';
+  $('#app').style.display = 'block';
+  const initial = (s.name || s.email)[0].toUpperCase();
+  $('#who').innerHTML = `<div class="avatar">${esc(initial)}</div>
+    <div style="line-height:1.25"><div style="color:var(--txt);font-weight:600;font-size:13px">${esc(s.name || s.email.split('@')[0])}</div>
+    <button class="link" style="font-size:11.5px" onclick="logout()">Se déconnecter</button></div>`;
+  if (s.isAdmin) $('#tabAdmin').style.display = '';
+  await loadDashboard();
+  // Première connexion sans mot de passe → on incite gentiment à en créer un
+  if (!s.hasPassword && !s.viaGoogle) {
+    setTimeout(() => toast('💡 Crée un mot de passe dans « Mon profil » pour te reconnecter facilement'), 1400);
+  }
+}
+window.logout = async () => { await api('/api/partner/logout', { method: 'POST' }); location.href = '/partner'; };
+
+/* ══════════════ ÉCRAN DE CONNEXION ══════════════ */
+function lmsg(kind, text) { const m = $('#lmsg'); m.className = 'msg ' + kind; m.innerHTML = text; }
+
+function showLogin() {
+  $('#login').style.display = 'flex';
+  const p = new URLSearchParams(location.search);
+  if (p.get('err') === 'link') lmsg('err', 'Ce lien a expiré ou a déjà été utilisé. Demande-en un nouveau ci-dessous.');
+  if (p.get('err') === 'access') lmsg('err', "Cet email ne fait pas partie de l'espace collaborateur.");
+  if (p.get('err') === 'revoked') lmsg('err', 'Ton accès collaborateur a été clôturé.');
+  if (p.get('login') === '1' || p.get('auth_err')) lmsg('err', "La connexion n'a pas abouti. Réessaie avec ton email.");
+  fetch('/api/auth/config').then((r) => r.json()).then((c) => {
+    if (c.google) { $('#gbtn').style.display = 'flex'; $('#gsep').style.display = 'flex'; }
+  }).catch(() => {});
+}
+
+$('#lform').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = $('#lbtn'); btn.disabled = true; btn.textContent = 'Connexion…';
+  const r = await api('/api/partner/login', { method: 'POST', body: JSON.stringify({ email: $('#lemail').value, password: $('#lpw').value }) });
+  btn.disabled = false; btn.textContent = 'Se connecter';
+  if (r.ok) return location.reload();
+  if (r.error === 'no_password') { lmsg('err', r.message); return sendMagic(); }
+  lmsg('err', esc(r.error || 'Connexion impossible.'));
+});
+
+async function sendMagic() {
+  const email = $('#lemail').value.trim();
+  if (!email) { lmsg('err', "Entre d'abord ton email."); return; }
+  const btn = $('#magicBtn'); btn.disabled = true; btn.textContent = 'Envoi…';
+  await api('/api/partner/magic', { method: 'POST', body: JSON.stringify({ email }) });
+  btn.disabled = false; btn.textContent = 'Première connexion / mot de passe oublié →';
+  lmsg('ok', `Si <b>${esc(email)}</b> fait partie des collaborateurs, un lien de connexion vient d'être envoyé. Vérifie tes spams.`);
+}
+$('#magicBtn').addEventListener('click', sendMagic);
+
+boot();
+</script>
+</body>
+</html>

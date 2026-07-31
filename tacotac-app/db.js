@@ -578,4 +578,119 @@ export function salesSummary() {
   `).all();
 }
 
+// ══════════════════════════════════════════════════════════════
+//  ESPACE COLLABORATEUR (/partner) — tables et requêtes dédiées
+//  - `partner_login_tokens` : liens magiques d'accès (1re connexion / mdp oublié)
+//  - `collaborator_payouts` : commissions RÉELLEMENT versées (saisies par l'admin)
+//    → le "reste à verser" affiché au collaborateur = commission due − versements
+// ══════════════════════════════════════════════════════════════
+db.exec(`
+  CREATE TABLE IF NOT EXISTS partner_login_tokens (
+    token      TEXT PRIMARY KEY,
+    email      TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    expires_at INTEGER NOT NULL,
+    used_at    INTEGER
+  );
+  CREATE TABLE IF NOT EXISTS collaborator_payouts (
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    collaborator_email TEXT NOT NULL,
+    amount_cents       INTEGER NOT NULL,
+    note               TEXT,
+    paid_at            INTEGER NOT NULL,
+    created_at         INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_sales_email ON collaborator_sales(collaborator_email);
+  CREATE INDEX IF NOT EXISTS idx_payouts_email ON collaborator_payouts(collaborator_email);
+`);
+// Champs de profil ajoutés après coup (ALTER échoue si déjà là → on ignore)
+try { db.exec('ALTER TABLE collaborators ADD COLUMN handle TEXT'); } catch { /* déjà migré */ }
+try { db.exec('ALTER TABLE collaborators ADD COLUMN payout_method TEXT'); } catch { /* déjà migré */ }
+try { db.exec('ALTER TABLE collaborators ADD COLUMN discount_pct INTEGER'); } catch { /* déjà migré */ }
+try { db.exec('ALTER TABLE collaborators ADD COLUMN last_seen_at INTEGER'); } catch { /* déjà migré */ }
+
+// ── Liens magiques (première connexion, mot de passe oublié) ────
+export function createPartnerToken(email, ttlMinutes = 45) {
+  const token = randomUUID().replace(/-/g, '') + randomUUID().replace(/-/g, '');
+  const now = nowTs();
+  db.prepare('INSERT INTO partner_login_tokens (token, email, created_at, expires_at) VALUES (?, ?, ?, ?)')
+    .run(token, normEmail(email), now, now + ttlMinutes * 60);
+  return token;
+}
+// Consomme un lien magique (usage unique). Renvoie l'email ou null.
+export function consumePartnerToken(token) {
+  if (!token) return null;
+  const row = db.prepare('SELECT * FROM partner_login_tokens WHERE token = ?').get(String(token));
+  if (!row || row.used_at || row.expires_at < nowTs()) return null;
+  db.prepare('UPDATE partner_login_tokens SET used_at = ? WHERE token = ?').run(nowTs(), String(token));
+  return row.email;
+}
+
+// ── Compte : définir / remplacer le mot de passe ────────────────
+export function setAccountPassword(email, passwordHash) {
+  const norm = normEmail(email);
+  let acc = qAccByEmail.get(norm);
+  if (!acc) { qInsertAcc.run(norm, passwordHash, null, nowTs()); return qAccByEmail.get(norm); }
+  db.prepare('UPDATE accounts SET password_hash = ? WHERE id = ?').run(passwordHash, acc.id);
+  return qAccByEmail.get(norm);
+}
+
+// ── Profil collaborateur : champs éditables ─────────────────────
+export function updateCollaboratorProfile(email, { name, handle, payoutMethod }) {
+  const norm = normEmail(email);
+  const c = getCollaborator(norm);
+  if (!c) return null;
+  db.prepare('UPDATE collaborators SET name = ?, handle = ?, payout_method = ? WHERE email = ?')
+    .run(name ?? c.name ?? null, handle ?? c.handle ?? null, payoutMethod ?? c.payout_method ?? null, norm);
+  return getCollaborator(norm);
+}
+export function setCollaboratorCommission(email, pct) {
+  db.prepare('UPDATE collaborators SET commission_pct = ? WHERE email = ?').run(pct, normEmail(email));
+  return getCollaborator(email);
+}
+export function setCollaboratorDiscount(email, pct) {
+  db.prepare('UPDATE collaborators SET discount_pct = ? WHERE email = ?').run(pct, normEmail(email));
+}
+export function touchCollaborator(email) {
+  db.prepare('UPDATE collaborators SET last_seen_at = ? WHERE email = ?').run(nowTs(), normEmail(email));
+}
+export function reactivateCollaborator(email) {
+  db.prepare('UPDATE collaborators SET revoked_at = NULL WHERE email = ?').run(normEmail(email));
+}
+
+// ── Ventes ──────────────────────────────────────────────────────
+// Toutes les ventes d'un collaborateur (les plus récentes d'abord).
+export function salesForCollaborator(email) {
+  return db.prepare('SELECT * FROM collaborator_sales WHERE collaborator_email = ? ORDER BY created_at DESC')
+    .all(normEmail(email));
+}
+export function allSales() {
+  return db.prepare('SELECT * FROM collaborator_sales ORDER BY created_at DESC').all();
+}
+
+// ── Versements de commission ────────────────────────────────────
+export function addPayout({ email, amountCents, note, paidAt }) {
+  const now = nowTs();
+  db.prepare('INSERT INTO collaborator_payouts (collaborator_email, amount_cents, note, paid_at, created_at) VALUES (?, ?, ?, ?, ?)')
+    .run(normEmail(email), Math.round(amountCents), note || null, paidAt || now, now);
+  return true;
+}
+export function deletePayout(id) {
+  db.prepare('DELETE FROM collaborator_payouts WHERE id = ?').run(Number(id));
+}
+export function payoutsFor(email) {
+  return db.prepare('SELECT * FROM collaborator_payouts WHERE collaborator_email = ? ORDER BY paid_at DESC')
+    .all(normEmail(email));
+}
+export function payoutTotals() {
+  return db.prepare('SELECT collaborator_email, SUM(amount_cents) AS paid_cents FROM collaborator_payouts GROUP BY collaborator_email').all();
+}
+
+// Comptes reliés à un email (sert à savoir si le collaborateur s'est déjà connecté)
+export function accountSummary(email) {
+  const a = qAccByEmail.get(normEmail(email));
+  if (!a) return null;
+  return { plan: a.plan, hasPassword: Boolean(a.password_hash), viaGoogle: Boolean(a.google_id), createdAt: a.created_at };
+}
+
 export default db;

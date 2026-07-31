@@ -1,5 +1,8 @@
 # Collaborateurs / affiliés
 
+> 💡 Tout ce qui suit existe aussi **en interface web**, avec les graphiques et la gestion
+> des versements : voir [ESPACE-COLLABORATEUR.md](ESPACE-COLLABORATEUR.md) → `taco-tac.app/partner`.
+
 Un **collaborateur** = un créateur qui fait des vidéos pour Tacotac. Il a l'**accès premium complet**, mais avec un statut distinct (`collaborator`) :
 
 - ✅ mêmes fonctionnalités qu'un abonné payant (6 tons, meilleur modèle, 25 analyses/jour)

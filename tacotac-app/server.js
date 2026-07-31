@@ -21,6 +21,7 @@ import { consumeQuota, getStatus, activatePremium, syncSubscription, deactivateP
          createAccount, getAccountByEmail, getAccountByGoogleId, attachGoogleToAccount, linkDeviceToAccount, createSession, getSessionAccount, destroySession, effectivePlan,
          accountsForLifecycle, markAccountEmail, consumeTrainQuota, trainUsedToday, claimGiftTone, refundGiftTone,
          getCollaboratorByPromoId, recordSale, completeQuiz } from './db.js';
+import { createPartnerRouter } from './partner.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -1548,8 +1549,11 @@ app.get('/api/auth/config', (req, res) => res.json({ google: GOOGLE_ENABLED }));
 // Le state signé transporte lui-même le deviceId d'origine : plus besoin de cookie,
 // et on sait relier le compte à l'appareil PWA même si le callback arrive ailleurs.
 const OAUTH_HMAC_SECRET = process.env.COOKIE_SECRET || 'dev-secret-change-me';
-function makeOauthState(deviceId) {
-  const payload = Buffer.from(JSON.stringify({ d: deviceId, t: Date.now() })).toString('base64url');
+// `next` : destination après login (whitelist stricte, voir SAFE_NEXT) — sert à
+// revenir sur /partner quand un collaborateur se connecte via Google depuis son espace.
+const SAFE_NEXT = new Set(['/app', '/partner', '/collab']);
+function makeOauthState(deviceId, next) {
+  const payload = Buffer.from(JSON.stringify({ d: deviceId, t: Date.now(), n: SAFE_NEXT.has(next) ? next : undefined })).toString('base64url');
   const sig = createHmac('sha256', OAUTH_HMAC_SECRET).update(payload).digest('base64url');
   return payload + '.' + sig;
 }
@@ -1584,7 +1588,7 @@ app.get('/api/auth/google', (req, res) => {
   u.searchParams.set('redirect_uri', GOOGLE_REDIRECT);
   u.searchParams.set('response_type', 'code');
   u.searchParams.set('scope', 'openid email');
-  u.searchParams.set('state', makeOauthState(req.deviceId));
+  u.searchParams.set('state', makeOauthState(req.deviceId, String(req.query.next || '')));
   u.searchParams.set('prompt', 'select_account');
   res.redirect(u.toString());
 });
@@ -1628,7 +1632,7 @@ app.get('/api/auth/google/callback', async (req, res) => {
     }
     pendingPwaSessions.set(stateData.d, { accountId: account.id, exp: Date.now() + 10 * 60 * 1000 });
     openSession(res, account.id);
-    res.redirect('/app?login=1');
+    res.redirect(SAFE_NEXT.has(stateData.n) ? `${stateData.n}?login=1` : '/app?login=1');
   } catch (e) {
     console.error('[google] callback:', e?.message);
     res.redirect('/app?auth_err=1');
@@ -2207,6 +2211,16 @@ app.post('/api/bio', analyzeLimiter, async (req, res) => {
 });
 
 // healthcheck
+// ══════════════════════════════════════════════════════════════
+//  ESPACE COLLABORATEUR (/partner) — portail privé des affiliés + console admin.
+//  Monté ici (et pas plus haut) car il réutilise les helpers de session
+//  déclarés au-dessus. Aucun lien depuis le site : l'URL se donne à la main.
+// ══════════════════════════════════════════════════════════════
+app.use(createPartnerRouter({
+  openSession, destroySession, attachAccount, hashPassword, verifyPassword,
+  sessionCookieName: SESSION_COOKIE, stripe, publicUrl: PUBLIC_URL, sendMail: sendEmail,
+}));
+
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, hasKey: Boolean(process.env.OPENAI_API_KEY), model: MODEL, modelPremium: MODEL_PREMIUM });
 });
