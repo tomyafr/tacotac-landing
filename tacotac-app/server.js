@@ -514,7 +514,10 @@ const analyzeLimiter = rateLimit({
 });
 
 // ── Client OpenAI ───────────────────────────────────────────────
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// timeout explicite : sans ça le SDK attend 10 MIN par défaut avant d'abandonner —
+// si OpenAI est lent (pas en erreur, juste lent), l'utilisateur reste bloqué sur
+// l'écran de chargement tout ce temps, sans aucune erreur à afficher.
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY, timeout: 25_000, maxRetries: 1 });
 // Deux gammes : les gratuits coûtent le minimum, les payants ont un modèle nettement
 // meilleur (punchlines, contexte) qui reste bon marché (~$0.40/$1.60 par 1M tokens).
 const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';                    // tier gratuit

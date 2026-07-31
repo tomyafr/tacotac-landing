@@ -1527,9 +1527,14 @@
       const minDelay=new Promise(r=>setTimeout(r,1800)); // garde l'anim visible
 
       let blocked=false,authNeeded=false,premiumNeeded=false;
+      // Filet de sécurité : sans ça, une requête qui reste en attente (réseau capricieux,
+      // proxy qui stalle...) laissait l'écran de chargement figé indéfiniment — le serveur
+      // a son propre timeout (25s) mais on ne peut pas compter dessus si LUI ne répond pas.
+      const abort=new AbortController();
+      const abortTimer=setTimeout(()=>abort.abort(),30000);
       try{
         const [resp]=await Promise.all([
-          fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:imageDataUrl,images:imagesPayload(),tone:selectedTone,profile:prefs,mode})}),
+          fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},signal:abort.signal,body:JSON.stringify({image:imageDataUrl,images:imagesPayload(),tone:selectedTone,profile:prefs,mode})}),
           minDelay,
         ]);
         const data=await resp.json();
@@ -1554,8 +1559,9 @@
           if(!quota.isPremium&&quota.remaining===1){setTimeout(()=>toast('⚠️ Plus qu\'1 analyse gratuite aujourd\'hui'),2600);track('quota_last_warning');}
         }
       }catch(e){
-        replies=null; // showResults gèrera le fallback
+        replies=null; // showResults gèrera le fallback (timeout inclus : abort → AbortError ici)
       }
+      clearTimeout(abortTimer);
 
       cancelAnimationFrame(raf);
       clearInterval(stepTimer);
