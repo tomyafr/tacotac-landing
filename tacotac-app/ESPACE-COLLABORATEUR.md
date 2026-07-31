@@ -19,16 +19,15 @@ https://taco-tac.app/partner
 
 ## 2. Comment un collaborateur se connecte
 
-Trois chemins, tous avec **l'email de son compte Tacotac** :
+Il tape **son email** (celui de son compte Tacotac) et entre directement — aucun mot de passe,
+aucun lien à cliquer. Si l'email correspond à un collaborateur actif (ou à un admin), la session
+s'ouvre immédiatement ; sinon, message générique refusant l'accès (aucune énumération possible).
 
-| Chemin | Quand |
-|---|---|
-| **Lien magique par email** | 1re connexion, ou mot de passe oublié → bouton « Première connexion » |
-| **Email + mot de passe** | dès qu'il en a créé un dans « Mon profil » |
-| **Continuer avec Google** | s'il a créé son compte Tacotac avec Google |
+C'est volontairement minimal : l'espace n'est jamais lié depuis le site, l'URL se donne à la main
+à des personnes de confiance, donc l'email seul suffit comme clé d'entrée.
 
-Le tout premier accès part de toi : dans la console admin, **« Renvoyer son lien d'accès »**
-lui envoie un email avec un bouton qui le connecte directement (lien valable 7 jours, usage unique).
+Le premier accès part de toi : dans la console admin, **« Renvoyer son rappel d'accès »** lui
+envoie un email qui redonne le lien vers `/partner` et rappelle qu'il suffit d'y taper son email.
 
 ## 3. Ce qu'il voit
 
@@ -46,8 +45,8 @@ de la semaine. Enfin l'historique de ses versements.
 **Mes ventes** — chaque vente ligne à ligne (date, client anonymisé, formule, montant, sa
 commission), filtres par formule, recherche, et **export CSV**.
 
-**Mon profil** — nom affiché, réseau, moyen de paiement, création de mot de passe, et le rappel
-de son contrat (taux de commission, remise communauté, date d'entrée, Premium offert).
+**Mon profil** — nom affiché, réseau, moyen de paiement, et le rappel de son contrat (taux de
+commission, remise communauté, date d'entrée, Premium offert).
 
 > Les emails clients sont **masqués** (`cl••••••@gmail.com`) : le collaborateur reconnaît ses
 > ventes sans récupérer la base clients.
@@ -63,10 +62,11 @@ Visible uniquement pour les emails de `PARTNER_ADMIN_EMAILS` (`.env`), onglet **
   - modifier son **taux de commission** et son nom
   - **noter un versement** (montant + note) → son « reste à recevoir » baisse d'autant chez lui
   - **voir son tableau de bord** exactement comme lui
-  - **renvoyer son lien d'accès** par email
+  - **renvoyer son rappel d'accès** par email
   - **révoquer** (retire le Premium + désactive le code promo Stripe) ou **réactiver**
 - **« + Ajouter un collaborateur »** : crée d'un coup le coupon + code promo Stripe, le compte
-  Premium, la ligne en base, et lui envoie son email de bienvenue avec son lien d'accès.
+  Premium, la ligne en base, et lui envoie son email de bienvenue (avec le rappel : il suffit
+  d'ouvrir `/partner` et de taper son email).
 
 ## 5. Installation sur le VPS
 

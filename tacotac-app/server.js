@@ -2217,7 +2217,7 @@ app.post('/api/bio', analyzeLimiter, async (req, res) => {
 //  déclarés au-dessus. Aucun lien depuis le site : l'URL se donne à la main.
 // ══════════════════════════════════════════════════════════════
 app.use(createPartnerRouter({
-  openSession, destroySession, attachAccount, hashPassword, verifyPassword,
+  openSession, destroySession, attachAccount,
   sessionCookieName: SESSION_COOKIE, stripe, publicUrl: PUBLIC_URL, sendMail: sendEmail,
 }));
 

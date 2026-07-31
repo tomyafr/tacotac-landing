@@ -17,7 +17,7 @@
 import 'dotenv/config';
 import {
   getCollaborator, upsertCollaborator, setCollaboratorPlan, setCollaboratorDiscount,
-  createPartnerToken, listCollaborators, accountSummary,
+  listCollaborators, accountSummary,
 } from './db.js';
 
 const PUBLIC_URL = process.env.PUBLIC_URL || 'https://taco-tac.app';
@@ -43,7 +43,8 @@ async function sendEmail({ to, subject, html }) {
   return true;
 }
 
-const inviteHtml = (name, link) => `<div style="background:#0b0b0b;padding:32px 14px;font-family:Arial,Helvetica,sans-serif;">
+// Pas de lien à cliquer : l'accès se fait en tapant l'email sur /partner.
+const inviteHtml = (name, email) => `<div style="background:#0b0b0b;padding:32px 14px;font-family:Arial,Helvetica,sans-serif;">
   <div style="max-width:480px;margin:0 auto;">
     <div style="text-align:center;padding-bottom:20px;">
       <img src="${PUBLIC_URL}/assets/icon-192.png" width="64" height="64" alt="Tacotac" style="border-radius:18px;border:0;">
@@ -52,8 +53,8 @@ const inviteHtml = (name, link) => `<div style="background:#0b0b0b;padding:32px 
     <div style="background:#161616;border:1px solid #262626;border-radius:20px;padding:32px 28px;color:#F4EEE2;">
       <h1 style="font-size:23px;margin:0 0 10px;text-align:center;color:#fff;">Ton espace collaborateur est ouvert 🦊</h1>
       <p style="color:#B5ABA0;font-size:15px;line-height:1.65;margin:0 0 8px;">Salut ${name || 'toi'}, tu peux maintenant suivre <b style="color:#fff;">en direct</b> le nombre d'abonnements pris avec ton code, le chiffre d'affaires généré et ta commission.</p>
-      <p style="color:#8A7F70;font-size:13px;line-height:1.6;margin:0;">Le bouton ci-dessous te connecte directement. Ensuite, crée ton mot de passe dans « Mon profil » pour revenir quand tu veux.</p>
-      <a href="${link}" style="display:block;text-align:center;background:#FF5C00;color:#ffffff;text-decoration:none;font-weight:700;font-size:16px;padding:16px;border-radius:13px;margin-top:26px;">Ouvrir mon espace →</a>
+      <p style="color:#8A7F70;font-size:13px;line-height:1.6;margin:0 0 14px;">Pas de mot de passe : ouvre ton espace et tape simplement <b style="color:#fff;">${email}</b>.</p>
+      <a href="${PUBLIC_URL}/partner" style="display:block;text-align:center;background:#FF5C00;color:#ffffff;text-decoration:none;font-weight:700;font-size:16px;padding:16px;border-radius:13px;">Ouvrir mon espace →</a>
     </div>
     <p style="color:#6e6a66;font-size:11.5px;text-align:center;margin:18px 0 0;">Lien personnel — ne le partage pas.</p>
   </div></div>`;
@@ -79,9 +80,8 @@ for (const c of ROSTER) {
   console.log(`   ${existing ? '✓ à jour ' : '＋ créé  '} ${email}  · code ${existing?.promo_code || c.code} · accès : ${how}`);
 
   if (INVITE) {
-    const link = `${PUBLIC_URL}/partner/auth?token=${createPartnerToken(email, 60 * 24 * 7)}`;
-    const sent = await sendEmail({ to: email, subject: 'Ton espace collaborateur Tacotac est ouvert 🦊', html: inviteHtml(c.name, link) });
-    console.log(sent ? '            ✉️  lien envoyé' : `            🔗 ${link}`);
+    const sent = await sendEmail({ to: email, subject: 'Ton espace collaborateur Tacotac est ouvert 🦊', html: inviteHtml(c.name, email) });
+    console.log(sent ? '            ✉️  email envoyé' : `            🔗 ${PUBLIC_URL}/partner (email non envoyé, RESEND_API_KEY absente ?)`);
   }
 }
 

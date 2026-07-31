@@ -580,18 +580,12 @@ export function salesSummary() {
 
 // ══════════════════════════════════════════════════════════════
 //  ESPACE COLLABORATEUR (/partner) — tables et requêtes dédiées
-//  - `partner_login_tokens` : liens magiques d'accès (1re connexion / mdp oublié)
+//  Connexion par email seul (pas de mot de passe) : si l'email correspond à
+//  un collaborateur actif ou à un admin, la session s'ouvre directement.
 //  - `collaborator_payouts` : commissions RÉELLEMENT versées (saisies par l'admin)
 //    → le "reste à verser" affiché au collaborateur = commission due − versements
 // ══════════════════════════════════════════════════════════════
 db.exec(`
-  CREATE TABLE IF NOT EXISTS partner_login_tokens (
-    token      TEXT PRIMARY KEY,
-    email      TEXT NOT NULL,
-    created_at INTEGER NOT NULL,
-    expires_at INTEGER NOT NULL,
-    used_at    INTEGER
-  );
   CREATE TABLE IF NOT EXISTS collaborator_payouts (
     id                 INTEGER PRIMARY KEY AUTOINCREMENT,
     collaborator_email TEXT NOT NULL,
@@ -608,32 +602,6 @@ try { db.exec('ALTER TABLE collaborators ADD COLUMN handle TEXT'); } catch { /* 
 try { db.exec('ALTER TABLE collaborators ADD COLUMN payout_method TEXT'); } catch { /* déjà migré */ }
 try { db.exec('ALTER TABLE collaborators ADD COLUMN discount_pct INTEGER'); } catch { /* déjà migré */ }
 try { db.exec('ALTER TABLE collaborators ADD COLUMN last_seen_at INTEGER'); } catch { /* déjà migré */ }
-
-// ── Liens magiques (première connexion, mot de passe oublié) ────
-export function createPartnerToken(email, ttlMinutes = 45) {
-  const token = randomUUID().replace(/-/g, '') + randomUUID().replace(/-/g, '');
-  const now = nowTs();
-  db.prepare('INSERT INTO partner_login_tokens (token, email, created_at, expires_at) VALUES (?, ?, ?, ?)')
-    .run(token, normEmail(email), now, now + ttlMinutes * 60);
-  return token;
-}
-// Consomme un lien magique (usage unique). Renvoie l'email ou null.
-export function consumePartnerToken(token) {
-  if (!token) return null;
-  const row = db.prepare('SELECT * FROM partner_login_tokens WHERE token = ?').get(String(token));
-  if (!row || row.used_at || row.expires_at < nowTs()) return null;
-  db.prepare('UPDATE partner_login_tokens SET used_at = ? WHERE token = ?').run(nowTs(), String(token));
-  return row.email;
-}
-
-// ── Compte : définir / remplacer le mot de passe ────────────────
-export function setAccountPassword(email, passwordHash) {
-  const norm = normEmail(email);
-  let acc = qAccByEmail.get(norm);
-  if (!acc) { qInsertAcc.run(norm, passwordHash, null, nowTs()); return qAccByEmail.get(norm); }
-  db.prepare('UPDATE accounts SET password_hash = ? WHERE id = ?').run(passwordHash, acc.id);
-  return qAccByEmail.get(norm);
-}
 
 // ── Profil collaborateur : champs éditables ─────────────────────
 export function updateCollaboratorProfile(email, { name, handle, payoutMethod }) {

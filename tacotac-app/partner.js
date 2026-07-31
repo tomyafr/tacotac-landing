@@ -22,9 +22,8 @@ import {
   getCollaborator, listCollaborators, upsertCollaborator, setCollaboratorPlan,
   revokeCollaboratorPlan, markCollaboratorRevoked, reactivateCollaborator,
   salesForCollaborator, allSales, addPayout, deletePayout, payoutsFor, payoutTotals,
-  createPartnerToken, consumePartnerToken, setAccountPassword, updateCollaboratorProfile,
-  setCollaboratorCommission, setCollaboratorDiscount, touchCollaborator, accountSummary,
-  getAccountByEmail,
+  updateCollaboratorProfile, setCollaboratorCommission, setCollaboratorDiscount,
+  touchCollaborator, accountSummary, getAccountByEmail,
 } from './db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -45,19 +44,19 @@ const nowTs = () => Math.floor(Date.now() / 1000);
 /**
  * Crée le routeur de l'espace collaborateur.
  * `deps` fournit les briques déjà présentes dans server.js pour ne rien dupliquer :
- *   openSession / destroySession / attachAccount / hashPassword / verifyPassword
- *   sessionCookieName / stripe / publicUrl / sendMail
+ *   openSession / destroySession / attachAccount / sessionCookieName / stripe / publicUrl / sendMail
  */
 export function createPartnerRouter(deps) {
   const {
-    openSession, destroySession, attachAccount, hashPassword, verifyPassword,
+    openSession, destroySession, attachAccount,
     sessionCookieName, stripe, publicUrl, sendMail,
   } = deps;
 
   const router = express.Router();
 
+  // Anti-bruteforce sur l'email : large, car aucun secret n'est en jeu ici
+  // (pas de mot de passe à deviner), juste à éviter le balayage automatisé.
   const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 40, standardHeaders: true, legacyHeaders: false });
-  const linkLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 8, standardHeaders: true, legacyHeaders: false });
 
   // ── Qui est connecté ? ───────────────────────────────────────
   // Renvoie { email, isAdmin, collab } ou null. Un admin sans ligne
@@ -90,18 +89,6 @@ export function createPartnerRouter(deps) {
   router.get('/partner', page);
   router.get('/collab', page);
 
-  // Lien magique : /partner/auth?token=… → ouvre la session puis renvoie sur le dashboard
-  router.get('/partner/auth', (req, res) => {
-    const email = consumePartnerToken(req.query.token);
-    if (!email) return res.redirect('/partner?err=link');
-    const collab = getCollaborator(email);
-    if (!collab && !ADMIN_EMAILS.has(email)) return res.redirect('/partner?err=access');
-    if (collab?.revoked_at) return res.redirect('/partner?err=revoked');
-    const acc = getAccountByEmail(email) || setCollaboratorPlan(email); // crée le compte si absent
-    openSession(res, acc.id);
-    res.redirect('/partner?welcome=1');
-  });
-
   // ════════════════════ AUTH ════════════════════
 
   // État de session (le front décide : écran de login ou dashboard)
@@ -109,71 +96,39 @@ export function createPartnerRouter(deps) {
     const me = whoami(req);
     if (!me) return res.json({ ok: false });
     touchCollaborator(me.email);
-    const acc = accountSummary(me.email);
     res.json({
       ok: true,
       email: me.email,
       isAdmin: me.isAdmin,
       isCollaborator: Boolean(me.collab),
       name: me.collab?.name || null,
-      hasPassword: Boolean(acc?.hasPassword),
-      viaGoogle: Boolean(acc?.viaGoogle),
     });
   });
 
+  // Connexion : juste l'email. S'il correspond à un collaborateur actif (ou à
+  // un admin), on ouvre la session directement — pas de mot de passe, pas de
+  // lien à cliquer. C'est un espace caché donné à la main, la simplicité prime.
   router.post('/api/partner/login', loginLimiter, (req, res) => {
     const email = norm(req.body?.email);
-    const password = String(req.body?.password || '');
     if (!EMAIL_RE.test(email)) return res.status(400).json({ ok: false, error: 'Entre un email valide.' });
 
     const collab = getCollaborator(email);
     const isAdmin = ADMIN_EMAILS.has(email);
-    // Message volontairement identique pour un email inconnu ET un non-collaborateur :
-    // impossible de deviner qui fait partie du programme depuis l'extérieur.
-    if (!isAdmin && !collab) return res.status(403).json({ ok: false, error: "Cet email ne fait pas partie de l'espace collaborateur." });
-    if (collab?.revoked_at && !isAdmin) return res.status(403).json({ ok: false, error: 'Ton accès collaborateur a été clôturé.' });
-
-    const acc = getAccountByEmail(email);
-    if (!acc?.password_hash) {
-      return res.status(409).json({ ok: false, error: 'no_password',
-        message: "Tu n'as pas encore de mot de passe. Reçois ton lien de connexion par email." });
+    if (!isAdmin && (!collab || collab.revoked_at)) {
+      return res.status(403).json({ ok: false, error: "Cet email ne fait pas partie de l'espace collaborateur." });
     }
-    if (!verifyPassword(password, acc.password_hash)) return res.status(401).json({ ok: false, error: 'Mot de passe incorrect.' });
+
+    // Compte réconcilié par email (même compte que l'app principale) ; créé
+    // au passage s'il n'existe pas encore (cas d'un admin sans accès app).
+    const acc = getAccountByEmail(email) || setCollaboratorPlan(email);
     openSession(res, acc.id);
     touchCollaborator(email);
-    res.json({ ok: true });
-  });
-
-  // Lien magique par email (1re connexion / mot de passe oublié)
-  router.post('/api/partner/magic', linkLimiter, async (req, res) => {
-    const email = norm(req.body?.email);
-    if (!EMAIL_RE.test(email)) return res.status(400).json({ ok: false, error: 'Entre un email valide.' });
-    const collab = getCollaborator(email);
-    const isAdmin = ADMIN_EMAILS.has(email);
-    // Réponse identique dans tous les cas : pas d'énumération des collaborateurs.
-    if ((collab && !collab.revoked_at) || isAdmin) {
-      const token = createPartnerToken(email);
-      const link = `${publicUrl}/partner/auth?token=${token}`;
-      await sendMail({
-        to: email,
-        subject: 'Ton accès à ton espace collaborateur Tacotac 🦊',
-        html: magicLinkHtml({ link, name: collab?.name, publicUrl }),
-      }).catch(() => {});
-    }
     res.json({ ok: true });
   });
 
   router.post('/api/partner/logout', (req, res) => {
     destroySession(req.signedCookies?.[sessionCookieName]);
     res.clearCookie(sessionCookieName);
-    res.json({ ok: true });
-  });
-
-  // Définir / changer son mot de passe (une fois connecté par lien magique ou Google)
-  router.post('/api/partner/password', requirePartner, (req, res) => {
-    const pw = String(req.body?.password || '');
-    if (pw.length < 8) return res.status(400).json({ ok: false, error: '8 caractères minimum.' });
-    setAccountPassword(req.partner.email, hashPassword(pw));
     res.json({ ok: true });
   });
 
@@ -306,12 +261,10 @@ export function createPartnerRouter(deps) {
 
       let emailSent = false;
       if (sendWelcome) {
-        const token = createPartnerToken(email, 60 * 24 * 7); // 7 jours pour la 1re connexion
         emailSent = await sendMail({
           to: email,
           subject: "Bienvenue dans l'équipe Tacotac 🦊 — ton espace collaborateur est ouvert",
-          html: welcomeHtml({ name, code: promo.code, discountPct, commissionPct, publicUrl,
-                              link: `${publicUrl}/partner/auth?token=${token}` }),
+          html: welcomeHtml({ name, code: promo.code, discountPct, commissionPct, publicUrl, email }),
         }).catch(() => false);
       }
       res.json({ ok: true, code: promo.code, emailSent });
@@ -320,18 +273,17 @@ export function createPartnerRouter(deps) {
     }
   });
 
-  // Renvoyer un lien d'accès (1re connexion oubliée, changement de téléphone…)
+  // Renvoyer le rappel d'accès (le collaborateur a perdu le lien / oublié comment entrer)
   router.post('/api/partner/admin/invite', requireAdminPartner, async (req, res) => {
     const email = norm(req.body?.email);
     const c = getCollaborator(email);
     if (!c) return res.status(404).json({ ok: false, error: 'Collaborateur inconnu.' });
-    const token = createPartnerToken(email, 60 * 24 * 7);
     const sent = await sendMail({
       to: email,
-      subject: 'Ton lien de connexion à ton espace collaborateur Tacotac',
-      html: magicLinkHtml({ link: `${publicUrl}/partner/auth?token=${token}`, name: c.name, publicUrl }),
+      subject: 'Ton espace collaborateur Tacotac',
+      html: reminderHtml({ name: c.name, publicUrl, email }),
     }).catch(() => false);
-    res.json({ ok: true, emailSent: Boolean(sent), link: `${publicUrl}/partner/auth?token=${token}` });
+    res.json({ ok: true, emailSent: Boolean(sent), link: `${publicUrl}/partner` });
   });
 
   router.post('/api/partner/admin/revoke', requireAdminPartner, async (req, res) => {
@@ -500,6 +452,8 @@ async function uniquePromoCode(stripe, desired) {
 
 // ══════════════════════ EMAILS ══════════════════════
 
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+
 function shell(inner, publicUrl, cta = { href: `${publicUrl}/partner`, label: 'Ouvrir mon espace →' }) {
   return `<div style="background:#0b0b0b;padding:32px 14px;font-family:Arial,Helvetica,sans-serif;">
   <div style="max-width:480px;margin:0 auto;">
@@ -517,16 +471,21 @@ function shell(inner, publicUrl, cta = { href: `${publicUrl}/partner`, label: 'O
   </div></div>`;
 }
 
-function magicLinkHtml({ link, name, publicUrl }) {
+// Rappel d'accès : plus de lien/token à consommer, juste le rappel que
+// l'espace s'ouvre en entrant son email — rien d'autre à retenir.
+function reminderHtml({ name, publicUrl, email }) {
   const hi = name ? String(name).split(/\s+/)[0] : 'toi';
   return shell(`
-    <h1 style="font-size:23px;margin:0 0 10px;text-align:center;color:#fff;">Ton lien de connexion 🔑</h1>
-    <p style="color:#B5ABA0;font-size:15px;line-height:1.65;margin:0 0 8px;">Salut ${hi}, clique sur le bouton pour ouvrir <b style="color:#fff;">ton espace collaborateur</b> : tes ventes, tes commissions, tes stats en direct.</p>
-    <p style="color:#8A7F70;font-size:13px;line-height:1.6;margin:0;">Ce lien est valable une seule fois. Une fois dedans, tu pourras créer un mot de passe pour te reconnecter quand tu veux.</p>`,
-    publicUrl, { href: link, label: 'Ouvrir mon espace →' });
+    <h1 style="font-size:23px;margin:0 0 10px;text-align:center;color:#fff;">Ton espace collaborateur 🦊</h1>
+    <p style="color:#B5ABA0;font-size:15px;line-height:1.65;margin:0 0 8px;">Salut ${hi}, pour retrouver <b style="color:#fff;">tes ventes et tes commissions en direct</b>, rends-toi sur ton espace et entre simplement ton email :</p>
+    <div style="background:#0d0d0d;border:1.5px dashed rgba(255,122,69,.5);border-radius:14px;padding:14px;text-align:center;margin:14px 0;">
+      <div style="font-size:15px;font-weight:700;color:#FF7A45;">${esc(email)}</div>
+    </div>
+    <p style="color:#8A7F70;font-size:13px;line-height:1.6;margin:0;">Pas de mot de passe à retenir : si cet email fait partie de l'équipe, tu es connecté directement.</p>`,
+    publicUrl);
 }
 
-function welcomeHtml({ name, code, discountPct, commissionPct, publicUrl, link }) {
+function welcomeHtml({ name, code, discountPct, commissionPct, publicUrl, email }) {
   const hi = name ? String(name).split(/\s+/)[0] : 'toi';
   return shell(`
     <h1 style="font-size:23px;margin:0 0 10px;text-align:center;color:#fff;">Bienvenue dans l'équipe 🦊</h1>
@@ -536,8 +495,9 @@ function welcomeHtml({ name, code, discountPct, commissionPct, publicUrl, link }
       <div style="font-size:27px;font-weight:800;letter-spacing:2px;color:#FF7A45;">${code}</div>
       <div style="color:#8A7F70;font-size:12.5px;margin-top:8px;">-${discountPct}% pour ta communauté · ${commissionPct}% pour toi</div>
     </div>
-    <p style="color:#B5ABA0;font-size:14.5px;line-height:1.65;margin:0;">Chaque abonnement pris avec ton code apparaît dans ton espace, avec le détail de ta commission. Le lien ci-dessous te connecte directement.</p>`,
-    publicUrl, { href: link, label: 'Ouvrir mon espace collaborateur →' });
+    <p style="color:#B5ABA0;font-size:14.5px;line-height:1.65;margin:0 0 14px;">Chaque abonnement pris avec ton code apparaît dans ton espace, avec le détail de ta commission.</p>
+    <p style="color:#8A7F70;font-size:13px;line-height:1.6;margin:0;">Pour entrer : ouvre ton espace et tape simplement <b style="color:#fff;">${esc(email)}</b> — pas de mot de passe.</p>`,
+    publicUrl);
 }
 
 export default createPartnerRouter;
