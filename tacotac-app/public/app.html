@@ -239,6 +239,18 @@
     .quiz-opt:active{transform:scale(.98)}
     .quiz-opt.sel{border-color:#FF7A18;background:#1a0d02;transform:scale(.98)}
     .quiz-opt:disabled{pointer-events:none}
+    /* Scène du renard pendant le QCM : halo orange qui respire + anneaux concentriques.
+       Les anneaux et le halo sont en position absolue → ils débordent visuellement sans
+       pousser la question ni les réponses vers le bas (la hauteur reste celle du renard). */
+    .quiz-fox-stage{position:relative;display:flex;align-items:center;justify-content:center;isolation:isolate}
+    .quiz-fox-stage::before{content:'';position:absolute;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(255,92,0,.30) 0%,rgba(255,92,0,.11) 42%,transparent 70%);filter:blur(8px);animation:tt-halo 3.8s ease-in-out infinite;z-index:-1}
+    .quiz-ring{position:absolute;border-radius:50%;border:1px solid rgba(255,122,24,.18);pointer-events:none;z-index:-1}
+    .quiz-ring.r1{width:176px;height:176px}
+    .quiz-ring.r2{width:224px;height:224px;border-color:rgba(255,122,24,.09)}
+    .quiz-fox-shadow{position:absolute;bottom:4px;width:104px;height:13px;border-radius:50%;background:radial-gradient(ellipse,rgba(255,92,0,.28),transparent 72%);filter:blur(5px);z-index:-1}
+    .quiz-fox{width:152px;height:152px;object-fit:contain;filter:drop-shadow(0 16px 32px rgba(255,92,0,.45));animation:tt-float 4.2s ease-in-out infinite}
+    @keyframes tt-halo{0%,100%{opacity:.72;transform:scale(1)}50%{opacity:1;transform:scale(1.07)}}
+    @keyframes tt-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 
     /* ── PWA : bouton installer + guide iOS ── */
     .install-btn{display:none;width:100%;margin-top:12px;position:relative;z-index:2;align-items:center;justify-content:center;gap:8px;height:46px;border-radius:14px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:600;color:#FF7A33;background:rgba(255,92,0,.07);border:1px solid rgba(255,92,0,.35);transition:background .2s,border-color .2s,transform .15s}
@@ -355,14 +367,14 @@
       </button>
       <button class="dr-item" data-tool="bio">
         <span class="dr-ic">📝</span>
-        <span style="flex:1;min-width:0;"><span class="dr-name">Bio</span><span class="dr-desc">3 versions qui font matcher</span></span>
+        <span style="flex:1;min-width:0;"><span class="dr-name">Bio</span><span class="dr-desc">3 versions qui donnent envie</span></span>
         <span class="dr-pro">PRO</span>
       </button>
 
       <div class="dr-sec">Entraînement</div>
       <button class="dr-item" id="drawerTrain">
         <span class="dr-ic">🎯</span>
-        <span style="flex:1;min-width:0;"><span class="dr-name">Choisir un match</span><span class="dr-desc">3 filles IA · décroche le date</span></span>
+        <span style="flex:1;min-width:0;"><span class="dr-name">Choisir un profil</span><span class="dr-desc">3 filles IA · décroche le date</span></span>
       </button>
       <div id="drawerPersonas"></div>
 
@@ -404,7 +416,12 @@
         </div>
       </div>
       <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;position:relative;z-index:2;">
-        <img id="quizStepFox" src="assets/fox_chill.png" alt="" style="width:78px;height:78px;object-fit:contain;margin:0 auto;filter:drop-shadow(0 10px 22px rgba(255,92,0,.35));">
+        <div class="quiz-fox-stage">
+          <div class="quiz-ring r2"></div>
+          <div class="quiz-ring r1"></div>
+          <div class="quiz-fox-shadow"></div>
+          <img id="quizStepFox" class="quiz-fox" src="assets/fox_chill.png" alt="">
+        </div>
         <div id="quizQWrap" class="speech-bubble quiz-fade" style="max-width:none;">
           <div class="display" id="quizQ" style="color:#fff;font-size:21px;line-height:1.22;"></div>
           <div id="quizQSub" style="color:#8a8580;font-size:13px;margin-top:8px;line-height:1.4;"></div>
@@ -470,7 +487,7 @@
       </button>
 
       <div style="margin-top:20px;position:relative;z-index:2;">
-        <div class="display" id="heroTitle" style="color:#fff;font-size:30px;line-height:1.1;">Balance ton <span style="color:#FF5C00;">match</span>.</div>
+        <div class="display" id="heroTitle" style="color:#fff;font-size:30px;line-height:1.1;">Balance ta <span style="color:#FF5C00;">conv</span>.</div>
         <div id="heroSub" style="color:#8a8580;font-size:14px;margin-top:8px;line-height:1.45;">Glisse ta capture, le renard te sort 3 répliques qui font mouche.</div>
       </div>
 
@@ -751,8 +768,8 @@
       </div>
 
       <div style="margin-top:20px;position:relative;z-index:2;">
-        <div class="display" style="color:#fff;font-size:26px;line-height:1.1;">Choisis ton <span style="color:#FF5C00;">match</span>.</div>
-        <div style="color:#8a8580;font-size:13.5px;margin-top:8px;line-height:1.5;">Elles répondent comme de vraies filles — avec leur caractère, leur rythme et leur mémoire. Décroche un rendez-vous concret pour gagner. Ce que tu apprends ici, tu le ressors sur tes vrais matchs.</div>
+        <div class="display" style="color:#fff;font-size:26px;line-height:1.1;">Choisis ton <span style="color:#FF5C00;">profil</span>.</div>
+        <div style="color:#8a8580;font-size:13.5px;margin-top:8px;line-height:1.5;">Elles répondent comme de vraies filles — avec leur caractère, leur rythme et leur mémoire. Décroche un rendez-vous concret pour gagner. Ce que tu apprends ici, tu le ressors sur tes vraies convs.</div>
       </div>
 
       <div id="personaList" style="margin-top:18px;display:flex;flex-direction:column;gap:11px;position:relative;z-index:2;"></div>
@@ -1129,7 +1146,7 @@
         {l:'😂 Une vanne qui a fait rire aux éclats',a:'chill'},
         {l:'✨ Une phrase sortie du lot, qui a marqué',a:'classe'},
         {l:'😈 Une ligne avec un sous-entendu bien placé',a:'spicy'}]},
-      {q:'Le premier message à un nouveau match, tu préfères…',
+      {q:'Le premier message à quelqu'un qui te plaît, tu préfères…',
        sub:'L\'ouverture donne le ton de toute la conv.',
        opts:[
         {l:'👋 Simple et sympa',a:'chill'},
@@ -1403,7 +1420,7 @@
     // ══════════════ MODES : 4 outils (Répondre / DM / Coach / Bio) ══════════════
     const MODES={
       reply:{ premium:false, input:'image',
-        hero:'Balance ton <span style="color:#FF5C00;">match</span>.',
+        hero:'Balance ta <span style="color:#FF5C00;">conv</span>.',
         sub:'Glisse ta capture, le renard te sort 3 répliques qui font mouche.',
         cta:'Analyser ma conv <span style="font-size:21px;">⚡</span>',
         steps:['Lecture du contexte…','Analyse du ton…','Détection du vibe…','Génération de plusieurs pistes…','Le renard élimine les mauvaises…','Dernière relecture…'] },
@@ -1419,7 +1436,7 @@
         steps:['Lecture de la conv…','Repérage des signaux…','Qui investit le plus…','Calcul du score…','Choix du meilleur move…'] },
       bio:{ premium:true, input:'text',
         hero:'Optimise ta <span style="color:#FF5C00;">bio</span>.',
-        sub:'Colle ta bio actuelle, le renard te sort 3 versions qui donnent envie de matcher.',
+        sub:'Colle ta bio actuelle, le renard te sort 3 versions qui donnent envie de te répondre.',
         cta:'Optimiser ma bio <span style="font-size:21px;">✨</span>',
         steps:['Lecture de ta bio…','Repérage des clichés…','Réécriture par le renard…','Dernier polish…'] },
     };
@@ -2009,9 +2026,9 @@
         const mid=document.createElement('span');mid.style.cssText='flex:1;min-width:0;';
         let status='';
         if(st&&st.status==='won')status='<span style="color:#34d399;">✅ RDV décroché</span>';
-        else if(st&&st.status==='dead')status='<span style="color:#ff6b5c;">💀 elle a unmatch</span>';
+        else if(st&&st.status==='dead')status='<span style="color:#ff6b5c;">💀 elle a coupé court</span>';
         else if(st&&st.msgs.length)status='<span style="color:#FF7A33;">💬 conv en cours · ❤️ '+st.interest+'%</span>';
-        else status='<span style="color:#56524e;">nouveau match ✨</span>';
+        else status='<span style="color:#56524e;">nouvelle conv ✨</span>';
         mid.innerHTML='<span style="display:flex;align-items:center;gap:8px;"><span style="color:#fff;font-size:15px;font-weight:700;">'+p.name+', '+p.age+'</span>'
           +'<span class="lvl-pill" style="color:'+p.color+';background:'+p.color+'1f;border:1px solid '+p.color+'55;">'+p.levelLabel+'</span></span>'
           +'<span style="display:block;color:#8a8580;font-size:12px;margin-top:3px;line-height:1.4;">'+p.desc+'</span>'
@@ -2057,7 +2074,7 @@
       setChatStatus('en ligne');heartUpdate(st.interest);
       chatScroll.innerHTML='';
       // la note "nouveau match" n'a de sens que si la conv n'a pas commencé
-      if(!st.msgs.length)sysNote('✨ Nouveau match avec '+p.name+' — à toi d\'ouvrir. Son profil peut t\'aider (appuie sur son nom).');
+      if(!st.msgs.length)sysNote('✨ Nouvelle conv avec '+p.name+' — à toi d\'ouvrir. Son profil peut t\'aider (appuie sur son nom).');
       st.msgs.forEach(m=>appendMsg(m.r,m.t));
       updateChatLock();trainSave();
       go(8);track('train_start',{persona:id});
@@ -2123,9 +2140,9 @@
       const fox=document.getElementById('trainEndFox'),em=document.getElementById('trainEndEmoji');
       if(won){fox.style.display='block';em.style.display='none';}
       else{fox.style.display='none';em.style.display='block';em.textContent='💀';}
-      document.getElementById('trainEndTitle').textContent=won?'RDV décroché 🎉':p.name+' a unmatch';
+      document.getElementById('trainEndTitle').textContent=won?'RDV décroché 🎉':p.name+' a coupé court';
       document.getElementById('trainEndMsg').textContent=won
-        ?'T\'as convaincu '+p.name+' ('+p.levelLabel+') en '+nb+' message'+(nb>1?'s':'')+'. Maintenant, va faire pareil sur tes vrais matchs 🦊'
+        ?'T\'as convaincu '+p.name+' ('+p.levelLabel+') en '+nb+' message'+(nb>1?'s':'')+'. Maintenant, va faire pareil sur tes vraies convs 🦊'
         :'Intérêt tombé à '+st.interest+'%. Relis la conv : à quel moment t\'es passé en mode lourd ou générique ? Retente, elle a pas de rancune.';
       trainEnd.classList.add('show');
       track(won?'train_win':'train_unmatch',{persona:currentPersona,msgs:nb});
@@ -2181,7 +2198,7 @@
     const DEMO_OPENER={
       classe:["ta bio dit « souvent en retard mais ça vaut le coup » — jsuis prêt à vérifier autour d'un verre","une photo en rando, une au resto… t'es le combo parfait, faut qu'on en parle","jparie que t'as un rire qui s'entend de loin, confirme autour d'un café ?"],
       drole:["alors comme ça tu mets 4 photos de ton chien et UNE de toi ? il est mieux vendu que toi mdr","ta bio dit team sushi, moi team pizza… on est foutus mais on tente quand même ?","jsuis passé 3 fois sur ton profil avant d'oser, note l'effort"],
-      spicy:["t'as le genre de sourire qui fait faire des bêtises, jle sens d'ici","jsais pas ce qui est le plus dangereux, ta photo 2 ou ta bio","match à 23h47… le destin veut qu'on se parle maintenant"],
+      spicy:["t'as le genre de sourire qui fait faire des bêtises, jle sens d'ici","jsais pas ce qui est le plus dangereux, ta photo 2 ou ta bio","23h47 et jsuis toujours là… le destin veut qu'on se parle maintenant"],
     };
     const DEMO_COACH={
       score:72,
@@ -2358,7 +2375,7 @@
           reply:['Ta réplique est prête 🔒','Ta meilleure réponse est écrite, juste derrière le flou. Débloque pour la lire.'],
           opener:['Tes DM sont prêts 🔒','3 premiers messages écrits pour <b style="color:#FF9A45;">son</b> profil sont là, juste derrière le flou. Débloque pour les lire.'],
           coach:['Ton diagnostic est prêt 🔒','Son niveau d\'intérêt est calculé, ton meilleur move est trouvé — juste derrière le flou.'],
-          bio:['Ta nouvelle bio est prête 🔒','3 versions réécrites qui donnent envie de matcher — juste derrière le flou.'],
+          bio:['Ta nouvelle bio est prête 🔒','3 versions réécrites qui donnent envie de te répondre — juste derrière le flou.'],
         };
         const c=T[context]||T.opener;
         title.textContent=c[0];sub.innerHTML=c[1];
@@ -2373,13 +2390,13 @@
         sub.innerHTML='<b style="color:#FF9A45;">Romantique · Sexto · Mystère</b> — les répliques les plus puissantes du renard sont réservées aux Premium.';
       }else if(context==='opener'){
         title.textContent='Générateur de 1er message 🔒';
-        sub.innerHTML='Envoie le <b style="color:#FF9A45;">profil</b> de ton match (bio, photos), le renard te sort le DM parfait — réservé aux membres Premium.';
+        sub.innerHTML='Envoie le <b style="color:#FF9A45;">profil</b> de la personne qui te plaît (bio, photos), le renard te sort le DM parfait — réservé aux membres Premium.';
       }else if(context==='coach'){
         title.textContent='Coach de conv 🔒';
         sub.innerHTML='Le renard lit ta conv, mesure son intérêt (<b style="color:#FF9A45;">score + signaux</b>) et te donne ton meilleur move — réservé aux membres Premium.';
       }else if(context==='bio'){
         title.textContent='Optimiseur de bio 🔒';
-        sub.innerHTML='Colle ta bio, le renard la réécrit en <b style="color:#FF9A45;">3 versions qui matchent</b> — réservé aux membres Premium.';
+        sub.innerHTML='Colle ta bio, le renard la réécrit en <b style="color:#FF9A45;">3 versions qui font mouche</b> — réservé aux membres Premium.';
       }else if(context==='fav'){
         title.textContent='Favoris Premium 🔒';
         sub.innerHTML='Garde tes meilleures répliques en <b style="color:#FF9A45;">favoris</b> et retrouve-les en un clin d\'œil — réservé aux membres Premium.';
@@ -2788,9 +2805,9 @@
         const b=document.createElement('button');b.className='dr-item';
         const av=document.createElement('span');av.className='p-avatar';fillAvatar(av,id,38);av.style.borderRadius='12px';
         const mid=document.createElement('span');mid.style.cssText='flex:1;min-width:0;';
-        let status='nouveau match ✨',color='#56524e';
+        let status='nouvelle conv ✨',color='#56524e';
         if(st&&st.status==='won'){status='✅ RDV décroché';color='#34d399';}
-        else if(st&&st.status==='dead'){status='💀 elle a unmatch';color='#ff6b5c';}
+        else if(st&&st.status==='dead'){status='💀 elle a coupé court';color='#ff6b5c';}
         else if(st&&st.msgs.length){status='💬 en cours · ❤️ '+st.interest+'%';color='#FF7A33';}
         mid.innerHTML='<span class="dr-name">'+p.name+', '+p.age+' <span style="font-size:10px;font-weight:800;color:'+p.color+';">'+p.levelLabel+'</span></span>'
           +'<span class="dr-desc" style="color:'+color+';">'+status+'</span>';

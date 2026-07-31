@@ -916,7 +916,7 @@ const OPENER_FUNCTION = {
   },
 };
 
-const OPENER_SYSTEM_PROMPT = `Tu es Tacotac, un coach de séduction français redoutable. Ton client vient de MATCHER (ou repérer) quelqu'un et te montre le screenshot de son PROFIL (Tinder, Hinge, Bumble, Fruitz, Instagram…) : bio, photos, prompts. AUCUN message n'a encore été échangé. Tu écris les PREMIERS messages à sa place.
+const OPENER_SYSTEM_PROMPT = `Tu es Tacotac, un coach de séduction français redoutable. Ton client vient de repérer quelqu'un et te montre le screenshot de son PROFIL (Tinder, Hinge, Bumble, Fruitz, Instagram…) : bio, photos, prompts. AUCUN message n'a encore été échangé. Tu écris les PREMIERS messages à sa place.
 
 Ton client est un mec français, la vingtaine, qui veut des openers qui sonnent VRAIS — pas des phrases d'IA, pas du coach YouTube 2018. Un opener doit ressembler à ce qu'un mec malin, drôle et sûr de lui enverrait vraiment en premier message.
 
@@ -993,15 +993,15 @@ const OPENER_FALLBACK = {
   classe: [
     "j'allais écrire un truc banal et je me suis dit que tu méritais mieux, donc : meilleur souvenir de l'année, go",
     "ton profil est le premier qui m'a fait m'arrêter aujourd'hui, jdis ça jdis rien",
-    "on m'a dit que les meilleurs matchs commencent mal, donc : salut c'est quoi ton plat préféré ? voilà c'est fait, maintenant on peut vraiment discuter",
+    "on m'a dit que les meilleures convs commencent mal, donc : salut c'est quoi ton plat préféré ? voilà c'est fait, maintenant on peut vraiment discuter",
   ],
   drole: [
     "jte préviens direct jsuis nul en openers donc fais comme si t'avais reçu un truc hyper drôle et original",
-    "match à 21h37, message à 21h39… jsuis pas du genre à jouer la montre moi 😭",
+    "toi à 21h37, moi à 21h39… jsuis pas du genre à jouer la montre 😭",
     "bon on saute l'étape 'salut ça va' et on passe direct au débat important : l'ananas sur la pizza ??",
   ],
   spicy: [
-    "jsens que t'es le genre de match qui répond jamais en premier… prouve-moi que jme trompe 👀",
+    "jsens que t'es le genre à répondre jamais en premier… prouve-moi que jme trompe 👀",
     "on m'a toujours dit de me méfier des profils trop bien, et là jsuis servi",
     "je te laisse une chance de faire meilleure première impression que moi, elle est rare celle-là",
   ],
@@ -1112,7 +1112,7 @@ const BIO_FUNCTION = {
   type: 'function',
   function: {
     name: 'optimiser_bio',
-    description: "Analyse la bio de dating du client et la réécrit en 3 versions distinctes (drôle, classe, mystère) qui donnent envie de matcher.",
+    description: "Analyse la bio de dating du client et la réécrit en 3 versions distinctes (drôle, classe, mystère) qui donnent envie de te répondre.",
     strict: true,
     parameters: {
       type: 'object',
@@ -1144,7 +1144,7 @@ const BIO_FUNCTION = {
   },
 };
 
-const BIO_SYSTEM_PROMPT = `Tu es Tacotac, expert français des bios de dating apps (Tinder, Hinge, Bumble). Ton client te colle sa bio actuelle (ou se décrit en 2 phrases) : tu la réécris en 3 versions qui donnent envie de matcher ET d'envoyer le premier message.
+const BIO_SYSTEM_PROMPT = `Tu es Tacotac, expert français des bios de dating apps (Tinder, Hinge, Bumble). Ton client te colle sa bio actuelle (ou se décrit en 2 phrases) : tu la réécris en 3 versions qui donnent envie de te répondre ET d'envoyer le premier message.
 
 CE QUI FAIT UNE BIO QUI CONVERTIT :
 • COURTE : 1 à 3 lignes, ~40 mots max.
@@ -1220,7 +1220,7 @@ const TRAIN_FUNCTION = {
 // Socle commun à tous les personas (le prompt spécifique est concaténé après).
 // userMsgCount = numéro du message courant de l'utilisateur : sert au verrou anti-date-express.
 function trainSystemPrompt(p, interest, userMsgCount) {
-  return `Tu joues ${p.name}, ${p.age} ans, une vraie fille française sur une app de rencontre. Tu N'ES PAS une assistante : tu ES elle, avec sa personnalité, sa vie, ses humeurs. L'utilisateur est un mec qui vient de te matcher — il s'entraîne à séduire, mais TOI tu joues le jeu à 100%, comme si c'était réel.
+  return `Tu joues ${p.name}, ${p.age} ans, une vraie fille française sur une app de rencontre. Tu N'ES PAS une assistante : tu ES elle, avec sa personnalité, sa vie, ses humeurs. L'utilisateur est un mec qui vient de t'aborder — il s'entraîne à séduire, mais TOI tu joues le jeu à 100%, comme si c'était réel.
 
 TON STYLE D'ÉCRITURE (non négociable) :
 - Comme une vraie meuf de ${p.age} ans par SMS en 2025 : minuscules, court (souvent moins de 15 mots), naturel. Parfois juste "mdr", "ahah ok", "vasy raconte".
