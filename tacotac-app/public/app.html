@@ -595,7 +595,7 @@
         <div class="tt-logo">
           <button id="resultBackBtn" class="chat-iconbtn" title="Retour">‹</button>
           <div class="tt-avatar" style="width:34px;height:34px;"><img src="assets/fox_chill.png" alt="Tacotac"></div>
-          <div style="color:#fff;font-size:17px;font-weight:700;letter-spacing:-.4px;">Tes répliques</div>
+          <div id="resultTitle" style="color:#fff;font-size:17px;font-weight:700;letter-spacing:-.4px;">Tes répliques</div>
         </div>
         <div class="badge-pill" id="toneBadge">😂 Mode Drôle</div>
       </div>
@@ -1448,7 +1448,11 @@
       analyzeBtn.innerHTML=M.cta;
       dropzone.style.display=M.input==='image'?'flex':'none';
       document.getElementById('bioBox').style.display=M.input==='text'?'flex':'none';
-      document.getElementById('bubbleLbl').textContent=m==='opener'?'tiens envoie lui ça':'tiens répond lui ça';
+      // DM et Réplique partageaient exactement le même habillage : rien ne distinguait
+      // les 2 outils à l'écran (ni le titre, ni le libellé de la bulle).
+      document.getElementById('bubbleLbl').textContent=m==='opener'?'tiens dm la comme ça':'tiens répond lui ça';
+      const rt=document.getElementById('resultTitle');
+      if(rt)rt.textContent=m==='opener'?'Tes DM':'Tes répliques';
       if(m==='opener'&&imageDataUrl2)clearPhoto2(); // un profil = une seule photo
       updatePhoto2Btn();
       updateAnalyzeReady();
@@ -1603,7 +1607,7 @@
       resultFox.src=t.fox;
       resetCopy();
     }
-    function resetCopy(){copyBtn.classList.remove('done');copyIcon.textContent='📋';copyText.textContent='Copier la réplique';}
+    function resetCopy(){copyBtn.classList.remove('done');copyIcon.textContent='📋';copyText.textContent=mode==='opener'?'Copier le DM':'Copier la réplique';}
 
     // Verrouillage des tons premium selon le plan
     function updateLockedPills(){
@@ -2587,7 +2591,7 @@
     function renderAuth(){
       const title=document.getElementById('authTitle'),sub=document.getElementById('authSubText');
       if(authContext==='analysis'){
-        title.textContent='Tes répliques sont prêtes 🎉';
+        title.textContent=mode==='opener'?'Tes DM sont prêts 🎉':'Tes répliques sont prêtes 🎉';
         sub.innerHTML='Crée ton compte <span style="color:#FF7A33;font-weight:600;">gratuit</span> (10 sec) pour les découvrir — et 3 analyses offertes chaque jour.';
       }else{
         title.textContent='Ton compte 🦊';
