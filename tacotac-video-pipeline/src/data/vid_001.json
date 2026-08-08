@@ -1,0 +1,22 @@
+{
+  "id": "vid_001",
+  "girl": { "name": "Sarah", "avatar": "girls/3.jpg", "status": "en ligne il y a 2h", "storyThumbnail": "girls/3.jpg" },
+  "storyReply": "ouais bof",
+  "hook": { "text": "j'ai laissé l'ia parler à ma place sur cette 10/10", "background": "girls/3.jpg" },
+  "outro": { "text": "l'ia gratuite est dans ma bio les coquins", "background": "memes/neymar-rose.jpg" },
+  "beats": [
+    { "type": "message", "from": "girl", "text": "ouais bof ?? 😭" },
+    { "type": "message", "from": "girl", "text": "t'es sérieux là" },
+    { "type": "meme", "asset": "memes/choc-tom-holland.jpg", "beat": "choc" },
+    { "type": "tacotac", "tone": "spicy", "text": "jrigole t'es clairement dans mon top 3… les deux autres c'est toi de face et toi de profil" },
+    { "type": "message", "from": "client", "text": "jrigole t'es clairement dans mon top 3… les deux autres c'est toi de face et toi de profil" },
+    { "type": "meme", "asset": "memes/shrek-rizz.png", "beat": "confiance" },
+    { "type": "message", "from": "girl", "text": "mdrrrr ok là t'as gagné des points" },
+    { "type": "meme", "asset": "memes/hype-tire-langue.png", "beat": "victoire" },
+    { "type": "message", "from": "girl", "text": "tu fais quoi ce week-end du coup" },
+    { "type": "tacotac", "tone": "classe", "text": "samedi 20h, un bar que j'aime bien, on verra si t'as aussi bon goût en vrai" },
+    { "type": "message", "from": "client", "text": "samedi 20h, un bar que j'aime bien, on verra si t'as aussi bon goût en vrai" },
+    { "type": "meme", "asset": "memes/ronaldo-impressionne.jpg", "beat": "bien_joue" },
+    { "type": "message", "from": "girl", "text": "ok ça marche, à samedi" }
+  ]
+}

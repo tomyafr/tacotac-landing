@@ -1,0 +1,60 @@
+{
+  "beats": {
+    "il_reflechit": {
+      "desc": "il réfléchit / cerveau qui rame / analyse avant de répondre",
+      "memes": ["memes/incomprehension-nick-young.jpg", "memes/cerveau-buffering.jpg", "memes/chien-lunettes-analyse.jpg", "memes/neymar-reflechit.mp4", "memes/mourinho-notes.jpg", "memes/bebe-reflechit.jpg"]
+    },
+    "doute": {
+      "desc": "sceptique / il doute / 'c'est vrai ça ?' / side-eye",
+      "memes": ["memes/cest-vrai-ca-capuche.jpg", "memes/side-eye-suspect.jpg", "memes/lebron-lunettes.jpg", "memes/shrug-costume.jpg", "memes/ronaldo-interview.jpg", "memes/singe-sceptique-tel.jpg"]
+    },
+    "choc": {
+      "desc": "choc / surprise (elle balance un truc fort)",
+      "memes": ["memes/choc-bellingham.jpg", "memes/choc-tom-holland.jpg", "memes/diable-ou-ange.jpg", "memes/surpris-retourne.jpg", "memes/choc-noir-blanc.jpg", "memes/choc-basket.jpg", "memes/curry-choque.jpg", "memes/choc-ecran-laptop.mp4"]
+    },
+    "elle_rembarre": {
+      "desc": "elle le vent / rejet / dégoûté / parler à un mur",
+      "memes": ["memes/degoute-tel.jpg", "memes/decu-tel.jpg", "memes/carton-rouge.jpg", "memes/note-0-sur-20.jpg", "memes/messi-degoute.jpg", "memes/zgeg-95.jpg", "memes/parle-a-un-mur.jpg", "memes/psg-facepalm.mp4", "memes/ronaldo-confrontation.mp4", "memes/note-0-sur-10.jpg", "memes/arnold-stop.jpg"]
+    },
+    "feu_vert": {
+      "desc": "elle valide / feu vert / ça passe",
+      "memes": ["memes/carton-vert.jpg"]
+    },
+    "il_kiffe": {
+      "desc": "il craque / désir / affamé de la conv (langue dehors)",
+      "memes": ["memes/leche-telephone.jpg", "memes/patrick-langue-affame.jpg", "memes/neymar-langue.jpg", "memes/singe-langue.jpg"]
+    },
+    "romantique": {
+      "desc": "charme / rose / bague / gros compliment",
+      "memes": ["memes/eminem-rose.jpg", "memes/neymar-rose.jpg", "memes/eminem-bague.jpg", "memes/chien-bague.jpg"]
+    },
+    "il_prepare_un_move": {
+      "desc": "il prépare son coup / il observe / il tape sa réponse à fond",
+      "memes": ["memes/observe-frotte-mains.jpg", "memes/sirote-verre.jpg", "memes/fortnite-loot.jpg", "memes/chat-tape-clavier.mp4"]
+    },
+    "espoir": {
+      "desc": "il prie / il espère / dernier 1% de chance",
+      "memes": ["memes/priere.jpg", "memes/priere-intense.jpg", "memes/lebron-1-percent.jpg", "memes/pep-espoir.mp4", "memes/leclerc-help.jpg"]
+    },
+    "retient_rire": {
+      "desc": "il se retient de rigoler / amusé / cache son rire",
+      "memes": ["memes/retient-rire.jpg", "memes/portugal-cache-rire.jpg"]
+    },
+    "bien_joue": {
+      "desc": "move malin / respect / pouces levés / applaudissement / bien joué",
+      "memes": ["memes/intelligent.jpg", "memes/ronaldo-impressionne.jpg", "memes/ronaldinho-content.png", "memes/ronaldo-pouces-leves.jpg", "memes/lebron-sourire.jpg", "memes/speed-thumbs-up.mp4", "memes/messi-pointe-sourire.mp4", "memes/zidane-applaudit.mp4", "memes/malin-tempe.mp4", "memes/nba-crossover.mp4", "memes/connexion-cerveaux.jpg"]
+    },
+    "confiance": {
+      "desc": "rizz / sigma / sûr de lui / classe / cheers / chut / cold",
+      "memes": ["memes/shrek-rizz.png", "memes/sigma-badass.jpg", "memes/mbappe-sourire-coquin.jpg", "memes/les-affaires-sont-les-affaires.jpg", "memes/mec-classe-voiture.jpg", "memes/mbappe-cool.jpg", "memes/henry-smirk.mp4", "memes/ronaldo-calme.mp4", "memes/gatsby-cheers.mp4", "memes/olise-chut.mp4", "memes/palmer-cold.mp4", "memes/haaland-walk.mp4", "memes/mourinho-chut.jpg", "memes/mourinho-ecoute.jpg", "memes/anthony-edwards.mp4", "memes/uno-reverse.jpg"]
+    },
+    "emu": {
+      "desc": "ému / touché / au bord des larmes (gros compliment reçu, moment fort)",
+      "memes": ["memes/mcconaughey-larmes.jpg", "memes/henry-emu.jpg", "memes/larme-emotion.mp4"]
+    },
+    "victoire": {
+      "desc": "victoire / hype / gros flex / célébration foot",
+      "memes": ["memes/chat-rigole.png", "memes/hype-tire-langue.png", "memes/curry-panier-lune.jpg", "memes/curry-tir-galaxie.jpg", "memes/dunk-noir-blanc.jpg", "memes/neymar-piscine-hype.jpg", "memes/bellingham-celebration.mp4", "memes/neymar-bresil-celebration.mp4", "memes/ronaldo-court-content.mp4", "memes/ronaldo-siu.mp4", "memes/mbappe-celebration.mp4", "memes/mec-hype-torse.mp4", "memes/dembele-celebration.mp4", "memes/lebron-dunk.mp4", "memes/vince-carter-dunk.mp4", "memes/jordan-shoot.mp4", "memes/lebron-block.mp4", "memes/jordan-free-throw-dunk.mp4", "memes/dunk-poster.jpg", "memes/curry-lebron-espace.jpg", "memes/curry-kuroko.jpg"]
+    }
+  }
+}
