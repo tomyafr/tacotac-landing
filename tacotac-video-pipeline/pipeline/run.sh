@@ -110,8 +110,29 @@ if [ -n "${RCLONE_REMOTE:-}" ]; then
     # --stats-one-line : pas de barre de progression illisible dans les logs cron
     if rclone copy "$OUT_DIR/" "$RCLONE_REMOTE" --include "video-*-a-poster.mp4" --stats-one-line --stats 10s; then
       echo "upload terminé"
+      # Purge des vieilles vidéos du Drive — sinon le quota finit par saturer et
+      # PLUS AUCUN upload ne passe (arrivé le 08/08/26 : 11 vidéos bloquées).
+      # ⚠️ Suppression DÉFINITIVE (--drive-use-trash=false) : sans ça les fichiers
+      # partent à la corbeille, qui compte encore dans le quota Google — donc
+      # zéro place récupérée. Le filtre --include ne vise QUE les fichiers produits
+      # par ce pipeline : rien d'autre sur le Drive ne peut être touché.
+      # Mettre DRIVE_RETENTION_DAYS=0 pour désactiver la purge.
+      retention="${DRIVE_RETENTION_DAYS:-14}"
+      if [ "$retention" != "0" ]; then
+        echo "--- purge Drive : vidéos de +${retention}j ---"
+        rclone delete "$RCLONE_REMOTE" --min-age "${retention}d" \
+          --include "video-*-a-poster.mp4" --include "vid_*.mp4" \
+          --drive-use-trash=false --stats-one-line \
+          && echo "purge OK" || echo "⚠️ purge Drive en échec (sans conséquence sur les vidéos du jour)"
+      fi
       if [ "${#uploaded_names[@]}" -gt 0 ]; then
         node pipeline/notify.mjs "${uploaded_names[@]}" || echo "⚠️ email de notif non envoye (upload OK quand meme)"
+        # Publication TikTok — après l'upload Drive, pour qu'un échec de posting
+        # ne fasse jamais perdre les vidéos (elles sont déjà sauvegardées).
+        echo "--- publication TikTok ---"
+        tiktok_paths=()
+        for name in "${uploaded_names[@]}"; do tiktok_paths+=("$OUT_DIR/$name"); done
+        node pipeline/tiktok-post.mjs "${tiktok_paths[@]}" || echo "⚠️ publication TikTok en échec (vidéos bien sur Drive)"
       fi
     else
       echo "⚠️ ÉCHEC upload rclone (mp4 conservés dans out/) — pas d'email envoyé"

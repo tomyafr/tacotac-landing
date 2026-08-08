@@ -95,6 +95,17 @@ if [ -n "${RCLONE_REMOTE:-}" ]; then
     echo "--- upload -> $RCLONE_REMOTE ---"
     if rclone copy "$OUT_DIR/" "$RCLONE_REMOTE" --include "pov-*-a-poster.mp4" --stats-one-line --stats 10s; then
       echo "upload terminé"
+      # Purge des vieux POV du Drive — même logique que run.sh (quota Google saturé
+      # = plus aucun upload). Suppression DÉFINITIVE, sinon la corbeille garde la place.
+      # Ne vise QUE les fichiers pov-* de ce pipeline. DRIVE_RETENTION_DAYS=0 pour désactiver.
+      retention="${DRIVE_RETENTION_DAYS:-14}"
+      if [ "$retention" != "0" ]; then
+        echo "--- purge Drive : POV de +${retention}j ---"
+        rclone delete "$RCLONE_REMOTE" --min-age "${retention}d" \
+          --include "pov-*-a-poster.mp4" \
+          --drive-use-trash=false --stats-one-line \
+          && echo "purge OK" || echo "⚠️ purge Drive en échec (sans conséquence sur les vidéos du jour)"
+      fi
       if [ "${#uploaded_names[@]}" -gt 0 ]; then
         node pipeline/notify.mjs "${uploaded_names[@]}" || echo "⚠️ email de notif non envoye (upload OK quand meme)"
       fi
