@@ -1,0 +1,14 @@
+node_modules/
+out/
+out-*/
+.remotion/
+*.log
+pipeline/queue/*.json
+pipeline/queue-*/*.json
+pipeline/rendered/*.json
+pipeline/rendered-*/*.json
+pipeline/state.json
+pipeline/state-*.json
+pipeline/run-*.log
+.env
+.git-ancien-depot/
