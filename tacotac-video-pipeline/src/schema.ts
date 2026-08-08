@@ -29,6 +29,9 @@ export const tacotacBeat = z.object({
   type: z.literal("tacotac"),
   tone: toneEnum,
   text: z.string(),
+  // Quel outil de l'app est montré à l'écran : "dm" (1er message, écran "Tes DM")
+  // ou "reply" (réponse, écran "Tes répliques"). Absent = reply, comme avant.
+  tool: z.enum(["dm", "reply"]).optional(),
 });
 
 export const memeBeat = z.object({

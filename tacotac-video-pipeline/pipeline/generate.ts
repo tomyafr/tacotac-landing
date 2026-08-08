@@ -220,6 +220,12 @@ const CONVERSATION_ARCHETYPES_REVERSED = [
 // champ script.music restait vide et le rendu retombait toujours sur bg-music.
 const MUSIC_KEYS = Object.keys(MUSIC_TRACKS);
 
+// Deux formats de vidéo en alternance stricte (une sur deux) :
+//  A — il répond à la story lui-même, Tacotac ne souffle QUE la réplique
+//  B — Tacotac écrit le 1er DM, puis la réplique (les 2 outils sont montrés)
+type Structure = "A" | "B";
+const STRUCTURES: Structure[] = ["A", "B"];
+
 // Légende incrustée sur l'intro (le clip lui-même est maintenant "vierge", sans texte
 // brûlé — voir Intro.tsx). Volontairement peu varié (demande explicite) : un petit pool
 // de 4 formulations, en rotation anti-répétition comme le reste, PARTAGÉ entre tous les
@@ -245,6 +251,7 @@ type State = {
   archetypeOrder: string[]; archetypeIndex: number;
   captionOrder: string[]; captionIndex: number;
   musicOrder: string[]; musicIndex: number;
+  structureOrder: Structure[]; structureIndex: number;
 };
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -262,6 +269,7 @@ function loadState(): State {
     archetypeOrder: shuffle(ACTIVE_ARCHETYPES), archetypeIndex: 0,
     captionOrder: shuffle(INTRO_CAPTIONS), captionIndex: 0,
     musicOrder: shuffle(MUSIC_KEYS), musicIndex: 0,
+    structureOrder: shuffle(STRUCTURES), structureIndex: 0,
   });
   try {
     const s = JSON.parse(fs.readFileSync(STATE_PATH, "utf8")) as State;
@@ -271,7 +279,8 @@ function loadState(): State {
       Array.isArray(s.outroAngleOrder) && s.outroAngleOrder.length === OUTRO_ANGLES.length &&
       Array.isArray(s.archetypeOrder) && s.archetypeOrder.length === ACTIVE_ARCHETYPES.length &&
       Array.isArray(s.captionOrder) && s.captionOrder.length === INTRO_CAPTIONS.length &&
-      Array.isArray(s.musicOrder) && s.musicOrder.length === MUSIC_KEYS.length;
+      Array.isArray(s.musicOrder) && s.musicOrder.length === MUSIC_KEYS.length &&
+      Array.isArray(s.structureOrder) && s.structureOrder.length === STRUCTURES.length;
     return ok ? s : fresh();
   } catch {
     return fresh(); // pas de state ou invalide → on en crée un
@@ -289,6 +298,16 @@ function nextGirl(state: State): string {
   state.girlIndex++;
   saveState(state);
   return girl;
+}
+function nextStructure(state: State): Structure {
+  if (state.structureIndex >= state.structureOrder.length) {
+    state.structureOrder = shuffle(STRUCTURES);
+    state.structureIndex = 0;
+  }
+  const st = state.structureOrder[state.structureIndex];
+  state.structureIndex++;
+  saveState(state);
+  return st;
 }
 function nextMusic(state: State): string {
   if (state.musicIndex >= state.musicOrder.length) {
@@ -332,7 +351,7 @@ function nextAngles(state: State): { story: string; outro: string; archetype: st
 // sur la même formulation à chaque génération.
 // NB : pas de hookTitle — chaque vidéo ouvre sur l'intro fixe (voir Intro.tsx),
 // le sous-titre "apprends de mon football..." est incrusté dans ce clip.
-function buildGenInstruction(angles: { story: string; outro: string; archetype: string }): string {
+function buildGenInstruction(angles: { story: string; outro: string; archetype: string }, structure: Structure): string {
   const format = REVERSED
     ? `FORMAT : une fille (la cliente, bulles à droite) drague un mec (bulles à gauche) en DM Instagram/Snap — PAS une app de rencontre à "match", ils se suivent déjà ou se connaissent un peu. Elle répond à sa story, la conv s'enchaîne, à un moment elle ouvre Tacotac qui lui donne une réplique qui claque, elle l'envoie, ça marche, la conv finit sur une bonne note (il valide / donne son snap / accepte un date). Des memes réactions ponctuent la conv.`
     : `FORMAT : un mec (le client, bulles à droite) drague une fille (bulles à gauche) en DM Instagram/Snap — PAS une app de rencontre à "match", ils se suivent déjà ou se connaissent un peu. Il répond à sa story, la conv s'enchaîne, à un moment il ouvre Tacotac qui lui donne une réplique qui claque, il l'envoie, ça marche, la conv finit sur une bonne note (elle valide / donne son snap / accepte un date). Des memes réactions ponctuent la conv.`;
@@ -349,23 +368,41 @@ function buildGenInstruction(angles: { story: string; outro: string; archetype: 
 - INTERDIT les messages creux ("mdrr" ou "ok" tout seul, sans contenu) — chaque message fait avancer la conv ou la tension. Un mot seul est permis UNE fois max, jamais en double.
 - Vraie PROGRESSION : la tension/complicité doit monter au fil des beats (pas un plateau plat de banter interchangeable) et se résoudre logiquement sur la fin positive — le lecteur doit sentir un ARC, pas une suite de vannes random.
 - Les messages du CLIENT (hors moments tacotac) doivent aussi avoir du répondant — jamais fade, jamais juste des questions plates.`;
-  const structureRules = REVERSED
-    ? `RÈGLES DE STRUCTURE :
-- storyReply : le TOUT PREMIER message de la cliente, en réponse à la story du mec.
-- beats : 8 à 11 éléments qui alternent (COURT — une vidéo qui dure moins de 45 s tourne mieux qu'une longue histoire à suivre). Types :
-  • {"kind":"message","from":"girl"|"client","text":"..."} — ici "girl" = le mec dragué (bulle gauche), "client" = la cliente Tacotac (bulle droite).
-  • {"kind":"tacotac","tone":"<ton>","text":"..."} — la cliente ouvre l'app. DOIT être suivi IMMÉDIATEMENT d'un {"kind":"message","from":"client","text":"..."} avec EXACTEMENT le même texte. Utilise 1 à 2 moments tacotac, au ton le plus adapté.
-  • {"kind":"meme","asset":"<nom-de-fichier-exact>"} — 2 à 3 memes à des moments comiques. Choisis le fichier qui correspond LE MIEUX à ce qui vient d'être dit (voir catalogue ci-dessous), pas juste une catégorie vague.
-- Fin : dernier message du mec clairement positif, qui résout l'archétype imposé ci-dessus.
-- girlName : prénom crédible pour LE MEC dragué (le champ s'appelle "girlName" mais tient ici le prénom du mec). status : ex "en ligne il y a 2h".`
-    : `RÈGLES DE STRUCTURE :
-- storyReply : le TOUT PREMIER message du client, en réponse à la story de la fille.
-- beats : 8 à 11 éléments qui alternent (COURT — une vidéo qui dure moins de 45 s tourne mieux qu'une longue histoire à suivre). Types :
-  • {"kind":"message","from":"girl"|"client","text":"..."}
-  • {"kind":"tacotac","tone":"<ton>","text":"..."} — le client ouvre l'app. DOIT être suivi IMMÉDIATEMENT d'un {"kind":"message","from":"client","text":"..."} avec EXACTEMENT le même texte. Utilise 1 à 2 moments tacotac, au ton le plus adapté.
-  • {"kind":"meme","asset":"<nom-de-fichier-exact>"} — 2 à 3 memes à des moments comiques. Choisis le fichier qui correspond LE MIEUX à ce qui vient d'être dit (voir catalogue ci-dessous), pas juste une catégorie vague.
-- Fin : dernier message de la fille clairement positif, qui résout l'archétype imposé ci-dessus.
-- girlName : prénom crédible. status : ex "en ligne il y a 2h".`;
+  // Deux formats de vidéo, tirés en alternance (voir STRUCTURES) :
+  //  A — il répond à la story lui-même, puis Tacotac lui souffle LA réplique
+  //  B — Tacotac écrit le tout premier DM, puis la réplique juste après
+  // Dans les deux cas la vidéo se termine sur un COMPLIMENT d'elle, pas sur un
+  // date : le compliment prouve que la disquette a marché et tient en 2 messages,
+  // là où un date déclenche une négociation logistique qui rallonge pour rien.
+  const her = REVERSED ? "le mec" : "la fille";
+  const him = REVERSED ? "la cliente" : "le client";
+  const commonBeats = `  • {"kind":"message","from":"girl"|"client","text":"..."}${REVERSED ? ' — ici "girl" = le mec dragué (bulle gauche), "client" = la cliente Tacotac (bulle droite).' : ""}
+  • {"kind":"tacotac","tone":"<ton>","text":"..."} — ${him} ouvre l'app. DOIT être suivi IMMÉDIATEMENT d'un {"kind":"message","from":"client","text":"..."} avec EXACTEMENT le même texte.
+  • {"kind":"meme","asset":"<nom-de-fichier-exact>"} — 1 à 2 memes maximum, à un moment vraiment comique. Choisis le fichier qui colle LE MIEUX à ce qui vient d'être dit.
+- ⚠️ Chaque texte de disquette fait AU MAXIMUM 95 caractères : au-delà il ne rentre pas dans la bulle de l'app à l'écran.
+- Fin OBLIGATOIRE : le tout dernier beat est un message de ${her} qui COMPLIMENTE ${him} — du genre "t'es trop fort", "ok t'es mignon toi", "t'as gagné là". Pas de date, pas de numéro, pas de snap : la vidéo s'arrête sur le compliment, c'est ça la preuve que la disquette a marché.
+- girlName : prénom crédible${REVERSED ? " pour LE MEC dragué (le champ s'appelle « girlName » mais tient ici le prénom du mec)" : ""}. status : ex "en ligne il y a 2h".`;
+
+  const structureRules =
+    structure === "B"
+      ? `RÈGLES DE STRUCTURE — FORMAT "DM" (${him} n'a jamais parlé à ${her} avant) :
+- storyReply : laisse une chaîne VIDE "". Ce format ne répond à aucune story.
+- beats : 5 à 7 éléments, dans CET ordre :
+  1. {"kind":"tacotac",...} — Tacotac écrit le tout PREMIER message (le DM d'ouverture)
+  2. {"kind":"message","from":"client"} — le même texte, envoyé
+  3. {"kind":"message","from":"girl"} — sa réponse, intriguée ou piquée
+  4. {"kind":"tacotac",...} — Tacotac écrit LA réplique qui referme
+  5. {"kind":"message","from":"client"} — le même texte, envoyé
+  6. {"kind":"message","from":"girl"} — son COMPLIMENT, et la vidéo s'arrête là
+${commonBeats}`
+      : `RÈGLES DE STRUCTURE — FORMAT "STORY" :
+- storyReply : le TOUT PREMIER message de ${him}, en réponse à la story de ${her}. Écrit par ${him} lui-même, PAS par Tacotac.
+- beats : 4 à 6 éléments, dans CET ordre :
+  1. {"kind":"message","from":"girl"} — sa réponse au storyReply
+  2. {"kind":"tacotac",...} — Tacotac écrit LA disquette qui claque
+  3. {"kind":"message","from":"client"} — le même texte, envoyé
+  4. {"kind":"message","from":"girl"} — son COMPLIMENT, et la vidéo s'arrête là
+${commonBeats}`;
   return `Tu génères le SCÉNARIO d'une vidéo TikTok "fausse conversation de dating" qui fait la promo de Tacotac (l'app qui souffle les disquettes).
 
 ${format}
@@ -485,8 +522,8 @@ function resolveClaudeBin(): string {
   return "claude"; // dernier recours : le PATH
 }
 
-function callCli(angles: { story: string; outro: string; archetype: string }): GenOutput {
-  const prompt = `${systemPromptTacotac}\n\n═══════════\n${buildGenInstruction(angles)}\n\n${jsonShape}\n\nGénère un nouveau scénario, original et drôle.`;
+function callCli(angles: { story: string; outro: string; archetype: string }, structure: Structure): GenOutput {
+  const prompt = `${systemPromptTacotac}\n\n═══════════\n${buildGenInstruction(angles, structure)}\n\n${jsonShape}\n\nGénère un nouveau scénario, original et drôle.`;
   const isWin = process.platform === "win32";
   const bin = resolveClaudeBin();
   const stdout = execFileSync(bin, ["-p", "--output-format", "json"], {
@@ -509,14 +546,14 @@ function callCli(angles: { story: string; outro: string; archetype: string }): G
 }
 
 // ── Backend API : SDK Anthropic (clé + crédits) ──
-async function callApi(angles: { story: string; outro: string; archetype: string }): Promise<GenOutput> {
+async function callApi(angles: { story: string; outro: string; archetype: string }, structure: Structure): Promise<GenOutput> {
   const { default: Anthropic } = await import("@anthropic-ai/sdk");
   const client = new Anthropic();
   const params: Record<string, unknown> = {
     model: "claude-opus-4-8",
     max_tokens: 4000,
     thinking: { type: "adaptive" },
-    system: `${systemPromptTacotac}\n\n═══════════\n${buildGenInstruction(angles)}`,
+    system: `${systemPromptTacotac}\n\n═══════════\n${buildGenInstruction(angles, structure)}`,
     output_config: { format: { type: "json_schema", schema: outputSchema } },
     messages: [{ role: "user", content: "Génère un nouveau scénario de vidéo, original et drôle." }],
   };
@@ -535,20 +572,30 @@ function resolveMemeAsset(asset: string): { full: string; beat: string } {
   return rand(memeCatalog);
 }
 
-function assemble(g: GenOutput, state: State) {
+function assemble(g: GenOutput, state: State, structure: Structure) {
   const girl = nextGirl(state);
   const introCaption = nextIntroCaption(state);
   const music = nextMusic(state);
+  // Quel écran de l'app montrer : en format B le PREMIER moment Tacotac est le DM
+  // d'ouverture, tous les suivants sont des réponses. En format A, tout est réponse.
+  // Dérivé par le code (le modèle ne choisit pas les assets — même règle que les memes).
+  let seenTacotac = 0;
   const beats = g.beats.map((b) => {
     if (b.kind === "message") return { type: "message", from: b.from, text: clean(b.text) };
-    if (b.kind === "tacotac") return { type: "tacotac", tone: b.tone, text: clean(b.text) };
+    if (b.kind === "tacotac") {
+      const tool = structure === "B" && seenTacotac === 0 ? "dm" : "reply";
+      seenTacotac++;
+      return { type: "tacotac", tone: b.tone, text: clean(b.text), tool };
+    }
     const { full, beat } = resolveMemeAsset(b.asset);
     return { type: "meme", asset: full, beat };
   });
   return {
     id: `vid_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
     girl: { name: g.girlName, avatar: girl, status: g.status, storyThumbnail: girl },
-    storyReply: clean(g.storyReply),
+    // Format B : la conv démarre sur le DM d'ouverture, il n'y a aucune story à
+    // laquelle répondre — on retire le bandeau "Vous avez répondu à sa story".
+    storyReply: structure === "B" ? undefined : clean(g.storyReply) || undefined,
     // Intro fixe (voir Intro.tsx) : le clip est vierge, la légende est piochée ici
     // en rotation anti-répétition (voir INTRO_CAPTIONS), pas générée par le modèle.
     introCaption,
@@ -568,8 +615,9 @@ async function generateOne(backend: "cli" | "api", state: State) {
   let script: ReturnType<typeof assemble> | null = null;
   for (let attempt = 1; attempt <= MAX_LENGTH_RETRIES; attempt++) {
     const angles = nextAngles(state); // 1 angle différent par champ, jamais répété avant d'avoir tout épuisé
-    const g = backend === "api" ? await callApi(angles) : callCli(angles);
-    const candidate = assemble(g, state);
+    const structure = nextStructure(state);
+    const g = backend === "api" ? await callApi(angles, structure) : callCli(angles, structure);
+    const candidate = assemble(g, state, structure);
     scriptSchema.parse(candidate); // rejette tout scénario invalide (compat render)
     const secs = durationSeconds(scriptSchema.parse(candidate));
     if (secs <= MAX_DURATION_SECONDS) {
@@ -602,7 +650,7 @@ function selfTest() {
     ],
   };
   const state = loadState();
-  scriptSchema.parse(assemble(fake, state));
+  for (const st of STRUCTURES) scriptSchema.parse(assemble(fake, state, st));
   console.log("✅ self-test OK — assemble + validation zod passent (fallback meme inclus)");
 }
 

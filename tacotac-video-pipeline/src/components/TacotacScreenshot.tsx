@@ -5,42 +5,75 @@ import type { TacotacBeat, Tone } from "../schema";
 import { TacotacScreen } from "./TacotacScreen";
 import { renderMaskedText } from "./maskedText";
 
-// Approche screenshot : on affiche le VRAI screen de l'app (un par mode) et on
-// écrit la réponse générée par-dessus, dans la boîte "tiens réponds lui ça".
-// Les screens ont un placeholder "testttt..." sur 3 lignes qui a servi à caler la
-// géométrie ci-dessous. On recouvre ce placeholder d'un aplat #1C1C1C (couleur exacte
-// de la boîte, échantillonnée), puis on dessine le texte à taille fixe.
+// Approche screenshot : on affiche le VRAI screen de l'app (un par outil ET par ton)
+// et on écrit la réponse générée par-dessus, dans la bulle. Les screens ont un
+// placeholder "testttt..." sur 3 lignes qui sert à caler la géométrie : on le
+// recouvre d'un aplat de la couleur exacte de la bulle, puis on dessine le texte.
+//
+// Screens pris sur iPhone (1179 px de large = 393 pt @3x). Toute la géométrie
+// ci-dessous est donc en pixels de screenshot, soit 3× les valeurs CSS de l'app.
+// Mesurée automatiquement sur les 8 images (détection du placeholder blanc) :
+//   - bulle intérieure : x 126 → 1052
+//   - texte : démarre à x=179, interligne 75-77 px, 3 lignes
+//   - le haut du texte varie de ~10 px d'une capture à l'autre (scroll pas
+//     exactement identique) → on stocke la valeur mesurée POUR CHAQUE image.
+const SHOT_W = 1179;
 
-const SCREENSHOT_TONES: Tone[] = [
-  "classe",
-  "drole",
-  "spicy",
-  "romantique",
-  "sexto",
-  "mystere",
-];
+// app.html : .bubble .reply { font-size:16.5px; line-height:1.55 } → ×3
+const FONT_SIZE = 16.5 * 3;
+const LINE_HEIGHT = 1.55;
 
-const screenshotFor = (tone: Tone) => `tacotac/test_3_lignes_mode_${tone}.png`;
+const BUBBLE = { left: 126, right: 1052 };
+const TEXT_LEFT = 179;
+// Décalage entre le haut de la ligne CSS et le haut de l'encre mesurée
+// (demi-interligne + écart ascendante/hauteur de capitale).
+const INK_OFFSET = 27;
 
-// Dimensions natives des screenshots (identiques sur les 6).
-const NATIVE = { w: 537, h: 952 };
+type Shot = { file: string; h: number; inkTop: number };
 
-// Géométrie mesurée en pixels natifs sur le screenshot (bulle intérieure x41→494,
-// y360→485). L'aplat reste STRICTEMENT dans la bulle (jamais de débordement gris)
-// et le texte wrappe dans la même largeur que l'app.
-const COVER = { x: 44, y: 389, w: 449, h: 93, radius: 12 };
-const TEXT = { x: 56, y: 394, w: 437, fontSize: 18, lineHeight: 1.5 };
+// inkTop = haut de la 1re ligne du placeholder, mesuré image par image.
+const SHOTS: Record<string, Shot> = {
+  "dm-classe": { file: "tacotac/dm-classe.png", h: 2270, inkTop: 1154 },
+  "dm-spicy": { file: "tacotac/dm-spicy.png", h: 2252, inkTop: 1149 },
+  "dm-sexto": { file: "tacotac/dm-sexto.png", h: 2252, inkTop: 1154 },
+  "dm-romantique": { file: "tacotac/dm-romantique.png", h: 2271, inkTop: 1158 },
+  "reply-classe": { file: "tacotac/rep-classe.png", h: 2283, inkTop: 1153 },
+  "reply-spicy": { file: "tacotac/rep-spicy.png", h: 2262, inkTop: 1157 },
+  "reply-sexto": { file: "tacotac/rep-sexto.png", h: 2283, inkTop: 1151 },
+  "reply-romantique": { file: "tacotac/rep-romantique.png", h: 2259, inkTop: 1148 },
+};
+
+// Tons réellement disponibles en screenshot (les vidéos n'utilisent que ceux-là).
+const SHOT_TONES: Tone[] = ["classe", "spicy", "sexto", "romantique"];
 
 export const TacotacScreenshot: React.FC<{ beat: TacotacBeat }> = ({ beat }) => {
-  // Fallback : mode sans screenshot → repro native.
-  if (!SCREENSHOT_TONES.includes(beat.tone)) {
+  const tool = beat.tool === "dm" ? "dm" : "reply";
+  const shot = SHOTS[`${tool}-${beat.tone}`];
+
+  // Ton sans screenshot (drôle, mystère) → repro native, jamais de rendu cassé.
+  if (!shot || !SHOT_TONES.includes(beat.tone)) {
     return <TacotacScreen beat={beat} />;
   }
 
-  // On remplit la largeur du cadre ; le screen est quasi 9:16 donc léger letterbox vertical.
-  const scale = video.width / NATIVE.w;
-  const scaledH = NATIVE.h * scale;
+  // On remplit la largeur du cadre ; le screen est plus haut que le 9:16 donc on
+  // le centre verticalement (léger rognage haut/bas, jamais sur la bulle).
+  const scale = video.width / SHOT_W;
+  const scaledH = shot.h * scale;
   const topOffset = (video.height - scaledH) / 2;
+
+  const coverTop = shot.inkTop - INK_OFFSET - 8;
+  const coverHeight = LINE_HEIGHT * FONT_SIZE * 3 + 16;
+
+  // La bulle ne tient QUE 3 lignes : au-delà, le texte débordait sur le renard
+  // (constaté en test avec une disquette de 154 caractères). Le prompt demande
+  // du court, mais si une longue passe quand même on réduit la police pour
+  // rester dans la bulle plutôt que de casser l'image. Plancher à 72 % : en
+  // dessous ça ne ressemblerait plus à l'app.
+  const textWidth = BUBBLE.right - TEXT_LEFT - 53;
+  const AVG_CHAR = 0.52; // largeur moyenne d'un caractère, en em (mesurée sur ces screens)
+  const maxChars = (3 * textWidth) / (AVG_CHAR * FONT_SIZE);
+  const fitRatio = beat.text.length > maxChars ? maxChars / beat.text.length : 1;
+  const fontSize = FONT_SIZE * Math.max(0.72, fitRatio);
 
   return (
     <AbsoluteFill style={{ background: "#000" }}>
@@ -49,39 +82,36 @@ export const TacotacScreenshot: React.FC<{ beat: TacotacBeat }> = ({ beat }) => 
           position: "absolute",
           top: topOffset,
           left: 0,
-          width: NATIVE.w,
-          height: NATIVE.h,
+          width: SHOT_W,
+          height: shot.h,
           transform: `scale(${scale})`,
           transformOrigin: "top left",
         }}
       >
-        <Img
-          src={staticFile(screenshotFor(beat.tone))}
-          style={{ width: NATIVE.w, height: NATIVE.h, display: "block" }}
-        />
-        {/* aplat qui masque le placeholder "testttt" — inséré dans la bulle */}
+        <Img src={staticFile(shot.file)} style={{ width: SHOT_W, height: shot.h, display: "block" }} />
+        {/* aplat qui masque le placeholder "testttt" — strictement dans la bulle */}
         <div
           style={{
             position: "absolute",
-            left: COVER.x,
-            top: COVER.y,
-            width: COVER.w,
-            height: COVER.h,
+            left: BUBBLE.left + 14,
+            top: coverTop,
+            width: BUBBLE.right - BUBBLE.left - 28,
+            height: coverHeight,
             background: app.bubbleBg,
-            borderRadius: COVER.radius,
           }}
         />
-        {/* la vraie réponse — taille fixe quelle que soit sa longueur */}
+        {/* la vraie réponse, calée sur l'encre du placeholder */}
         <div
           style={{
             position: "absolute",
-            left: TEXT.x,
-            top: TEXT.y,
-            width: TEXT.w,
+            left: TEXT_LEFT,
+            top: shot.inkTop - INK_OFFSET,
+            width: textWidth,
             fontFamily: fonts.body,
-            fontSize: TEXT.fontSize,
+            fontSize,
             fontWeight: 500,
-            lineHeight: TEXT.lineHeight,
+            lineHeight: LINE_HEIGHT,
+            letterSpacing: -0.3,
             color: app.replyText,
           }}
         >
