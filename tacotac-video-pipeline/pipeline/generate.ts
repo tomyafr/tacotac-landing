@@ -31,6 +31,7 @@ const REPO = path.resolve(ROOT, "..");
 const PROFILE = (process.env.TACOTAC_PROFILE || "").replace(/[^a-z0-9_-]/gi, "");
 const SUFFIX = PROFILE ? `-${PROFILE}` : "";
 const QUEUE = path.join(HERE, `queue${SUFFIX}`);
+const RENDERED = path.join(HERE, `rendered${SUFFIX}`);
 const STATE_PATH = path.join(HERE, `state${SUFFIX}.json`);
 
 // ── Ressources ──
@@ -85,7 +86,64 @@ const OUTRO_BGS = [
 ];
 
 const rand = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
-const clean = (s: string) => s.replace(/\s*\.\s*$/u, "").trim();
+// Emojis : AUCUNE police emoji n'est installée sur le VPS de rendu (vérifié :
+// 24 polices, zéro emoji), donc tout emoji sort en carré vide dans la vidéo.
+// Le prompt les interdit ; ce filtre garantit qu'aucun ne passe même si le
+// modèle désobéit. Couvre aussi les tons de peau, sélecteurs et ZWJ.
+const stripEmoji = (s: string) =>
+  s.replace(/[\p{Extended_Pictographic}\u{1F3FB}-\u{1F3FF}\u{FE0F}\u{200D}]/gu, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+const clean = (s: string) => stripEmoji(s.replace(/\s*\.\s*$/u, ""));
+
+// ── Anti-répétition réelle : on montre au modèle ce qui est DÉJÀ sorti ──────
+// La rotation d'angles ne suffisait pas : sur 15 vidéos, "mardi" revenait 4 fois,
+// la vanne des "prises" 3 fois, et "t'aurais pu prévenir avant de poster ça"
+// 2 fois quasi mot pour mot. La cause : les angles décrivent un REGISTRE, et le
+// modèle retombe sur la même formulation à l'intérieur de ce registre — en plus
+// de recopier les exemples entre parenthèses. On lui met donc sous les yeux ses
+// propres sorties passées, avec interdiction d'y retoucher.
+function recentOutputs(limit = 25): { stories: string[]; punchlines: string[] } {
+  const stories: string[] = [];
+  const punchlines: string[] = [];
+  try {
+    const files = fs
+      .readdirSync(RENDERED)
+      .filter((f) => f.endsWith(".json"))
+      .map((f) => ({ f, t: fs.statSync(path.join(RENDERED, f)).mtimeMs }))
+      .sort((a, b) => b.t - a.t)
+      .slice(0, limit);
+    for (const { f } of files) {
+      try {
+        const { script } = JSON.parse(fs.readFileSync(path.join(RENDERED, f), "utf8"));
+        if (script?.storyReply) stories.push(script.storyReply);
+        for (const b of script?.beats ?? []) {
+          if (b?.type === "tacotac" && b.text) punchlines.push(b.text);
+        }
+      } catch { /* fichier illisible : on l'ignore, l'anti-répétition reste best-effort */ }
+    }
+  } catch { /* pas encore d'archive (1er run) */ }
+  return { stories, punchlines };
+}
+
+function buildAvoidBlock(): string {
+  const { stories, punchlines } = recentOutputs();
+  if (!stories.length && !punchlines.length) return "";
+  const list = (arr: string[], max: number) =>
+    arr.slice(0, max).map((s) => `- ${s}`).join("\n");
+  return `
+
+⛔ DÉJÀ SORTI DANS LES VIDÉOS PRÉCÉDENTES — INTERDIT DE RÉUTILISER
+Ne reprends ni ces formulations, ni le RESSORT COMIQUE qu'il y a derrière (même
+idée reformulée = même faute). Si ton brouillon ressemble à l'un de ces exemples,
+jette-le et trouve un autre angle.
+
+storyReply déjà utilisés :
+${list(stories, 25)}
+
+Disquettes déjà utilisées :
+${list(punchlines, 25)}`;
+}
 
 // ── Angles imposés pour storyReply / hook / outro ──────────────────────────
 // Le bug observé (toutes les vidéos ouvrent sur "tu savais que t'étais belle
@@ -318,6 +376,17 @@ ${angles.archetype}
 
 ${qualityRules}
 
+⚠️ LA DISQUETTE — c'est LE truc qu'on vend, tout le reste n'est que décor :
+- Une disquette n'est PAS une phrase d'accroche ni une observation. C'est une réplique qui MET LA PRESSION : elle donne à la fille un truc auquel elle est OBLIGÉE de réagir. Si elle peut répondre "ah ok mdr" et que la conv est morte, c'est raté.
+- Elle doit contenir un RETOURNEMENT : tu commences dans une direction, tu finis ailleurs. Une phrase plate qui dit juste un compliment ou un constat n'est pas une disquette.
+- Elle doit être VOLABLE : le viewer doit pouvoir la ressortir telle quelle dans sa propre conv, sans rien changer. Donc zéro détail qui ne marche que dans CETTE conv précise.
+- INTERDIT : les questions molles ("t'as passé une bonne journée ?"), les compliments secs ("t'es trop belle"), les constats sans enjeu ("tu postes souvent des stories").
+
+⚠️ LE STORY REPLY — même exigence, c'est la 1re seconde de la vidéo :
+- ⛔ Le piège dans lequel toutes les vidéos précédentes sont tombées : commenter LE FAIT DE POSTER une story (combien de prises, quel jour, quelle heure, "t'aurais pu prévenir", "c'est quoi le but"). C'est devenu un tic, n'y touche plus.
+- Vise plutôt : lui prêter une intention précise et assumée, la mettre au défi, la vanner sur un truc qu'elle n'a pas vu venir, ou ouvrir sur une affirmation gonflée qu'elle devra contredire.
+- Il doit APPELER une réponse : après l'avoir lu, elle a envie de répliquer, pas juste de liker.
+
 ⚠️ FORMAT COURT ET LISIBLE (priorité n°1 — c'est ce qui fait la différence entre une vidéo qui tourne et une qui meurt) :
 - La vidéo entière doit tenir SOUS 59 SECONDES, intro comprise. Vise une conv courte et dense, pas une histoire à rallonge.
 - La disquette Tacotac doit se comprendre INSTANTANÉMENT, sans avoir suivi toute la conv : le viewer tombe dessus au milieu du scroll. Une vanne qui a besoin de 4 messages de contexte pour être drôle est une vanne ratée ici.
@@ -332,7 +401,9 @@ ${structureRules}
 
 ⚠️ CONTRAINTE CRITIQUE — STORY REPLY : tu ne vois PAS la photo réelle qui sera utilisée (elle est choisie séparément, au hasard, parmi des selfies miroir). N'INVENTE JAMAIS un détail visuel précis dans storyReply : pas d'objet (verre, lunettes, téléphone...), pas de lieu (café, plage, restau...), pas d'activité (${REVERSED ? "il boit, il mange" : "elle boit, elle mange"}...), pas d'animal, pas de vêtement précis. Toute affirmation sur le contenu de la photo a de grandes chances d'être fausse et de casser l'immersion. Reste sur des remarques qui marchent avec N'IMPORTE QUEL selfie miroir en tenue.
 
-VOIX (tout le texte) : minuscules, JAMAIS de point final, 0-1 emoji, phonétique naturelle (jsuis, jte, jsp, tkt, mdr), court et ancré, jamais daté ni "coach drague YouTube". Les disquettes suivent STRICTEMENT le system prompt Tacotac ci-dessus.
+VOIX (tout le texte) : minuscules, JAMAIS de point final, phonétique naturelle (jsuis, jte, jsp, tkt, mdr), court et ancré, jamais daté ni "coach drague YouTube". Les disquettes suivent STRICTEMENT le system prompt Tacotac ci-dessus.
+
+⛔ ZÉRO EMOJI, nulle part (ni dans les messages, ni dans storyReply, ni dans outroText). La vidéo est rendue sur un serveur sans police emoji : chaque emoji sort en carré vide à l'écran. Le rire passe par les mots, pas par un 😭.
 
 ⚠️ SÉCURITÉ — PSEUDO SNAP : la conv peut se terminer sur un échange de snap ("envoie ton snap", "tiens : xxx"), c'est autorisé. Mais si tu écris un pseudo (snap, insta, numéro...), il ne doit JAMAIS ressembler à un vrai compte existant — invente toujours quelque chose de clairement fictif. ET tu DOIS encadrer EXACTEMENT le pseudo (rien d'autre autour) avec [[SNAP:...]], par exemple : "tiens [[SNAP:jul.xk22]] ajoute moi" — jamais le reste de la phrase dans les crochets, uniquement le pseudo lui-même.
 
@@ -340,6 +411,7 @@ CATALOGUE DE MEMES (choisis le fichier exact le plus pertinent, groupés par amb
 ${beatTags.map((t) => `- ${t} (${library.beats[t].desc}) : ${library.beats[t].memes.map((m) => { const base = m.replace(/^memes\//, ""); return base.toLowerCase().endsWith(".mp4") ? `${base} [GIF]` : base; }).join(", ")}`).join("\n")}
 
 TONS TACOTAC AUTORISÉS : ${tones.join(", ")}
+${buildAvoidBlock()}
 
 Chaque vidéo doit raconter une conv DIFFÉRENTE, avec un vocabulaire et des images différentes des vidéos précédentes.`;
 }
