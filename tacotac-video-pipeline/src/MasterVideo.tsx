@@ -1,5 +1,5 @@
 import React, { Fragment } from "react";
-import { AbsoluteFill, Audio, staticFile, useCurrentFrame, useVideoConfig, interpolate } from "remotion";
+import { AbsoluteFill, Audio, Img, staticFile, useCurrentFrame, useVideoConfig, interpolate } from "remotion";
 import { TransitionSeries, linearTiming } from "@remotion/transitions";
 import { fade } from "@remotion/transitions/fade";
 import { DMScene } from "./components/DMScene";
@@ -15,6 +15,13 @@ const renderScene = (script: Script, s: Scene) => {
   switch (s.kind) {
     case "intro":
       return <Intro caption={script.introCaption} trimFrames={s.trim} />;
+    case "photo":
+      // Plein écran, comme si on regardait sa story juste avant de lui écrire.
+      return (
+        <AbsoluteFill style={{ background: "#000" }}>
+          <Img src={staticFile(s.asset)} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        </AbsoluteFill>
+      );
     case "caption":
       return <CaptionCard text={s.text} background={s.background} variant={s.variant} />;
     case "dm":

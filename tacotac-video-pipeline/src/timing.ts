@@ -10,6 +10,7 @@ import { video } from "./theme";
 export const D = {
   outro: 90,
   meme: 42,
+  openPhoto: 48, // 1,6 s sur la photo : le temps de la voir sans casser le rythme
   storyOpen: 40, // temps où l'on voit la réponse à la story avant qu'elle réponde
   dmLead: 12, // délai avant le 1er message quand on revient sur le DM (après le fondu)
 };
@@ -35,6 +36,7 @@ const revealDur = (it: DMItem): number => {
 
 export type Scene =
   | { kind: "intro"; dur: number; trim: number }
+  | { kind: "photo"; asset: string; dur: number }
   | { kind: "caption"; text: string; background: string; variant: "outro"; dur: number }
   | { kind: "dm"; base: DMItem[]; reveals: DMItem[]; starts: number[]; dur: number }
   | { kind: "tacotac"; beat: TacotacBeat; dur: number }
@@ -73,6 +75,12 @@ export function buildScenes(script: Script): Scene[] {
   // musique choisie (chaque drop tombe à un instant différent), voir music.ts.
   const trim = resolveMusic(script.music).introTrim;
   scenes.push({ kind: "intro", dur: introDurationFrames(trim), trim });
+
+  // Format "DM" : on la voit AVANT d'ouvrir l'app. Le meme de réaction qui suit
+  // est un beat normal placé par le modèle, il arrive donc juste après.
+  if (script.openPhoto) {
+    scenes.push({ kind: "photo", asset: script.openPhoto, dur: D.openPhoto });
+  }
 
   for (const beat of script.beats) {
     if (beat.type === "message") {

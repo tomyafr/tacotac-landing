@@ -55,11 +55,12 @@ export const TacotacScreenshot: React.FC<{ beat: TacotacBeat }> = ({ beat }) => 
     return <TacotacScreen beat={beat} />;
   }
 
-  // On remplit la largeur du cadre ; le screen est plus haut que le 9:16 donc on
-  // le centre verticalement (léger rognage haut/bas, jamais sur la bulle).
+  // On remplit la largeur du cadre. Le screen est plus haut que le 9:16, donc il
+  // faut rogner : on cale en HAUT (topOffset = 0) pour garder tout l'en-tête
+  // ("Tes DM" / "Tes répliques", le ton sélectionné) — c'est ce qui identifie
+  // l'outil à l'écran. Le rognage tombe en bas, sur les boutons, sans intérêt.
   const scale = video.width / SHOT_W;
-  const scaledH = shot.h * scale;
-  const topOffset = (video.height - scaledH) / 2;
+  const topOffset = 0;
 
   const coverTop = shot.inkTop - INK_OFFSET - 8;
   const coverHeight = LINE_HEIGHT * FONT_SIZE * 3 + 16;

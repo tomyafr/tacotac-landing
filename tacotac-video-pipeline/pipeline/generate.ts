@@ -378,7 +378,7 @@ function buildGenInstruction(angles: { story: string; outro: string; archetype: 
   const him = REVERSED ? "la cliente" : "le client";
   const commonBeats = `  • {"kind":"message","from":"girl"|"client","text":"..."}${REVERSED ? ' — ici "girl" = le mec dragué (bulle gauche), "client" = la cliente Tacotac (bulle droite).' : ""}
   • {"kind":"tacotac","tone":"<ton>","text":"..."} — ${him} ouvre l'app. DOIT être suivi IMMÉDIATEMENT d'un {"kind":"message","from":"client","text":"..."} avec EXACTEMENT le même texte.
-  • {"kind":"meme","asset":"<nom-de-fichier-exact>"} — 1 à 2 memes maximum, à un moment vraiment comique. Choisis le fichier qui colle LE MIEUX à ce qui vient d'être dit.
+  • {"kind":"meme","asset":"<nom-de-fichier-exact>"} — vise environ UN MEME POUR DEUX MESSAGES (2 à 3 sur la vidéo). Pas entre chaque message, mais assez pour rythmer. Choisis le fichier qui colle LE MIEUX à ce qui vient d'être dit.
 - ⚠️ Chaque texte de disquette fait AU MAXIMUM 95 caractères : au-delà il ne rentre pas dans la bulle de l'app à l'écran.
 - Fin OBLIGATOIRE : le tout dernier beat est un message de ${her} qui COMPLIMENTE ${him} — du genre "t'es trop fort", "ok t'es mignon toi", "t'as gagné là". Pas de date, pas de numéro, pas de snap : la vidéo s'arrête sur le compliment, c'est ça la preuve que la disquette a marché.
 - girlName : prénom crédible${REVERSED ? " pour LE MEC dragué (le champ s'appelle « girlName » mais tient ici le prénom du mec)" : ""}. status : ex "en ligne il y a 2h".`;
@@ -387,13 +387,15 @@ function buildGenInstruction(angles: { story: string; outro: string; archetype: 
     structure === "B"
       ? `RÈGLES DE STRUCTURE — FORMAT "DM" (${him} n'a jamais parlé à ${her} avant) :
 - storyReply : laisse une chaîne VIDE "". Ce format ne répond à aucune story.
-- beats : 5 à 7 éléments, dans CET ordre :
-  1. {"kind":"tacotac",...} — Tacotac écrit le tout PREMIER message (le DM d'ouverture)
-  2. {"kind":"message","from":"client"} — le même texte, envoyé
-  3. {"kind":"message","from":"girl"} — sa réponse, intriguée ou piquée
-  4. {"kind":"tacotac",...} — Tacotac écrit LA réplique qui referme
-  5. {"kind":"message","from":"client"} — le même texte, envoyé
-  6. {"kind":"message","from":"girl"} — son COMPLIMENT, et la vidéo s'arrête là
+- La vidéo s'ouvre sur la PHOTO de ${her} en plein écran (ajoutée automatiquement, tu n'as rien à écrire pour ça).
+- beats : 6 à 8 éléments, dans CET ordre :
+  1. {"kind":"meme","asset":"..."} — la RÉACTION en voyant sa photo : choisis un meme qui bave / affamé / coquin / sous le charme. C'est le premier beat, obligatoire.
+  2. {"kind":"tacotac",...} — Tacotac écrit le tout PREMIER message (le DM d'ouverture)
+  3. {"kind":"message","from":"client"} — le même texte, envoyé
+  4. {"kind":"message","from":"girl"} — sa réponse, intriguée ou piquée
+  5. {"kind":"tacotac",...} — Tacotac écrit LA réplique qui referme
+  6. {"kind":"message","from":"client"} — le même texte, envoyé
+  7. {"kind":"message","from":"girl"} — son COMPLIMENT, et la vidéo s'arrête là
 ${commonBeats}`
       : `RÈGLES DE STRUCTURE — FORMAT "STORY" :
 - storyReply : le TOUT PREMIER message de ${him}, en réponse à la story de ${her}. Écrit par ${him} lui-même, PAS par Tacotac.
@@ -596,6 +598,9 @@ function assemble(g: GenOutput, state: State, structure: Structure) {
     // Format B : la conv démarre sur le DM d'ouverture, il n'y a aucune story à
     // laquelle répondre — on retire le bandeau "Vous avez répondu à sa story".
     storyReply: structure === "B" ? undefined : clean(g.storyReply) || undefined,
+    // Format B : la vidéo ouvre sur SA photo (la même que l'avatar de la conv),
+    // puis le meme de réaction, puis l'écran DM de l'app.
+    openPhoto: structure === "B" ? girl : undefined,
     // Intro fixe (voir Intro.tsx) : le clip est vierge, la légende est piochée ici
     // en rotation anti-répétition (voir INTRO_CAPTIONS), pas générée par le modèle.
     introCaption,

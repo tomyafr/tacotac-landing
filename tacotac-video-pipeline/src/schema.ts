@@ -70,6 +70,10 @@ export const scriptSchema = z.object({
   // Légende affichée sur l'intro fixe (clip vierge, texte piocké en rotation
   // côté generate.ts — voir INTRO_CAPTIONS). Absent = pas de légende (fallback).
   introCaption: z.string().optional(),
+  // Format "DM" : on ouvre sur la photo de la personne draguée (plein écran, comme
+  // si on regardait sa story) avant que Tacotac n'écrive le 1er message. Absent
+  // dans le format "story", qui démarre directement sur la conversation.
+  openPhoto: z.string().optional(),
   // Clé de la piste musicale dans MUSIC_TRACKS (src/music.ts) — ex: "pressure",
   // "flex-up", "nba". Chaque piste embarque SA coupe d'intro pour que le panier
   // tombe sur le drop. Absent/inconnu = "bg-music" (piste historique, intro pleine).
