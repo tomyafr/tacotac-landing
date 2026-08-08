@@ -20,6 +20,7 @@ import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { scriptSchema, toneEnum, type Tone } from "../src/schema";
 import { durationSeconds, MAX_DURATION_SECONDS } from "../src/timing";
+import { MUSIC_TRACKS } from "../src/music";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "..");
@@ -156,6 +157,11 @@ const CONVERSATION_ARCHETYPES_REVERSED = [
   "il change de sujet ou évite une question, la cliente doit rebondir sans s'accrocher ni paraître vexée",
 ];
 
+// Musiques disponibles (voir src/music.ts) — chacune embarque SA coupe d'intro pour
+// que le panier tombe sur le drop. Tirées en rotation comme le reste : sans ça, le
+// champ script.music restait vide et le rendu retombait toujours sur bg-music.
+const MUSIC_KEYS = Object.keys(MUSIC_TRACKS);
+
 // Légende incrustée sur l'intro (le clip lui-même est maintenant "vierge", sans texte
 // brûlé — voir Intro.tsx). Volontairement peu varié (demande explicite) : un petit pool
 // de 4 formulations, en rotation anti-répétition comme le reste, PARTAGÉ entre tous les
@@ -180,6 +186,7 @@ type State = {
   outroAngleOrder: string[]; outroAngleIndex: number;
   archetypeOrder: string[]; archetypeIndex: number;
   captionOrder: string[]; captionIndex: number;
+  musicOrder: string[]; musicIndex: number;
 };
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -196,6 +203,7 @@ function loadState(): State {
     outroAngleOrder: shuffle(OUTRO_ANGLES), outroAngleIndex: 0,
     archetypeOrder: shuffle(ACTIVE_ARCHETYPES), archetypeIndex: 0,
     captionOrder: shuffle(INTRO_CAPTIONS), captionIndex: 0,
+    musicOrder: shuffle(MUSIC_KEYS), musicIndex: 0,
   });
   try {
     const s = JSON.parse(fs.readFileSync(STATE_PATH, "utf8")) as State;
@@ -204,7 +212,8 @@ function loadState(): State {
       Array.isArray(s.storyAngleOrder) && s.storyAngleOrder.length === ACTIVE_STORY_ANGLES.length &&
       Array.isArray(s.outroAngleOrder) && s.outroAngleOrder.length === OUTRO_ANGLES.length &&
       Array.isArray(s.archetypeOrder) && s.archetypeOrder.length === ACTIVE_ARCHETYPES.length &&
-      Array.isArray(s.captionOrder) && s.captionOrder.length === INTRO_CAPTIONS.length;
+      Array.isArray(s.captionOrder) && s.captionOrder.length === INTRO_CAPTIONS.length &&
+      Array.isArray(s.musicOrder) && s.musicOrder.length === MUSIC_KEYS.length;
     return ok ? s : fresh();
   } catch {
     return fresh(); // pas de state ou invalide → on en crée un
@@ -222,6 +231,16 @@ function nextGirl(state: State): string {
   state.girlIndex++;
   saveState(state);
   return girl;
+}
+function nextMusic(state: State): string {
+  if (state.musicIndex >= state.musicOrder.length) {
+    state.musicOrder = shuffle(MUSIC_KEYS);
+    state.musicIndex = 0;
+  }
+  const music = state.musicOrder[state.musicIndex];
+  state.musicIndex++;
+  saveState(state);
+  return music;
 }
 function nextIntroCaption(state: State): string {
   if (state.captionIndex >= state.captionOrder.length) {
@@ -447,6 +466,7 @@ function resolveMemeAsset(asset: string): { full: string; beat: string } {
 function assemble(g: GenOutput, state: State) {
   const girl = nextGirl(state);
   const introCaption = nextIntroCaption(state);
+  const music = nextMusic(state);
   const beats = g.beats.map((b) => {
     if (b.kind === "message") return { type: "message", from: b.from, text: clean(b.text) };
     if (b.kind === "tacotac") return { type: "tacotac", tone: b.tone, text: clean(b.text) };
@@ -460,6 +480,8 @@ function assemble(g: GenOutput, state: State) {
     // Intro fixe (voir Intro.tsx) : le clip est vierge, la légende est piochée ici
     // en rotation anti-répétition (voir INTRO_CAPTIONS), pas générée par le modèle.
     introCaption,
+    // Musique en rotation : le rendu en déduit aussi la coupe d'intro (music.ts).
+    music,
     outro: { text: clean(g.outroText), background: rand(OUTRO_BGS) },
     beats,
   };
