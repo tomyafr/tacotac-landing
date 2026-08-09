@@ -325,7 +325,11 @@ function nextGirl(state: State): string {
   saveState(state);
   return girl;
 }
+// TACOTAC_STRUCTURE=A|B force le format pour ce run (utile pour tester un seul
+// des deux sans consommer plusieurs générations). Vide = rotation normale.
+const FORCED_STRUCTURE = (process.env.TACOTAC_STRUCTURE || "").toUpperCase();
 function nextStructure(state: State): Structure {
+  if (FORCED_STRUCTURE === "A" || FORCED_STRUCTURE === "B") return FORCED_STRUCTURE;
   if (state.structureIndex >= state.structureOrder.length) {
     state.structureOrder = shuffle(STRUCTURES);
     state.structureIndex = 0;
@@ -730,9 +734,13 @@ function punchlineProblems(script: Candidate): string[] {
 async function generateOne(backend: "cli" | "api", state: State) {
   let script: Candidate | null = null;
   let fallback: Candidate | null = null; // meilleur candidat vu, si aucun n'est parfait
+  // Angles et format tirés UNE SEULE FOIS pour cette vidéo : une régénération
+  // corrige un texte non conforme, elle ne doit pas changer le sujet ni sauter au
+  // format suivant (sinon un run "format DM" pouvait ressortir en format story, et
+  // chaque essai raté brûlait un cran de rotation).
+  const angles = nextAngles(state); // 1 angle différent par champ, jamais répété avant d'avoir tout épuisé
+  const structure = nextStructure(state);
   for (let attempt = 1; attempt <= MAX_LENGTH_RETRIES; attempt++) {
-    const angles = nextAngles(state); // 1 angle différent par champ, jamais répété avant d'avoir tout épuisé
-    const structure = nextStructure(state);
     const g = backend === "api" ? await callApi(angles, structure) : callCli(angles, structure);
     const candidate = assemble(g, state, structure);
     scriptSchema.parse(candidate); // rejette tout scénario invalide (compat render)
