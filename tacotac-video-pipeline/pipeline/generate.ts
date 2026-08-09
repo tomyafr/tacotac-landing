@@ -204,7 +204,7 @@ const OUTRO_ANGLES = [
 // ligne d'ouverture) : quel est le conflit/l'enjeu qui traverse la conv du début
 // à la fin. Sans ça, les convs finissent toutes en "banter plat" interchangeable.
 const CONVERSATION_ARCHETYPES = [
-  "elle teste si c'est un profil fake / si les photos sont vraies, il doit la rassurer avec culot plutôt que se justifier platement",
+  "elle dit qu'elle est occupée / qu'elle a pas le temps, il ne la supplie pas et retourne ça en sa faveur",
   "elle est froide et distante au début (réponses courtes, presque désintéressée), et se réchauffe progressivement au fil de la conv",
   "elle négocie fermement la logistique du date (lieu, horaire, qui décide), teste s'il tient bon sans juste céder",
   "elle mentionne un autre mec / une légère compétition, il doit rester confiant sans paraître jaloux ni désespéré",
@@ -216,7 +216,7 @@ const CONVERSATION_ARCHETYPES = [
 // Même registre que CONVERSATION_ARCHETYPES, rôles inversés : lui teste/négocie/hésite,
 // la cliente (Amelia) mène la conv et l'assure — jamais elle qui doute d'elle-même.
 const CONVERSATION_ARCHETYPES_REVERSED = [
-  "il teste si c'est un profil fake / si les photos sont vraies, elle doit le rassurer avec culot plutôt que se justifier platement",
+  "il dit qu'il est occupé / qu'il a pas le temps, elle ne le supplie pas et retourne ça en sa faveur",
   "il est froid et distant au début (réponses courtes, presque désintéressé), et se réchauffe progressivement au fil de la conv",
   "il négocie fermement la logistique du date (lieu, horaire, qui décide), teste si elle tient bon sans juste céder",
   "il mentionne une autre fille / une légère compétition, elle doit rester confiante sans paraître jalouse ni désespérée",
@@ -398,7 +398,12 @@ function buildGenInstruction(angles: { story: string; outro: string; archetype: 
   const commonBeats = `  • {"kind":"message","from":"girl"|"client","text":"..."}${REVERSED ? ' — ici "girl" = le mec dragué (bulle gauche), "client" = la cliente Tacotac (bulle droite).' : ""}
   • {"kind":"tacotac","tone":"<ton>","text":"..."} — ${him} ouvre l'app. DOIT être suivi IMMÉDIATEMENT d'un {"kind":"message","from":"client","text":"..."} avec EXACTEMENT le même texte.
   • {"kind":"meme","asset":"<nom-de-fichier-exact>"} — vise environ UN MEME POUR DEUX MESSAGES (2 à 3 sur la vidéo). Pas entre chaque message, mais assez pour rythmer. Choisis le fichier qui colle LE MIEUX à ce qui vient d'être dit.
-- ⚠️ Chaque texte de disquette fait AU MAXIMUM 95 caractères : au-delà il ne rentre pas dans la bulle de l'app à l'écran.
+- ⚠️ RAPPEL : chaque disquette fait 50 CARACTÈRES MAXIMUM (voir les règles plus haut). Compte-les avant de valider.
+- ⚠️ Le storyReply fait 60 CARACTÈRES MAXIMUM, une seule idée lui aussi. "tu postes ça un dimanche soir en sachant très bien ce que ça fait aux gens, assume au moins" = beaucoup trop long, coupe.
+- ⚠️ Les messages de la conv sont COURTS eux aussi : une ligne, comme un vrai DM. Jamais deux idées dans un message.
+- ⚠️ ÉCRIS AVEC LES ACCENTS. "reponds", "gerer", "deja", "meme" sans accent = faute visible à l'écran. On écrit en phonétique relâchée (jsuis, jte, tkt), PAS sans accents.
+- ⛔ LA FIN — varie le compliment. Les 4 dernières vidéos finissaient TOUTES sur "ok là t'es fort". C'est mort, trouve autre chose : "t'es mignon toi", "ok tu m'as eue", "jm'attendais pas à ça", "bon t'as gagné", "arrête jvais rougir", "c'est malin ça". Le compliment doit sonner comme ELLE, pas comme une formule.
+- ⛔ Sujets INTERDITS (ils sont revenus dans 1 vidéo sur 4, on n'en veut plus) : le profil fake, les photos truquées, les filtres, demander/donner une preuve que c'est bien lui. Trouve autre chose.
 - Fin OBLIGATOIRE : le tout dernier beat est un message de ${her} qui COMPLIMENTE ${him} — du genre "t'es trop fort", "ok t'es mignon toi", "t'as gagné là". Pas de date, pas de numéro, pas de snap : la vidéo s'arrête sur le compliment, c'est ça la preuve que la disquette a marché.
 - girlName : prénom crédible${REVERSED ? " pour LE MEC dragué (le champ s'appelle « girlName » mais tient ici le prénom du mec)" : ""}. status : ex "en ligne il y a 2h".`;
 
@@ -434,11 +439,37 @@ ${angles.archetype}
 
 ${qualityRules}
 
-⚠️ LA DISQUETTE — c'est LE truc qu'on vend, tout le reste n'est que décor :
-- Une disquette n'est PAS une phrase d'accroche ni une observation. C'est une réplique qui MET LA PRESSION : elle donne à la fille un truc auquel elle est OBLIGÉE de réagir. Si elle peut répondre "ah ok mdr" et que la conv est morte, c'est raté.
-- Elle doit contenir un RETOURNEMENT : tu commences dans une direction, tu finis ailleurs. Une phrase plate qui dit juste un compliment ou un constat n'est pas une disquette.
-- Elle doit être VOLABLE : le viewer doit pouvoir la ressortir telle quelle dans sa propre conv, sans rien changer. Donc zéro détail qui ne marche que dans CETTE conv précise.
-- INTERDIT : les questions molles ("t'as passé une bonne journée ?"), les compliments secs ("t'es trop belle"), les constats sans enjeu ("tu postes souvent des stories").
+⚠️⚠️ LA DISQUETTE — LIS ÇA DEUX FOIS, C'EST LE CŒUR DU TRAVAIL ⚠️⚠️
+
+LE TEST DU SCROLL : le viewer défile TikTok à moitié attentif. Il lit ta disquette UNE fois, en 1 seconde, sans revenir en arrière. S'il doit relire, s'il doit réfléchir, s'il doit tenir deux idées en tête pour saisir le lien — c'est RATÉ. On ne fait pas des mots croisés, on fait une punchline.
+
+⛔ CE QUI TUE LES DISQUETTES (analyse réelle des 30 dernières, elles étaient TOUTES malades) :
+- Longueur moyenne 85 caractères, 87 % au-dessus de 80, AUCUNE en dessous de 70. Beaucoup trop long.
+- 97 % contenaient une virgule → deux propositions → deux idées à traiter → illisible au scroll.
+- Le poison n°1 : le retournement conceptuel du type "t'es pas en train de me tester, t'es en train de vérifier si jtiens le rythme" ou "jhésitais entre un truc banal et la vérité, jai choisi le pire des deux". Ça a l'air malin, ça ne veut RIEN dire à la lecture rapide. N'écris PLUS JAMAIS ce genre de construction.
+
+✅ LES RÈGLES DURES — non négociables :
+1. **50 CARACTÈRES MAXIMUM.** Compte-les. Si tu dépasses, coupe des mots jusqu'à passer sous la barre.
+2. **UNE SEULE IDÉE, UNE SEULE PROPOSITION.** Interdiction d'utiliser une virgule pour enchaîner une 2e idée. Une phrase = un souffle.
+3. **CONCRET.** Parle de choses qui existent : son téléphone, l'heure qu'il est, jeudi, un verre, son sourire. JAMAIS de concept abstrait (la vérité, le classement, le rythme, la comparaison, une raison).
+4. **DU CULOT, PAS DE LA LOGIQUE.** Ce qui fait rire c'est l'aplomb, l'assurance tranquille, le truc qu'on ose dire. Pas la construction intelligente.
+5. Pas de "…" à la fin. Pas de phrase qui commence par "j" deux fois de suite dans la même vidéo.
+
+EXEMPLES DE CE QU'ON VEUT (courtes, cash, comprises instantanément) :
+  • "réponds pas trop vite ça va me monter à la tête"
+  • "tu vas dire non et le regretter jeudi"
+  • "mets une alarme tu vas y repenser à 3h du mat"
+  • "arrête de sourire jte vois d'ici"
+  • "jsuis déjà en train de choisir le bar"
+  • "t'as répondu en 30 secondes on est d'accord"
+
+EXEMPLES DE CE QU'ON NE VEUT PLUS (vraies disquettes ratées, trop longues et alambiquées) :
+  ✗ "jveux pas être en tête de ton classement, jveux juste que tu supprimes le classement"
+  ✗ "ton physique m'a fait ouvrir, ta question m'a fait rester, le reste tu le sauras en vrai"
+  ✗ "pas bavarde jaime bien, ça veut dire que quand tu diras un truc jvais le prendre au sérieux"
+
+- Elle doit rester VOLABLE : le viewer doit pouvoir la ressortir telle quelle dans sa conv. Donc aucun détail propre à CETTE conv.
+- INTERDIT aussi : les questions molles ("t'as passé une bonne journée ?"), les compliments secs ("t'es trop belle").
 
 ⚠️ LE STORY REPLY — même exigence, c'est la 1re seconde de la vidéo :
 - ⛔ Le piège dans lequel toutes les vidéos précédentes sont tombées : commenter LE FAIT DE POSTER une story (combien de prises, quel jour, quelle heure, "t'aurais pu prévenir", "c'est quoi le but"). C'est devenu un tic, n'y touche plus.
@@ -634,8 +665,29 @@ function assemble(g: GenOutput, state: State, structure: Structure) {
 // d'avance. Le modèle reçoit la contrainte dans le prompt, donc c'est rare.
 const MAX_LENGTH_RETRIES = 3;
 
+// Le prompt demande des disquettes courtes ; ce contrôle le GARANTIT. Sans lui,
+// le modèle dérivait à 85 caractères de moyenne avec deux propositions par phrase
+// — illisible au scroll, c'est le défaut n°1 remonté sur les vidéos.
+const MAX_PUNCHLINE_CHARS = 50;
+const MAX_STORY_CHARS = 60; // l'ouverture a droit à un peu plus, mais pas au pavé
+type Candidate = ReturnType<typeof assemble>;
+function punchlineProblems(script: Candidate): string[] {
+  const problems: string[] = [];
+  for (const b of script.beats) {
+    if (b.type !== "tacotac" || typeof b.text !== "string") continue;
+    if (b.text.length > MAX_PUNCHLINE_CHARS) {
+      problems.push(`disquette ${b.text.length} car (max ${MAX_PUNCHLINE_CHARS}) : "${b.text}"`);
+    }
+  }
+  if (script.storyReply && script.storyReply.length > MAX_STORY_CHARS) {
+    problems.push(`storyReply ${script.storyReply.length} car (max ${MAX_STORY_CHARS}) : "${script.storyReply}"`);
+  }
+  return problems;
+}
+
 async function generateOne(backend: "cli" | "api", state: State) {
-  let script: ReturnType<typeof assemble> | null = null;
+  let script: Candidate | null = null;
+  let fallback: Candidate | null = null; // meilleur candidat vu, si aucun n'est parfait
   for (let attempt = 1; attempt <= MAX_LENGTH_RETRIES; attempt++) {
     const angles = nextAngles(state); // 1 angle différent par champ, jamais répété avant d'avoir tout épuisé
     const structure = nextStructure(state);
@@ -643,12 +695,25 @@ async function generateOne(backend: "cli" | "api", state: State) {
     const candidate = assemble(g, state, structure);
     scriptSchema.parse(candidate); // rejette tout scénario invalide (compat render)
     const secs = durationSeconds(scriptSchema.parse(candidate));
-    if (secs <= MAX_DURATION_SECONDS) {
+    const tooLong = punchlineProblems(candidate);
+    if (secs <= MAX_DURATION_SECONDS && tooLong.length === 0) {
       script = candidate;
-      console.log(`   durée ${secs.toFixed(1)}s ✅`);
+      console.log(`   durée ${secs.toFixed(1)}s ✅  disquettes ≤ ${MAX_PUNCHLINE_CHARS} car ✅`);
       break;
     }
-    console.warn(`   ⚠️ ${secs.toFixed(1)}s > ${MAX_DURATION_SECONDS}s — régénération (${attempt}/${MAX_LENGTH_RETRIES})`);
+    // On garde le 1er candidat valide en durée : mieux vaut une disquette un peu
+    // longue qu'un run qui plante et zéro vidéo produite.
+    if (secs <= MAX_DURATION_SECONDS && !fallback) fallback = candidate;
+    if (secs > MAX_DURATION_SECONDS) {
+      console.warn(`   ⚠️ ${secs.toFixed(1)}s > ${MAX_DURATION_SECONDS}s — régénération (${attempt}/${MAX_LENGTH_RETRIES})`);
+    } else {
+      console.warn(`   ⚠️ texte trop long — régénération (${attempt}/${MAX_LENGTH_RETRIES})`);
+      for (const p of tooLong) console.warn(`      ${p}`);
+    }
+  }
+  if (!script && fallback) {
+    console.warn(`   ⚠️ aucun scénario parfait après ${MAX_LENGTH_RETRIES} essais — on garde le moins mauvais`);
+    script = fallback;
   }
   if (!script) throw new Error(`Impossible d'obtenir un scénario sous ${MAX_DURATION_SECONDS}s après ${MAX_LENGTH_RETRIES} essais`);
   const outPath = path.join(QUEUE, `${script.id}.json`);

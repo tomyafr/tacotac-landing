@@ -93,8 +93,19 @@ echo "rendus: $rendered"
 if [ -n "${RCLONE_REMOTE:-}" ]; then
   if command -v rclone >/dev/null 2>&1; then
     echo "--- upload -> $RCLONE_REMOTE ---"
-    if rclone copy "$OUT_DIR/" "$RCLONE_REMOTE" --include "pov-*-a-poster.mp4" --stats-one-line --stats 10s; then
+    if rclone copy "$OUT_DIR/" "$RCLONE_REMOTE" --include "pov-*-a-poster.mp4" --max-depth 1 --stats-one-line --stats 10s; then
       echo "upload terminé"
+      # Même correctif que run.sh : on sort les POV envoyés du dossier d'upload,
+      # sinon `rclone copy` les remonte à chaque run et toute suppression côté
+      # Drive est annulée au run suivant.
+      ARCHIVE_DIR="${OUT_DIR}-envoyees"
+      mkdir -p "$ARCHIVE_DIR"
+      moved=0
+      for sent in "$OUT_DIR"/pov-*-a-poster.mp4; do
+        [ -e "$sent" ] || continue
+        mv "$sent" "$ARCHIVE_DIR/" && moved=$((moved + 1))
+      done
+      echo "archivées hors du dossier d'upload : $moved"
       # Purge des vieux POV du Drive — même logique que run.sh (quota Google saturé
       # = plus aucun upload). Suppression DÉFINITIVE, sinon la corbeille garde la place.
       # Ne vise QUE les fichiers pov-* de ce pipeline. DRIVE_RETENTION_DAYS=0 pour désactiver.

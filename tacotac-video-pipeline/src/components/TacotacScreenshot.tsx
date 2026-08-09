@@ -101,13 +101,18 @@ export const TacotacScreenshot: React.FC<{ beat: TacotacBeat }> = ({ beat }) => 
             background: app.bubbleBg,
           }}
         />
-        {/* la vraie réponse, calée sur l'encre du placeholder */}
+        {/* La vraie réponse. Centrée verticalement dans la zone des 3 lignes : les
+            disquettes font maintenant ~40 caractères (1 ligne) alors que la bulle du
+            screenshot est calibrée pour 3, ce qui laissait un grand vide en dessous. */}
         <div
           style={{
             position: "absolute",
             left: TEXT_LEFT,
-            top: shot.inkTop - INK_OFFSET,
+            top: coverTop,
             width: textWidth,
+            height: coverHeight,
+            display: "flex",
+            alignItems: "center",
             fontFamily: fonts.body,
             fontSize,
             fontWeight: 500,
@@ -116,7 +121,7 @@ export const TacotacScreenshot: React.FC<{ beat: TacotacBeat }> = ({ beat }) => 
             color: app.replyText,
           }}
         >
-          {renderMaskedText(beat.text)}
+          <div>{renderMaskedText(beat.text)}</div>
         </div>
       </div>
     </AbsoluteFill>

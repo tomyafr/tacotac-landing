@@ -108,8 +108,22 @@ if [ -n "${RCLONE_REMOTE:-}" ]; then
   if command -v rclone >/dev/null 2>&1; then
     echo "--- upload -> $RCLONE_REMOTE ---"
     # --stats-one-line : pas de barre de progression illisible dans les logs cron
-    if rclone copy "$OUT_DIR/" "$RCLONE_REMOTE" --include "video-*-a-poster.mp4" --stats-one-line --stats 10s; then
+    # --max-depth 1 : ne descend PAS dans le dossier d'archive créé plus bas.
+    if rclone copy "$OUT_DIR/" "$RCLONE_REMOTE" --include "video-*-a-poster.mp4" --max-depth 1 --stats-one-line --stats 10s; then
       echo "upload terminé"
+      # Une fois envoyées, on SORT les vidéos de $OUT_DIR. Sans ça, `rclone copy`
+      # renvoie à chaque run tout ce qui manque à destination : les vidéos que Tom
+      # supprimait du Drive revenaient donc systématiquement au run suivant (et la
+      # purge ci-dessous ne servait à rien, elle était annulée dans la foulée).
+      # Les fichiers restent sur le VPS comme sauvegarde, juste hors de portée du copy.
+      ARCHIVE_DIR="${OUT_DIR}-envoyees"
+      mkdir -p "$ARCHIVE_DIR"
+      moved=0
+      for sent in "$OUT_DIR"/video-*-a-poster.mp4; do
+        [ -e "$sent" ] || continue
+        mv "$sent" "$ARCHIVE_DIR/" && moved=$((moved + 1))
+      done
+      echo "archivées hors du dossier d'upload : $moved"
       # Purge des vieilles vidéos du Drive — sinon le quota finit par saturer et
       # PLUS AUCUN upload ne passe (arrivé le 08/08/26 : 11 vidéos bloquées).
       # ⚠️ Suppression DÉFINITIVE (--drive-use-trash=false) : sans ça les fichiers
