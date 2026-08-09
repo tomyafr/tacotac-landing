@@ -247,7 +247,14 @@ const STRUCTURES: Structure[] = ["A", "B"];
 // modèle en cohérence avec la conv, ça donnait des titres trop travaillés et des
 // tournures bizarres. Le titre n'a pas à raconter la vidéo, juste à annoncer la
 // couleur. Tiré en rotation par le code, comme les filles et les musiques.
+// Titres d'intro. Les 4 premiers sont RELEVÉS SUR LES VIDÉOS DE TOM qui ont
+// marché (reference/inspiration/) : première personne + souvent un aparté adressé
+// aux gars entre parenthèses ou astérisques. Le reste suit le même moule.
 const INTRO_CAPTIONS = [
+  "je teste mon football sur snapchat",
+  "je drague la plus belle du lycée *prenez des notes*",
+  "comment dm sur insta (prenez des notes les gars)",
+  "comment gérer une meuf sur insta",
   "regarde comment je gère mon football",
   "je gère cette 10/10 par message",
   "je dm ma crush",
@@ -398,7 +405,8 @@ function buildGenInstruction(angles: { story: string; outro: string; archetype: 
   const commonBeats = `  • {"kind":"message","from":"girl"|"client","text":"..."}${REVERSED ? ' — ici "girl" = le mec dragué (bulle gauche), "client" = la cliente Tacotac (bulle droite).' : ""}
   • {"kind":"tacotac","tone":"<ton>","text":"..."} — ${him} ouvre l'app. DOIT être suivi IMMÉDIATEMENT d'un {"kind":"message","from":"client","text":"..."} avec EXACTEMENT le même texte.
   • {"kind":"meme","asset":"<nom-de-fichier-exact>"} — vise environ UN MEME POUR DEUX MESSAGES (2 à 3 sur la vidéo). Pas entre chaque message, mais assez pour rythmer. Choisis le fichier qui colle LE MIEUX à ce qui vient d'être dit.
-- ⚠️ RAPPEL : chaque disquette fait 50 CARACTÈRES MAXIMUM (voir les règles plus haut). Compte-les avant de valider.
+- ⚠️ RAPPEL : amorce 45 caractères max, relance 4 mots max, chute 65 caractères max. Compte-les avant de valider.
+- ⚠️ RAPPEL : la relance de ${her} ("non pourquoi ?") n'est PAS un message creux interdit — c'est le pivot de la mécanique. C'est la SEULE exception à la règle "pas de message creux".
 - ⚠️ Le storyReply fait 60 CARACTÈRES MAXIMUM, une seule idée lui aussi. "tu postes ça un dimanche soir en sachant très bien ce que ça fait aux gens, assume au moins" = beaucoup trop long, coupe.
 - ⚠️ Les messages de la conv sont COURTS eux aussi : une ligne, comme un vrai DM. Jamais deux idées dans un message.
 - ⚠️ ÉCRIS AVEC LES ACCENTS. "reponds", "gerer", "deja", "meme" sans accent = faute visible à l'écran. On écrit en phonétique relâchée (jsuis, jte, tkt), PAS sans accents.
@@ -412,22 +420,24 @@ function buildGenInstruction(angles: { story: string; outro: string; archetype: 
       ? `RÈGLES DE STRUCTURE — FORMAT "DM" (${him} n'a jamais parlé à ${her} avant) :
 - storyReply : laisse une chaîne VIDE "". Ce format ne répond à aucune story.
 - La vidéo s'ouvre sur la PHOTO de ${her} en plein écran (ajoutée automatiquement, tu n'as rien à écrire pour ça).
-- beats : 6 à 8 éléments, dans CET ordre :
+- beats : 7 à 9 éléments, dans CET ordre — c'est la MÉCANIQUE EN 3 TEMPS, respecte-la à la lettre :
   1. {"kind":"meme","asset":"..."} — la RÉACTION en voyant sa photo : choisis un meme qui bave / affamé / coquin / sous le charme. C'est le premier beat, obligatoire.
-  2. {"kind":"tacotac",...} — Tacotac écrit le tout PREMIER message (le DM d'ouverture)
+  2. {"kind":"tacotac",...} — l'outil DM écrit **L'AMORCE** (45 car. max, incompréhensible seule)
   3. {"kind":"message","from":"client"} — le même texte, envoyé
-  4. {"kind":"message","from":"girl"} — sa réponse, intriguée ou piquée
-  5. {"kind":"tacotac",...} — Tacotac écrit LA réplique qui referme
+  4. {"kind":"message","from":"girl"} — **LA RELANCE** : 4 MOTS MAX, aucune vanne ("non pourquoi ?", "de quoi")
+  5. {"kind":"tacotac",...} — l'outil Réplique écrit **LA CHUTE** (65 car. max, image archi-connue)
   6. {"kind":"message","from":"client"} — le même texte, envoyé
   7. {"kind":"message","from":"girl"} — son COMPLIMENT, et la vidéo s'arrête là
 ${commonBeats}`
       : `RÈGLES DE STRUCTURE — FORMAT "STORY" :
 - storyReply : le TOUT PREMIER message de ${him}, en réponse à la story de ${her}. Écrit par ${him} lui-même, PAS par Tacotac.
-- beats : 4 à 6 éléments, dans CET ordre :
+- beats : 6 à 8 éléments, dans CET ordre — c'est la MÉCANIQUE EN 3 TEMPS, respecte-la à la lettre :
   1. {"kind":"message","from":"girl"} — sa réponse au storyReply
-  2. {"kind":"tacotac",...} — Tacotac écrit LA disquette qui claque
-  3. {"kind":"message","from":"client"} — le même texte, envoyé
-  4. {"kind":"message","from":"girl"} — son COMPLIMENT, et la vidéo s'arrête là
+  2. {"kind":"message","from":"client"} — **L'AMORCE** : 45 car. max, elle ne veut rien dire toute seule
+  3. {"kind":"message","from":"girl"} — **LA RELANCE** : 4 MOTS MAX, aucune vanne ("non pourquoi ?", "à quoi", "de quoi")
+  4. {"kind":"tacotac",...} — Tacotac écrit **LA CHUTE**, le message qui referme (65 car. max, image archi-connue)
+  5. {"kind":"message","from":"client"} — le même texte, envoyé
+  6. {"kind":"message","from":"girl"} — son COMPLIMENT, et la vidéo s'arrête là
 ${commonBeats}`;
   return `Tu génères le SCÉNARIO d'une vidéo TikTok "fausse conversation de dating" qui fait la promo de Tacotac (l'app qui souffle les disquettes).
 
@@ -441,34 +451,42 @@ ${qualityRules}
 
 ⚠️⚠️ LA DISQUETTE — LIS ÇA DEUX FOIS, C'EST LE CŒUR DU TRAVAIL ⚠️⚠️
 
-LE TEST DU SCROLL : le viewer défile TikTok à moitié attentif. Il lit ta disquette UNE fois, en 1 seconde, sans revenir en arrière. S'il doit relire, s'il doit réfléchir, s'il doit tenir deux idées en tête pour saisir le lien — c'est RATÉ. On ne fait pas des mots croisés, on fait une punchline.
+**UNE DISQUETTE N'EST PAS UNE PHRASE. C'EST UNE MÉCANIQUE EN 3 TEMPS.**
 
-⛔ CE QUI TUE LES DISQUETTES (analyse réelle des 30 dernières, elles étaient TOUTES malades) :
-- Longueur moyenne 85 caractères, 87 % au-dessus de 80, AUCUNE en dessous de 70. Beaucoup trop long.
-- 97 % contenaient une virgule → deux propositions → deux idées à traiter → illisible au scroll.
-- Le poison n°1 : le retournement conceptuel du type "t'es pas en train de me tester, t'es en train de vérifier si jtiens le rythme" ou "jhésitais entre un truc banal et la vérité, jai choisi le pire des deux". Ça a l'air malin, ça ne veut RIEN dire à la lecture rapide. N'écris PLUS JAMAIS ce genre de construction.
+C'est LA seule chose qui marche, vérifiée sur les vidéos de la chaîne qui ont réellement performé :
+
+  1. L'AMORCE — ${him} lâche une affirmation courte, gonflée, qui ne veut RIEN dire toute seule.
+  2. LA RELANCE — ${her} est OBLIGÉE de demander. 1 à 4 mots, neutres, sans esprit.
+  3. LA CHUTE — ${him} referme. C'est LÀ que la vanne tombe, et nulle part ailleurs.
+
+Exemples réels (recopie la MÉCANIQUE, jamais les mots) :
+  1. "ton père serait pas un voleur"      2. "non pourquoi ?"   3. "parce qu'il a pris les étoiles du ciel pour les mettre dans tes yeux"
+  1. "j'espère que t'es forte en premiers secours"   2. "pourquoi tu dis ça ?"   3. "parce que tu viens de me couper le souffle"
+  1. "fais attention"                     2. "à quoi"           3. "à force d'être aussi belle jvais finir par m'attacher"
+  1. "t'as pas volé quelque chose"        2. "non pourquoi ?"   3. "bah jcrois que si, t'as volé mon cœur"
+  1. "ton père serait pas peintre"        2. "non pourquoi"     3. "parce qu'il a fait une œuvre d'art"
+
+POURQUOI ça marche, et pourquoi c'est NON NÉGOCIABLE : le viewer lit l'amorce, il se pose la même question qu'elle, il ATTEND la réponse. Quand la chute arrive, il n'a aucun effort à faire — c'est une réponse à une question qu'il vient de lire. Zéro décodage. Une punchline balancée d'un seul bloc, elle, oblige à tout démêler d'un coup : c'est exactement ce qu'on ne veut plus.
 
 ✅ LES RÈGLES DURES — non négociables :
-1. **50 CARACTÈRES MAXIMUM.** Compte-les. Si tu dépasses, coupe des mots jusqu'à passer sous la barre.
-2. **UNE SEULE IDÉE, UNE SEULE PROPOSITION.** Interdiction d'utiliser une virgule pour enchaîner une 2e idée. Une phrase = un souffle.
-3. **CONCRET.** Parle de choses qui existent : son téléphone, l'heure qu'il est, jeudi, un verre, son sourire. JAMAIS de concept abstrait (la vérité, le classement, le rythme, la comparaison, une raison).
-4. **DU CULOT, PAS DE LA LOGIQUE.** Ce qui fait rire c'est l'aplomb, l'assurance tranquille, le truc qu'on ose dire. Pas la construction intelligente.
-5. Pas de "…" à la fin. Pas de phrase qui commence par "j" deux fois de suite dans la même vidéo.
+1. **L'AMORCE : 45 caractères max**, et elle doit être INCOMPLÈTE. Test : lue seule, elle ne doit pas avoir de sens. Si on peut y répondre autre chose que "pourquoi ?", elle est ratée.
+2. **LA RELANCE : 4 MOTS MAXIMUM, et elle ne fait AUCUNE vanne.** "non pourquoi ?", "pourquoi", "de quoi", "à quoi", "et donc ?", "quel film ?". Elle est un tremplin, pas une partenaire de banter. Si elle réplique avec de l'esprit ici, la chute tombe à plat.
+3. **LA CHUTE : 65 caractères max, UNE SEULE PROPOSITION.** Commence le plus souvent par "parce que" / "bah" — c'est une réponse, elle doit sonner comme une réponse.
+4. **LA CHUTE UTILISE UNE IMAGE ARCHI-CONNUE.** Voler mon cœur, couper le souffle, les étoiles dans les yeux, une œuvre d'art, tomber, s'attacher, le Titanic. **N'ESSAIE PAS D'ÊTRE ORIGINAL SUR L'IMAGE** — le plaisir vient de la variation sur un truc connu, pas de la surprise intellectuelle. C'est un compliment déguisé en devinette, rien de plus.
+5. **VOCABULAIRE 100 % COURANT.** Aucun mot que tu n'entendrais pas dans une cour de récré. Zéro concept abstrait (la vérité, le classement, le rythme, la comparaison, une raison, l'intention).
+6. Pas de "…" à la fin.
 
-EXEMPLES DE CE QU'ON VEUT (courtes, cash, comprises instantanément) :
-  • "réponds pas trop vite ça va me monter à la tête"
-  • "tu vas dire non et le regretter jeudi"
-  • "mets une alarme tu vas y repenser à 3h du mat"
-  • "arrête de sourire jte vois d'ici"
-  • "jsuis déjà en train de choisir le bar"
-  • "t'as répondu en 30 secondes on est d'accord"
+⛔ CE QUI TUE LES DISQUETTES (analyse réelle des 30 dernières, elles étaient TOUTES malades) :
+- Elles étaient BALANCÉES D'UN SEUL BLOC, sans amorce ni relance. C'est le défaut de fond.
+- Longueur moyenne 85 caractères, 97 % avec une virgule → deux idées → illisible au scroll.
+- Le poison n°1 : le retournement conceptuel du type "t'es pas en train de me tester, t'es en train de vérifier si jtiens le rythme" ou "jhésitais entre un truc banal et la vérité, jai choisi le pire des deux". Ça a l'air malin, ça ne veut RIEN dire à la lecture rapide. N'écris PLUS JAMAIS ce genre de construction.
 
-EXEMPLES DE CE QU'ON NE VEUT PLUS (vraies disquettes ratées, trop longues et alambiquées) :
+EXEMPLES DE CE QU'ON NE VEUT PLUS (vraies disquettes ratées : trop longues, alambiquées, et sans mécanique) :
   ✗ "jveux pas être en tête de ton classement, jveux juste que tu supprimes le classement"
   ✗ "ton physique m'a fait ouvrir, ta question m'a fait rester, le reste tu le sauras en vrai"
   ✗ "pas bavarde jaime bien, ça veut dire que quand tu diras un truc jvais le prendre au sérieux"
 
-- Elle doit rester VOLABLE : le viewer doit pouvoir la ressortir telle quelle dans sa conv. Donc aucun détail propre à CETTE conv.
+- La chute doit rester VOLABLE : le viewer doit pouvoir la ressortir telle quelle dans sa conv. Donc aucun détail propre à CETTE conv.
 - INTERDIT aussi : les questions molles ("t'as passé une bonne journée ?"), les compliments secs ("t'es trop belle").
 
 ⚠️ LE STORY REPLY — même exigence, c'est la 1re seconde de la vidéo :
@@ -665,20 +683,44 @@ function assemble(g: GenOutput, state: State, structure: Structure) {
 // d'avance. Le modèle reçoit la contrainte dans le prompt, donc c'est rare.
 const MAX_LENGTH_RETRIES = 3;
 
-// Le prompt demande des disquettes courtes ; ce contrôle le GARANTIT. Sans lui,
-// le modèle dérivait à 85 caractères de moyenne avec deux propositions par phrase
-// — illisible au scroll, c'est le défaut n°1 remonté sur les vidéos.
-const MAX_PUNCHLINE_CHARS = 50;
+// Le prompt demande la mécanique en 3 temps (amorce → relance → chute) ; ces
+// contrôles la GARANTISSENT. Sans eux le modèle dérive vers la punchline balancée
+// d'un seul bloc, à 85 caractères de moyenne et deux propositions par phrase —
+// illisible au scroll, c'est le défaut n°1 remonté sur les vidéos.
+const MAX_PUNCHLINE_CHARS = 65; // la CHUTE (le dernier écran Tacotac)
+const MAX_AMORCE_CHARS = 45; // une amorce Tacotac (format B) : encore plus court
+const MAX_RELANCE_WORDS = 4; // "non pourquoi ?" — au-delà, elle vole la vedette à la chute
 const MAX_STORY_CHARS = 60; // l'ouverture a droit à un peu plus, mais pas au pavé
 type Candidate = ReturnType<typeof assemble>;
 function punchlineProblems(script: Candidate): string[] {
   const problems: string[] = [];
-  for (const b of script.beats) {
-    if (b.type !== "tacotac" || typeof b.text !== "string") continue;
-    if (b.text.length > MAX_PUNCHLINE_CHARS) {
-      problems.push(`disquette ${b.text.length} car (max ${MAX_PUNCHLINE_CHARS}) : "${b.text}"`);
+  const beats = script.beats;
+  // Le DERNIER écran Tacotac porte la chute ; les précédents (format B) l'amorce.
+  const lastTacotac = beats.map((b) => b.type).lastIndexOf("tacotac");
+
+  beats.forEach((b, i) => {
+    if (b.type !== "tacotac" || typeof b.text !== "string") return;
+    const isChute = i === lastTacotac;
+    const max = isChute ? MAX_PUNCHLINE_CHARS : MAX_AMORCE_CHARS;
+    if (b.text.length > max) {
+      problems.push(`${isChute ? "chute" : "amorce"} ${b.text.length} car (max ${max}) : "${b.text}"`);
+    }
+  });
+
+  // La mécanique elle-même : la chute doit RÉPONDRE à une relance courte d'elle.
+  // Sans ce contrôle le modèle retombe sur "elle fait une vanne puis il en fait une".
+  if (lastTacotac > 0) {
+    const before = beats[lastTacotac - 1];
+    if (before.type !== "message" || before.from !== "girl") {
+      problems.push("la chute n'est pas precedee d'une relance de la fille (mecanique en 3 temps cassee)");
+    } else {
+      const words = before.text.trim().split(/\s+/).length;
+      if (words > MAX_RELANCE_WORDS) {
+        problems.push(`relance ${words} mots (max ${MAX_RELANCE_WORDS}) : "${before.text}"`);
+      }
     }
   }
+
   if (script.storyReply && script.storyReply.length > MAX_STORY_CHARS) {
     problems.push(`storyReply ${script.storyReply.length} car (max ${MAX_STORY_CHARS}) : "${script.storyReply}"`);
   }
@@ -698,7 +740,7 @@ async function generateOne(backend: "cli" | "api", state: State) {
     const tooLong = punchlineProblems(candidate);
     if (secs <= MAX_DURATION_SECONDS && tooLong.length === 0) {
       script = candidate;
-      console.log(`   durée ${secs.toFixed(1)}s ✅  disquettes ≤ ${MAX_PUNCHLINE_CHARS} car ✅`);
+      console.log(`   durée ${secs.toFixed(1)}s ✅  mécanique amorce→relance→chute ✅`);
       break;
     }
     // On garde le 1er candidat valide en durée : mieux vaut une disquette un peu
@@ -707,7 +749,7 @@ async function generateOne(backend: "cli" | "api", state: State) {
     if (secs > MAX_DURATION_SECONDS) {
       console.warn(`   ⚠️ ${secs.toFixed(1)}s > ${MAX_DURATION_SECONDS}s — régénération (${attempt}/${MAX_LENGTH_RETRIES})`);
     } else {
-      console.warn(`   ⚠️ texte trop long — régénération (${attempt}/${MAX_LENGTH_RETRIES})`);
+      console.warn(`   ⚠️ disquette non conforme — régénération (${attempt}/${MAX_LENGTH_RETRIES})`);
       for (const p of tooLong) console.warn(`      ${p}`);
     }
   }
