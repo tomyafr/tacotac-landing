@@ -103,32 +103,45 @@ const clean = (s: string) => stripEmoji(s.replace(/\s*\.\s*$/u, ""));
 // modèle retombe sur la même formulation à l'intérieur de ce registre — en plus
 // de recopier les exemples entre parenthèses. On lui met donc sous les yeux ses
 // propres sorties passées, avec interdiction d'y retoucher.
-function recentOutputs(limit = 25): { stories: string[]; punchlines: string[] } {
+function recentOutputs(limit = 25): { stories: string[]; punchlines: string[]; captions: string[] } {
   const stories: string[] = [];
   const punchlines: string[] = [];
+  const captions: string[] = [];
   try {
-    const files = fs
-      .readdirSync(RENDERED)
-      .filter((f) => f.endsWith(".json"))
-      .map((f) => ({ f, t: fs.statSync(path.join(RENDERED, f)).mtimeMs }))
+    // On lit rendered/ ET queue/ : sans la file d'attente, les vidéos d'un même
+    // lot ne se voient pas entre elles et convergent (les 3 titres d'un batch
+    // commençaient tous par "comment je...").
+    const dirs = [RENDERED, QUEUE];
+    const files = dirs
+      .flatMap((dir) => {
+        try {
+          return fs
+            .readdirSync(dir)
+            .filter((f) => f.endsWith(".json"))
+            .map((f) => ({ full: path.join(dir, f), t: fs.statSync(path.join(dir, f)).mtimeMs }));
+        } catch {
+          return [];
+        }
+      })
       .sort((a, b) => b.t - a.t)
       .slice(0, limit);
-    for (const { f } of files) {
+    for (const { full } of files) {
       try {
-        const { script } = JSON.parse(fs.readFileSync(path.join(RENDERED, f), "utf8"));
+        const { script } = JSON.parse(fs.readFileSync(full, "utf8"));
         if (script?.storyReply) stories.push(script.storyReply);
+        if (script?.introCaption) captions.push(script.introCaption);
         for (const b of script?.beats ?? []) {
           if (b?.type === "tacotac" && b.text) punchlines.push(b.text);
         }
       } catch { /* fichier illisible : on l'ignore, l'anti-répétition reste best-effort */ }
     }
   } catch { /* pas encore d'archive (1er run) */ }
-  return { stories, punchlines };
+  return { stories, punchlines, captions };
 }
 
 function buildAvoidBlock(): string {
-  const { stories, punchlines } = recentOutputs();
-  if (!stories.length && !punchlines.length) return "";
+  const { stories, punchlines, captions } = recentOutputs();
+  if (!stories.length && !punchlines.length && !captions.length) return "";
   const list = (arr: string[], max: number) =>
     arr.slice(0, max).map((s) => `- ${s}`).join("\n");
   return `
@@ -142,7 +155,10 @@ storyReply déjà utilisés :
 ${list(stories, 25)}
 
 Disquettes déjà utilisées :
-${list(punchlines, 25)}`;
+${list(punchlines, 25)}
+
+Titres de vidéo déjà utilisés :
+${list(captions, 25)}`;
 }
 
 // ── Angles imposés pour storyReply / hook / outro ──────────────────────────
@@ -226,16 +242,22 @@ const MUSIC_KEYS = Object.keys(MUSIC_TRACKS);
 type Structure = "A" | "B";
 const STRUCTURES: Structure[] = ["A", "B"];
 
-// Légende incrustée sur l'intro (le clip lui-même est maintenant "vierge", sans texte
-// brûlé — voir Intro.tsx). Volontairement peu varié (demande explicite) : un petit pool
-// de 4 formulations, en rotation anti-répétition comme le reste, PARTAGÉ entre tous les
-// profils (pas de version spécifique par profil, contrairement aux archétypes).
-const INTRO_CAPTIONS = [
+// Légende incrustée sur l'intro (le clip est "vierge", sans texte brûlé — voir
+// Intro.tsx). Elle était tirée au sort par le code dans un pool figé de 4 phrases :
+// résultat, le titre n'avait aucun rapport avec la conv en dessous ("tuto dm son
+// crush" sur une vidéo de relance, par exemple). C'est maintenant LE MODÈLE qui
+// l'écrit, en cohérence avec le scénario qu'il vient de produire — ces 5 exemples
+// ne servent que de registre, il doit s'en inspirer sans les recopier.
+const CAPTION_EXAMPLES = [
   "regarde comment j'ai géré ce pain",
-  "tuto : gérer son pain",
-  "tuto dm son crush",
-  "tuto rattraper une conv qui part mal",
+  "regarde mon football avec cette 10/10",
+  "tuto : rattraper une conv qui part mal",
+  "tuto dm son crush sans se griller",
+  "comment je gère quand elle me teste",
 ];
+// Filet de sécurité si le modèle n'en renvoie pas (jamais vu, mais le rendu ne
+// doit pas se retrouver sans titre).
+const CAPTION_FALLBACK = "regarde comment j'ai géré ce pain";
 
 // Pools actifs pour ce profil (droits pour "solene"/Amelia, par défaut sinon).
 const ACTIVE_STORY_ANGLES = REVERSED ? STORY_REPLY_ANGLES_REVERSED : STORY_REPLY_ANGLES;
@@ -249,7 +271,6 @@ type State = {
   storyAngleOrder: string[]; storyAngleIndex: number;
   outroAngleOrder: string[]; outroAngleIndex: number;
   archetypeOrder: string[]; archetypeIndex: number;
-  captionOrder: string[]; captionIndex: number;
   musicOrder: string[]; musicIndex: number;
   structureOrder: Structure[]; structureIndex: number;
 };
@@ -267,7 +288,6 @@ function loadState(): State {
     storyAngleOrder: shuffle(ACTIVE_STORY_ANGLES), storyAngleIndex: 0,
     outroAngleOrder: shuffle(OUTRO_ANGLES), outroAngleIndex: 0,
     archetypeOrder: shuffle(ACTIVE_ARCHETYPES), archetypeIndex: 0,
-    captionOrder: shuffle(INTRO_CAPTIONS), captionIndex: 0,
     musicOrder: shuffle(MUSIC_KEYS), musicIndex: 0,
     structureOrder: shuffle(STRUCTURES), structureIndex: 0,
   });
@@ -278,7 +298,6 @@ function loadState(): State {
       Array.isArray(s.storyAngleOrder) && s.storyAngleOrder.length === ACTIVE_STORY_ANGLES.length &&
       Array.isArray(s.outroAngleOrder) && s.outroAngleOrder.length === OUTRO_ANGLES.length &&
       Array.isArray(s.archetypeOrder) && s.archetypeOrder.length === ACTIVE_ARCHETYPES.length &&
-      Array.isArray(s.captionOrder) && s.captionOrder.length === INTRO_CAPTIONS.length &&
       Array.isArray(s.musicOrder) && s.musicOrder.length === MUSIC_KEYS.length &&
       Array.isArray(s.structureOrder) && s.structureOrder.length === STRUCTURES.length;
     return ok ? s : fresh();
@@ -318,16 +337,6 @@ function nextMusic(state: State): string {
   state.musicIndex++;
   saveState(state);
   return music;
-}
-function nextIntroCaption(state: State): string {
-  if (state.captionIndex >= state.captionOrder.length) {
-    state.captionOrder = shuffle(INTRO_CAPTIONS);
-    state.captionIndex = 0;
-  }
-  const caption = state.captionOrder[state.captionIndex];
-  state.captionIndex++;
-  saveState(state);
-  return caption;
 }
 function nextAngle(pool: string[], order: string[], index: number): { angle: string; order: string[]; index: number } {
   if (index >= order.length) { order = shuffle(pool); index = 0; }
@@ -426,6 +435,20 @@ ${qualityRules}
 - Vise plutôt : lui prêter une intention précise et assumée, la mettre au défi, la vanner sur un truc qu'elle n'a pas vu venir, ou ouvrir sur une affirmation gonflée qu'elle devra contredire.
 - Il doit APPELER une réponse : après l'avoir lu, elle a envie de répliquer, pas juste de liker.
 
+⚠️ LE TITRE DE LA VIDÉO (champ introCaption) — c'est la 1re chose que le viewer lit :
+- Il s'affiche par-dessus l'intro, AVANT la conversation. Il doit donner envie de rester.
+- Il doit COLLER À CETTE CONVERSATION précise. Si elle le teste, si elle répond froid, s'il relance après un vent, si c'est un premier DM : le titre doit le refléter. Un titre passe-partout collé sur n'importe quelle vidéo, c'est raté.
+- Registre à respecter — inspire-toi de ces exemples SANS les recopier mot pour mot :
+${CAPTION_EXAMPLES.map((c) => `  • ${c}`).join("\n")}
+- ⚠️ VARIE LA TOURNURE. Le piège : tout formuler en "comment je gère quand elle…". Regarde les titres déjà utilisés plus bas et prends une AUTRE forme que les dernières. Tu as le choix entre :
+  • "tuto : …"  ("tuto : répondre à une fille qui teste")
+  • "regarde comment j'ai …"  ("regarde comment j'ai retourné ce vent")
+  • "comment je gère quand …"
+  • le constat direct  ("elle me prenait pour un fake, 3 messages plus tard…")
+  • le résultat d'abord  ("2 messages pour la faire changer d'avis")
+- Court (moins de 55 caractères), minuscules, jamais de point final, aucun emoji.
+- Écris-le à la 1re personne, comme si tu montrais TON échange.
+
 ⚠️ FORMAT COURT ET LISIBLE (priorité n°1 — c'est ce qui fait la différence entre une vidéo qui tourne et une qui meurt) :
 - La vidéo entière doit tenir SOUS 59 SECONDES, intro comprise. Vise une conv courte et dense, pas une histoire à rallonge.
 - La disquette Tacotac doit se comprendre INSTANTANÉMENT, sans avoir suivi toute la conv : le viewer tombe dessus au milieu du scroll. Une vanne qui a besoin de 4 messages de contexte pour être drôle est une vanne ratée ici.
@@ -456,7 +479,7 @@ Chaque vidéo doit raconter une conv DIFFÉRENTE, avec un vocabulaire et des ima
 }
 
 const jsonShape = `Réponds UNIQUEMENT avec un objet JSON valide, sans aucun texte autour ni bloc de code, de cette forme exacte :
-{"girlName":"...","status":"...","storyReply":"...","outroText":"...","beats":[{"kind":"message","from":"girl","text":"..."}, {"kind":"tacotac","tone":"spicy","text":"..."}, {"kind":"meme","asset":"carton-rouge.jpg"}]}`;
+{"girlName":"...","status":"...","storyReply":"...","introCaption":"...","outroText":"...","beats":[{"kind":"message","from":"girl","text":"..."}, {"kind":"tacotac","tone":"spicy","text":"..."}, {"kind":"meme","asset":"carton-rouge.jpg"}]}`;
 
 // JSON schema (backend API uniquement — sortie structurée garantie)
 const outputSchema = {
@@ -466,6 +489,7 @@ const outputSchema = {
     girlName: { type: "string" },
     status: { type: "string" },
     storyReply: { type: "string" },
+    introCaption: { type: "string" },
     outroText: { type: "string" },
     beats: {
       type: "array",
@@ -478,7 +502,7 @@ const outputSchema = {
       },
     },
   },
-  required: ["girlName", "status", "storyReply", "outroText", "beats"],
+  required: ["girlName", "status", "storyReply", "introCaption", "outroText", "beats"],
 } as const;
 
 type GenBeat =
@@ -489,6 +513,7 @@ type GenOutput = {
   girlName: string;
   status: string;
   storyReply: string;
+  introCaption: string;
   outroText: string;
   beats: GenBeat[];
 };
@@ -576,7 +601,6 @@ function resolveMemeAsset(asset: string): { full: string; beat: string } {
 
 function assemble(g: GenOutput, state: State, structure: Structure) {
   const girl = nextGirl(state);
-  const introCaption = nextIntroCaption(state);
   const music = nextMusic(state);
   // Quel écran de l'app montrer : en format B le PREMIER moment Tacotac est le DM
   // d'ouverture, tous les suivants sont des réponses. En format A, tout est réponse.
@@ -601,9 +625,9 @@ function assemble(g: GenOutput, state: State, structure: Structure) {
     // Format B : la vidéo ouvre sur SA photo (la même que l'avatar de la conv),
     // puis le meme de réaction, puis l'écran DM de l'app.
     openPhoto: structure === "B" ? girl : undefined,
-    // Intro fixe (voir Intro.tsx) : le clip est vierge, la légende est piochée ici
-    // en rotation anti-répétition (voir INTRO_CAPTIONS), pas générée par le modèle.
-    introCaption,
+    // Titre incrusté sur l'intro, écrit par le modèle en cohérence avec CETTE conv
+    // (voir CAPTION_EXAMPLES). Repli si jamais il n'en renvoie pas.
+    introCaption: clean(g.introCaption) || CAPTION_FALLBACK,
     // Musique en rotation : le rendu en déduit aussi la coupe d'intro (music.ts).
     music,
     outro: { text: clean(g.outroText), background: rand(OUTRO_BGS) },
@@ -644,6 +668,7 @@ function selfTest() {
     girlName: "Léa",
     status: "en ligne il y a 1h",
     storyReply: "ok tu savais que t'étais belle en postant ça.",
+    introCaption: "regarde comment j'ai géré ce test 😭", // teste aussi le filtre emoji
     outroText: "l'ia gratuite est dans ma bio les coquins.",
     beats: [
       { kind: "message", from: "girl", text: "ouais bof ?? 😭" },
