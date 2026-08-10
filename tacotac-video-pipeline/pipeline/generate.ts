@@ -45,6 +45,14 @@ const beatTags = Object.keys(library.beats);
 // schema.ts garde les 6 tons pour l'app (les composants de rendu les supportent tous),
 // seule la GÉNÉRATION est restreinte ici.
 const ALLOWED_TONES: readonly Tone[] = ["classe", "spicy", "sexto", "romantique"];
+// Ce que veut dire chaque ton POUR LA CHUTE. Sans ça le modèle écrivait la même
+// chute romantique quel que soit le ton affiché à l'écran.
+const TONE_BRIEFS: Record<string, string> = {
+  classe: "élégant et sûr de lui. La chute est un compliment bien tourné, jamais lourd. Image classique (les yeux, le sourire, une œuvre d'art, se perdre).",
+  spicy: "taquin et joueur, il la chambre. La chute pique un peu, elle sous-entend sans jamais être vulgaire. Il a de l'aplomb, il se moque gentiment.",
+  sexto: "chaud mais SUGGÉRÉ, jamais explicite ni vulgaire. La chute joue sur le trouble, la température, l'envie — par l'allusion (la clim, le souffle, la nuit blanche), jamais par le mot cru.",
+  romantique: "sincère et désarmant. La chute est un aveu franc, un peu vulnérable. C'est le ton le plus doux, sans ironie.",
+};
 const tones = toneEnum.options.filter((t): t is Tone => ALLOWED_TONES.includes(t));
 
 // Profil "rôles inversés" : une fille (la cliente Tacotac) drague un mec — utilisé pour
@@ -278,6 +286,7 @@ type State = {
   captionOrder: string[]; captionIndex: number;
   musicOrder: string[]; musicIndex: number;
   structureOrder: Structure[]; structureIndex: number;
+  toneOrder: Tone[]; toneIndex: number;
 };
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -296,6 +305,7 @@ function loadState(): State {
     captionOrder: shuffle(INTRO_CAPTIONS), captionIndex: 0,
     musicOrder: shuffle(MUSIC_KEYS), musicIndex: 0,
     structureOrder: shuffle(STRUCTURES), structureIndex: 0,
+    toneOrder: shuffle([...tones]), toneIndex: 0,
   });
   try {
     const s = JSON.parse(fs.readFileSync(STATE_PATH, "utf8")) as State;
@@ -306,7 +316,8 @@ function loadState(): State {
       Array.isArray(s.archetypeOrder) && s.archetypeOrder.length === ACTIVE_ARCHETYPES.length &&
       Array.isArray(s.captionOrder) && s.captionOrder.length === INTRO_CAPTIONS.length &&
       Array.isArray(s.musicOrder) && s.musicOrder.length === MUSIC_KEYS.length &&
-      Array.isArray(s.structureOrder) && s.structureOrder.length === STRUCTURES.length;
+      Array.isArray(s.structureOrder) && s.structureOrder.length === STRUCTURES.length &&
+      Array.isArray(s.toneOrder) && s.toneOrder.length === tones.length;
     return ok ? s : fresh();
   } catch {
     return fresh(); // pas de state ou invalide → on en crée un
@@ -338,6 +349,20 @@ function nextStructure(state: State): Structure {
   state.structureIndex++;
   saveState(state);
   return st;
+}
+// Le ton de la CHUTE, en rotation forcée. Laissé au modèle, il convergeait
+// systématiquement sur "romantique" (3 vidéos sur 3 au dernier run) : les
+// screenshots Classe / Spicy / Sexto de l'app ne sortaient donc quasiment jamais,
+// alors que c'est justement la démo du produit.
+function nextTone(state: State): Tone {
+  if (state.toneIndex >= state.toneOrder.length) {
+    state.toneOrder = shuffle([...tones]);
+    state.toneIndex = 0;
+  }
+  const t = state.toneOrder[state.toneIndex];
+  state.toneIndex++;
+  saveState(state);
+  return t;
 }
 function nextIntroCaption(state: State): string {
   if (state.captionIndex >= state.captionOrder.length) {
@@ -381,7 +406,7 @@ function nextAngles(state: State): { story: string; outro: string; archetype: st
 // sur la même formulation à chaque génération.
 // NB : pas de hookTitle — chaque vidéo ouvre sur l'intro fixe (voir Intro.tsx),
 // le sous-titre "apprends de mon football..." est incrusté dans ce clip.
-function buildGenInstruction(angles: { story: string; outro: string; archetype: string }, structure: Structure): string {
+function buildGenInstruction(angles: { story: string; outro: string; archetype: string }, structure: Structure, tone: Tone): string {
   const format = REVERSED
     ? `FORMAT : une fille (la cliente, bulles à droite) drague un mec (bulles à gauche) en DM Instagram/Snap — PAS une app de rencontre à "match", ils se suivent déjà ou se connaissent un peu. Elle répond à sa story, la conv s'enchaîne, à un moment elle ouvre Tacotac qui lui donne une réplique qui claque, elle l'envoie, ça marche, la conv finit sur une bonne note (il valide / donne son snap / accepte un date). Des memes réactions ponctuent la conv.`
     : `FORMAT : un mec (le client, bulles à droite) drague une fille (bulles à gauche) en DM Instagram/Snap — PAS une app de rencontre à "match", ils se suivent déjà ou se connaissent un peu. Il répond à sa story, la conv s'enchaîne, à un moment il ouvre Tacotac qui lui donne une réplique qui claque, il l'envoie, ça marche, la conv finit sur une bonne note (elle valide / donne son snap / accepte un date). Des memes réactions ponctuent la conv.`;
@@ -478,8 +503,12 @@ POURQUOI ça marche, et pourquoi c'est NON NÉGOCIABLE : le viewer lit l'amorce,
 2. **LA RELANCE : 4 MOTS MAXIMUM, et elle ne fait AUCUNE vanne.** "non pourquoi ?", "pourquoi", "de quoi", "à quoi", "et donc ?", "quel film ?". Elle est un tremplin, pas une partenaire de banter. Si elle réplique avec de l'esprit ici, la chute tombe à plat.
 3. **LA CHUTE : 65 caractères max, UNE SEULE PROPOSITION.** Commence le plus souvent par "parce que" / "bah" — c'est une réponse, elle doit sonner comme une réponse.
 4. **LA CHUTE UTILISE UNE IMAGE ARCHI-CONNUE.** Voler mon cœur, couper le souffle, les étoiles dans les yeux, une œuvre d'art, tomber, s'attacher, le Titanic. **N'ESSAIE PAS D'ÊTRE ORIGINAL SUR L'IMAGE** — le plaisir vient de la variation sur un truc connu, pas de la surprise intellectuelle. C'est un compliment déguisé en devinette, rien de plus.
-5. **VOCABULAIRE 100 % COURANT.** Aucun mot que tu n'entendrais pas dans une cour de récré. Zéro concept abstrait (la vérité, le classement, le rythme, la comparaison, une raison, l'intention).
-6. Pas de "…" à la fin.
+5. **LA CHUTE DOIT RÉPONDRE GRAMMATICALEMENT À LA RELANCE.** Relis-la à voix haute enchaînée avec la relance : ça doit se dire naturellement.
+   ✗ "attention avec ce genre de question" / "attention à quoi" / "**parce que** jsuis du genre à m'attacher" ← on répond "parce que" à un "à quoi", ça ne s'enchaîne pas
+   ✓ "attention avec ce genre de question" / "attention à quoi" / "**à moi**, jsuis du genre à m'attacher pour moins"
+   Règle simple : "pourquoi ?" appelle "parce que…" ou "bah…" — "à quoi ?" appelle "à…" — "de quoi ?" appelle "de…".
+6. **VOCABULAIRE 100 % COURANT.** Aucun mot que tu n'entendrais pas dans une cour de récré. Zéro concept abstrait (la vérité, le classement, le rythme, la comparaison, une raison, l'intention).
+7. Pas de "…" à la fin.
 
 ⛔ CE QUI TUE LES DISQUETTES (analyse réelle des 30 dernières, elles étaient TOUTES malades) :
 - Elles étaient BALANCÉES D'UN SEUL BLOC, sans amorce ni relance. C'est le défaut de fond.
@@ -522,7 +551,9 @@ VOIX (tout le texte) : minuscules, JAMAIS de point final, phonétique naturelle 
 CATALOGUE DE MEMES (choisis le fichier exact le plus pertinent, groupés par ambiance) — les fichiers marqués [GIF] sont animés (plus vivants qu'une image fixe) : PRÉFÈRE un [GIF] à une image fixe quand les deux sont pertinents pour le beat, vise au moins 1 [GIF] dans la vidéo si le catalogue en propose un qui colle :
 ${beatTags.map((t) => `- ${t} (${library.beats[t].desc}) : ${library.beats[t].memes.map((m) => { const base = m.replace(/^memes\//, ""); return base.toLowerCase().endsWith(".mp4") ? `${base} [GIF]` : base; }).join(", ")}`).join("\n")}
 
-TONS TACOTAC AUTORISÉS : ${tones.join(", ")}
+⚠️ TON IMPOSÉ POUR CETTE VIDÉO : **${tone}** — mets exactement "${tone}" dans le champ "tone" de CHAQUE beat tacotac, et surtout ÉCRIS la chute dans ce registre :
+${TONE_BRIEFS[tone]}
+(Le ton est choisi par le code en rotation, pas par toi : n'en prends pas un autre. Mais la mécanique amorce → relance → chute reste la même quel que soit le ton.)
 ${buildAvoidBlock()}
 
 Chaque vidéo doit raconter une conv DIFFÉRENTE, avec un vocabulaire et des images différentes des vidéos précédentes.`;
@@ -597,8 +628,8 @@ function resolveClaudeBin(): string {
   return "claude"; // dernier recours : le PATH
 }
 
-function callCli(angles: { story: string; outro: string; archetype: string }, structure: Structure): GenOutput {
-  const prompt = `${systemPromptTacotac}\n\n═══════════\n${buildGenInstruction(angles, structure)}\n\n${jsonShape}\n\nGénère un nouveau scénario, original et drôle.`;
+function callCli(angles: { story: string; outro: string; archetype: string }, structure: Structure, tone: Tone): GenOutput {
+  const prompt = `${systemPromptTacotac}\n\n═══════════\n${buildGenInstruction(angles, structure, tone)}\n\n${jsonShape}\n\nGénère un nouveau scénario, original et drôle.`;
   const isWin = process.platform === "win32";
   const bin = resolveClaudeBin();
   const stdout = execFileSync(bin, ["-p", "--output-format", "json"], {
@@ -621,14 +652,14 @@ function callCli(angles: { story: string; outro: string; archetype: string }, st
 }
 
 // ── Backend API : SDK Anthropic (clé + crédits) ──
-async function callApi(angles: { story: string; outro: string; archetype: string }, structure: Structure): Promise<GenOutput> {
+async function callApi(angles: { story: string; outro: string; archetype: string }, structure: Structure, tone: Tone): Promise<GenOutput> {
   const { default: Anthropic } = await import("@anthropic-ai/sdk");
   const client = new Anthropic();
   const params: Record<string, unknown> = {
     model: "claude-opus-4-8",
     max_tokens: 4000,
     thinking: { type: "adaptive" },
-    system: `${systemPromptTacotac}\n\n═══════════\n${buildGenInstruction(angles, structure)}`,
+    system: `${systemPromptTacotac}\n\n═══════════\n${buildGenInstruction(angles, structure, tone)}`,
     output_config: { format: { type: "json_schema", schema: outputSchema } },
     messages: [{ role: "user", content: "Génère un nouveau scénario de vidéo, original et drôle." }],
   };
@@ -647,7 +678,7 @@ function resolveMemeAsset(asset: string): { full: string; beat: string } {
   return rand(memeCatalog);
 }
 
-function assemble(g: GenOutput, state: State, structure: Structure) {
+function assemble(g: GenOutput, state: State, structure: Structure, forcedTone: Tone) {
   const girl = nextGirl(state);
   const introCaption = nextIntroCaption(state);
   const music = nextMusic(state);
@@ -660,7 +691,7 @@ function assemble(g: GenOutput, state: State, structure: Structure) {
     if (b.kind === "tacotac") {
       const tool = structure === "B" && seenTacotac === 0 ? "dm" : "reply";
       seenTacotac++;
-      return { type: "tacotac", tone: b.tone, text: clean(b.text), tool };
+      return { type: "tacotac", tone: forcedTone, text: clean(b.text), tool };
     }
     const { full, beat } = resolveMemeAsset(b.asset);
     return { type: "meme", asset: full, beat };
@@ -754,9 +785,10 @@ async function generateOne(backend: "cli" | "api", state: State) {
   // chaque essai raté brûlait un cran de rotation).
   const angles = nextAngles(state); // 1 angle différent par champ, jamais répété avant d'avoir tout épuisé
   const structure = nextStructure(state);
+  const tone = nextTone(state); // ton imposé au modèle ET au rendu, voir nextTone()
   for (let attempt = 1; attempt <= MAX_LENGTH_RETRIES; attempt++) {
-    const g = backend === "api" ? await callApi(angles, structure) : callCli(angles, structure);
-    const candidate = assemble(g, state, structure);
+    const g = backend === "api" ? await callApi(angles, structure, tone) : callCli(angles, structure, tone);
+    const candidate = assemble(g, state, structure, tone);
     scriptSchema.parse(candidate); // rejette tout scénario invalide (compat render)
     const secs = durationSeconds(scriptSchema.parse(candidate));
     const tooLong = punchlineProblems(candidate);
