@@ -414,6 +414,7 @@ function buildGenInstruction(angles: { story: string; outro: string; archetype: 
 - ⚠️ Le storyReply fait 60 CARACTÈRES MAXIMUM, une seule idée lui aussi. "tu postes ça un dimanche soir en sachant très bien ce que ça fait aux gens, assume au moins" = beaucoup trop long, coupe.
 - ⚠️ Les messages de la conv sont COURTS eux aussi : une ligne, comme un vrai DM. Jamais deux idées dans un message.
 - ⚠️ ÉCRIS AVEC LES ACCENTS. "reponds", "gerer", "deja", "meme" sans accent = faute visible à l'écran. On écrit en phonétique relâchée (jsuis, jte, tkt), PAS sans accents.
+- ⛔ LA FIN — 40 CARACTÈRES MAX, UNE SEULE IDÉE, PAS DE VIRGULE. "ok tu m'as eue là, l'autre il peut ranger ses affaires" = deux idées, on ne comprend plus qui est "l'autre" : coupe après "ok tu m'as eue là". Le compliment referme la vidéo, il ne raconte pas une histoire.
 - ⛔ LA FIN — varie le compliment. Les 4 dernières vidéos finissaient TOUTES sur "ok là t'es fort". C'est mort, trouve autre chose : "t'es mignon toi", "ok tu m'as eue", "jm'attendais pas à ça", "bon t'as gagné", "arrête jvais rougir", "c'est malin ça". Le compliment doit sonner comme ELLE, pas comme une formule.
 - ⛔ Sujets INTERDITS (ils sont revenus dans 1 vidéo sur 4, on n'en veut plus) : le profil fake, les photos truquées, les filtres, demander/donner une preuve que c'est bien lui. Trouve autre chose.
 - Fin OBLIGATOIRE : le tout dernier beat est un message de ${her} qui COMPLIMENTE ${him} — du genre "t'es trop fort", "ok t'es mignon toi", "t'as gagné là". Pas de date, pas de numéro, pas de snap : la vidéo s'arrête sur le compliment, c'est ça la preuve que la disquette a marché.
@@ -694,6 +695,7 @@ const MAX_LENGTH_RETRIES = 3;
 const MAX_PUNCHLINE_CHARS = 65; // la CHUTE (le dernier écran Tacotac)
 const MAX_AMORCE_CHARS = 45; // une amorce Tacotac (format B) : encore plus court
 const MAX_RELANCE_WORDS = 4; // "non pourquoi ?" — au-delà, elle vole la vedette à la chute
+const MAX_FIN_CHARS = 40; // le compliment de fin : une seule idée, il referme, c'est tout
 const MAX_STORY_CHARS = 60; // l'ouverture a droit à un peu plus, mais pas au pavé
 type Candidate = ReturnType<typeof assemble>;
 function punchlineProblems(script: Candidate): string[] {
@@ -714,8 +716,13 @@ function punchlineProblems(script: Candidate): string[] {
   // La mécanique elle-même : la chute doit RÉPONDRE à une relance courte d'elle.
   // Sans ce contrôle le modèle retombe sur "elle fait une vanne puis il en fait une".
   if (lastTacotac > 0) {
-    const before = beats[lastTacotac - 1];
-    if (before.type !== "message" || before.from !== "girl") {
+    // On remonte en sautant les memes : un meme glissé entre la relance et la
+    // chute ne casse pas la mécanique (il fait même monter l'attente), mais il
+    // faisait échouer le contrôle et déclenchait des régénérations pour rien.
+    let j = lastTacotac - 1;
+    while (j >= 0 && beats[j].type === "meme") j--;
+    const before = beats[j];
+    if (!before || before.type !== "message" || before.from !== "girl") {
       problems.push("la chute n'est pas precedee d'une relance de la fille (mecanique en 3 temps cassee)");
     } else {
       const words = before.text.trim().split(/\s+/).length;
@@ -723,6 +730,13 @@ function punchlineProblems(script: Candidate): string[] {
         problems.push(`relance ${words} mots (max ${MAX_RELANCE_WORDS}) : "${before.text}"`);
       }
     }
+  }
+
+  // Le compliment final : il referme la vidéo, il ne raconte pas une 2e histoire.
+  // Sans ce contrôle il dérivait vers deux propositions séparées par une virgule.
+  const last = beats[beats.length - 1];
+  if (last?.type === "message" && last.from === "girl" && last.text.length > MAX_FIN_CHARS) {
+    problems.push(`compliment final ${last.text.length} car (max ${MAX_FIN_CHARS}) : "${last.text}"`);
   }
 
   if (script.storyReply && script.storyReply.length > MAX_STORY_CHARS) {
