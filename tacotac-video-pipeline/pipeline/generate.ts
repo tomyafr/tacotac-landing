@@ -259,7 +259,9 @@ const STRUCTURES: Structure[] = ["A", "B"];
 // marché (reference/inspiration/) : première personne + souvent un aparté adressé
 // aux gars entre parenthèses ou astérisques. Le reste suit le même moule.
 const INTRO_CAPTIONS = [
-  "je teste mon football sur snapchat",
+  // ⛔ JAMAIS "snapchat" ici : le décor rendu dans la vidéo est une conv Instagram.
+  // Un titre "sur snapchat" au-dessus d'un écran Insta se voit immédiatement.
+  "je teste mon football sur insta",
   "je drague la plus belle du lycée *prenez des notes*",
   "comment dm sur insta (prenez des notes les gars)",
   "comment gérer une meuf sur insta",
@@ -309,15 +311,22 @@ function loadState(): State {
   });
   try {
     const s = JSON.parse(fs.readFileSync(STATE_PATH, "utf8")) as State;
+    // Le state stocke les TEXTES eux-mêmes, pas des index : si on corrige un
+    // libellé dans le code sans changer la taille du pool, l'ancienne version
+    // continuait de ressortir tant que la rotation n'était pas épuisée (vu avec
+    // le titre "…sur snapchat" alors que le décor rendu est Instagram).
+    // On vérifie donc aussi que chaque entrée existe TOUJOURS dans le pool.
+    const sameSet = (stored: unknown, pool: readonly string[]) =>
+      Array.isArray(stored) && stored.length === pool.length && stored.every((v) => pool.includes(v as string));
     const ok =
-      Array.isArray(s.girlOrder) && s.girlOrder.length === girlFiles.length &&
-      Array.isArray(s.storyAngleOrder) && s.storyAngleOrder.length === ACTIVE_STORY_ANGLES.length &&
-      Array.isArray(s.outroAngleOrder) && s.outroAngleOrder.length === OUTRO_ANGLES.length &&
-      Array.isArray(s.archetypeOrder) && s.archetypeOrder.length === ACTIVE_ARCHETYPES.length &&
-      Array.isArray(s.captionOrder) && s.captionOrder.length === INTRO_CAPTIONS.length &&
-      Array.isArray(s.musicOrder) && s.musicOrder.length === MUSIC_KEYS.length &&
-      Array.isArray(s.structureOrder) && s.structureOrder.length === STRUCTURES.length &&
-      Array.isArray(s.toneOrder) && s.toneOrder.length === tones.length;
+      sameSet(s.girlOrder, girlFiles) &&
+      sameSet(s.storyAngleOrder, ACTIVE_STORY_ANGLES) &&
+      sameSet(s.outroAngleOrder, OUTRO_ANGLES) &&
+      sameSet(s.archetypeOrder, ACTIVE_ARCHETYPES) &&
+      sameSet(s.captionOrder, INTRO_CAPTIONS) &&
+      sameSet(s.musicOrder, MUSIC_KEYS) &&
+      sameSet(s.structureOrder, STRUCTURES) &&
+      sameSet(s.toneOrder, tones);
     return ok ? s : fresh();
   } catch {
     return fresh(); // pas de state ou invalide → on en crée un
@@ -408,8 +417,8 @@ function nextAngles(state: State): { story: string; outro: string; archetype: st
 // le sous-titre "apprends de mon football..." est incrusté dans ce clip.
 function buildGenInstruction(angles: { story: string; outro: string; archetype: string }, structure: Structure, tone: Tone): string {
   const format = REVERSED
-    ? `FORMAT : une fille (la cliente, bulles à droite) drague un mec (bulles à gauche) en DM Instagram/Snap — PAS une app de rencontre à "match", ils se suivent déjà ou se connaissent un peu. Elle répond à sa story, la conv s'enchaîne, à un moment elle ouvre Tacotac qui lui donne une réplique qui claque, elle l'envoie, ça marche, la conv finit sur une bonne note (il valide / donne son snap / accepte un date). Des memes réactions ponctuent la conv.`
-    : `FORMAT : un mec (le client, bulles à droite) drague une fille (bulles à gauche) en DM Instagram/Snap — PAS une app de rencontre à "match", ils se suivent déjà ou se connaissent un peu. Il répond à sa story, la conv s'enchaîne, à un moment il ouvre Tacotac qui lui donne une réplique qui claque, il l'envoie, ça marche, la conv finit sur une bonne note (elle valide / donne son snap / accepte un date). Des memes réactions ponctuent la conv.`;
+    ? `FORMAT : une fille (la cliente, bulles à droite) drague un mec (bulles à gauche) en DM Instagram — PAS une app de rencontre à "match", ils se suivent déjà ou se connaissent un peu. Elle répond à sa story, la conv s'enchaîne, à un moment elle ouvre Tacotac qui lui donne une réplique qui claque, elle l'envoie, ça marche, la conv finit sur une bonne note (il valide / accepte un date). Des memes réactions ponctuent la conv.`
+    : `FORMAT : un mec (le client, bulles à droite) drague une fille (bulles à gauche) en DM Instagram — PAS une app de rencontre à "match", ils se suivent déjà ou se connaissent un peu. Il répond à sa story, la conv s'enchaîne, à un moment il ouvre Tacotac qui lui donne une réplique qui claque, il l'envoie, ça marche, la conv finit sur une bonne note (elle valide / accepte un date). Des memes réactions ponctuent la conv.`;
   const qualityRules = REVERSED
     ? `RÈGLES DE QUALITÉ DES MESSAGES (le point faible n°1 des vidéos ratées — lis bien) :
 - Donne au mec un TRAIT DE CARACTÈRE dominant pour CETTE conv (taquin / sceptique / pressé / joueur / direct-cash / distant...) et TIENS-le sur tout l'échange — jamais un mec "gentil" générique et interchangeable.
@@ -472,7 +481,7 @@ ${commonBeats}`;
   return `Tu génères le SCÉNARIO d'une vidéo TikTok "fausse conversation de dating" qui fait la promo de Tacotac (l'app qui souffle les disquettes).
 
 ${format}
-⛔ INTERDIT : les mots "match"/"matché"/"on a matché" ou toute référence à une app de rencontre (Tinder, Hinge, Bumble...) — l'outil est pour du DM Insta/Snap, pas du swipe.
+⛔ INTERDIT : les mots "match"/"matché"/"on a matché" ou toute référence à une app de rencontre (Tinder, Hinge, Bumble...) — l'outil est pour du DM Insta, pas du swipe.
 
 ⚠️ ARCHÉTYPE IMPOSÉ POUR CETTE VIDÉO — c'est le FIL CONDUCTEUR de toute la conv, pas juste la 1ère ligne. Construis les beats "message" autour de CET enjeu précis, du début à la résolution en fin de conv :
 ${angles.archetype}
