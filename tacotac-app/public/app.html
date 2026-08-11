@@ -239,6 +239,20 @@
     .quiz-opt:active{transform:scale(.98)}
     .quiz-opt.sel{border-color:#FF7A18;background:#1a0d02;transform:scale(.98)}
     .quiz-opt:disabled{pointer-events:none}
+    /* L'option choisie se coche, les autres s'effacent : le choix se voit, il n'est
+       pas juste "enregistré". */
+    .quiz-opt.sel::after{content:'✓';position:absolute;right:15px;top:50%;transform:translateY(-50%);color:#FF7A18;font-size:17px;font-weight:800}
+    .quiz-opt.dim{opacity:.32;transform:scale(.985)}
+    /* Réaction du renard après le choix — c'est ce qui donne le rythme d'un jeu. */
+    @keyframes tt-react{0%{opacity:0;transform:translateY(6px) scale(.9)}18%{opacity:1;transform:translateY(0) scale(1)}82%{opacity:1}100%{opacity:0;transform:translateY(-6px)}}
+    .quiz-react{position:absolute;left:50%;top:-6px;transform:translateX(-50%);white-space:nowrap;background:#FF7A18;color:#1a0d02;font-size:12.5px;font-weight:800;padding:6px 12px;border-radius:999px;box-shadow:0 8px 20px -8px rgba(255,122,24,.9);animation:tt-react 1s ease both;pointer-events:none;z-index:5}
+    /* Progression en segments : on voit d'un coup d'œil combien il en reste. */
+    .quiz-seg{flex:1;height:4px;border-radius:99px;background:#1c1c1c;overflow:hidden}
+    .quiz-seg i{display:block;height:100%;width:0;background:linear-gradient(90deg,#FF7A18,#FFA23D);transition:width .35s cubic-bezier(.22,.68,0,1)}
+    .quiz-seg.done i{width:100%}
+    /* Bilan chiffré du reveal : trois barres qui se remplissent à l'arrivée. */
+    .qstat-bar{height:7px;border-radius:99px;background:#1c1c1c;overflow:hidden;margin-top:6px}
+    .qstat-bar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#FF7A18,#FFA23D);transition:width .9s cubic-bezier(.22,.68,0,1)}
     /* Scène du renard pendant le QCM : halo orange qui respire + anneaux concentriques.
        Les anneaux et le halo sont en position absolue → ils débordent visuellement sans
        pousser la question ni les réponses vers le bas (la hauteur reste celle du renard). */
@@ -416,9 +430,7 @@
     <section class="screen" id="screen-quiz">
       <div class="glow-top"></div>
       <div style="position:relative;z-index:2;">
-        <div style="height:4px;background:#1c1c1c;border-radius:99px;overflow:hidden;">
-          <div id="quizBar" style="height:100%;width:0%;background:linear-gradient(90deg,#FF7A18,#FFA23D);transition:width .3s ease;"></div>
-        </div>
+        <div id="quizSegs" style="display:flex;gap:5px;"></div>
         <div style="display:flex;align-items:center;justify-content:flex-end;margin-top:14px;">
           <div id="quizStep" style="color:#6e6a66;font-size:12px;font-weight:700;">1/7</div>
         </div>
@@ -448,6 +460,22 @@
         <div style="color:#8a8580;font-size:12.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-top:20px;">Ton profil de drague</div>
         <div class="display" id="quizArchTitle" style="color:#fff;font-size:30px;margin-top:8px;"></div>
         <p id="quizArchDesc" style="color:#9a9aa4;font-size:14.5px;line-height:1.55;margin:14px auto 0;max-width:320px;"></p>
+        <!-- Bilan chiffré : ses 7 réponses deviennent 3 jauges. Ça transforme un
+             résultat qualitatif en diagnostic, et ça rend le manque mesurable. -->
+        <div id="quizStats" style="width:100%;max-width:320px;margin:22px auto 0;text-align:left;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <span style="color:#d8d8de;font-size:13px;font-weight:700;">😂 Humour</span><span id="qstatHumourVal" style="color:#FF9A45;font-size:13px;font-weight:800;">0%</span>
+          </div>
+          <div class="qstat-bar"><i id="qstatHumour"></i></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;">
+            <span style="color:#d8d8de;font-size:13px;font-weight:700;">🎩 Style</span><span id="qstatStyleVal" style="color:#FF9A45;font-size:13px;font-weight:800;">0%</span>
+          </div>
+          <div class="qstat-bar"><i id="qstatStyle"></i></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;">
+            <span style="color:#d8d8de;font-size:13px;font-weight:700;">🌶️ Tension</span><span id="qstatTensionVal" style="color:#FF9A45;font-size:13px;font-weight:800;">0%</span>
+          </div>
+          <div class="qstat-bar"><i id="qstatTension"></i></div>
+        </div>
       </div>
       <button class="cta cta-big" id="quizRevealCta" style="position:relative;z-index:2;">Accède à l'application ⚡</button>
     </section>
@@ -995,7 +1023,13 @@
 
     <!-- ═══════════════ PAYWALL / EMAIL GATE ═══════════════ -->
     <div class="gate-overlay" id="gate">
-      <div class="gate-card">
+      <div class="gate-card" style="position:relative;">
+        <!-- Sortie franche, toujours visible sans scroller. L'ancien lien "Revenir plus
+             tard" était tout en bas de la carte : sur un panneau qui scrolle, beaucoup
+             ne le trouvaient jamais et se sentaient piégés. -->
+        <div style="position:sticky;top:0;z-index:3;height:0;display:flex;justify-content:flex-end;">
+          <button id="gateCloseTop" aria-label="Fermer" style="width:36px;height:36px;border-radius:999px;background:rgba(22,22,24,.92);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.16);color:#e6e6ec;font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;">×</button>
+        </div>
         <!-- Header -->
         <div class="pw-icon">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M7 10V8a5 5 0 0 1 10 0v2" stroke="#FF7A18" stroke-width="2" stroke-linecap="round"/><rect x="4.5" y="10" width="15" height="10" rx="3" stroke="#FF7A18" stroke-width="2"/></svg>
@@ -1133,49 +1167,53 @@
     // ══════════════ FUNNEL HARD PAYWALL : QCM de personnalité ══════════════
     // 7 questions centrées sur TES conversations (pas sur l'aisance à aborder en vrai) →
     // un des 3 archétypes déjà présents dans l'app (les tons Chill/Classe/Spicy).
+    // Vocabulaire volontairement calqué sur celui des vidéos TikTok (disquette, dm,
+    // story, 10/10, vu, ghost, ratio, crush) : c'est par là qu'ils arrivent, la
+    // continuité de ton fait qu'ils se sentent au bon endroit. `react` = la petite
+    // phrase du renard après le choix, elle donne le rythme d'un jeu, pas d'un form.
     const QUIZ_QUESTIONS=[
-      {q:'Elle t\'envoie juste "ça va ?" — tu réponds quoi ?',
-       sub:'Ta 1ère réaction en dit long sur ton style.',
+      {q:'Une 10/10 poste une story. Tu fais quoi ?',
+       sub:'Tout se joue dans les 3 secondes.',
        opts:[
-        {l:'😄 Un truc marrant qui relance tout de suite',a:'chill'},
-        {l:'🎯 Une réponse qui donne juste assez envie de creuser',a:'classe'},
-        {l:'😏 Un truc qui la fait sourire toute seule',a:'spicy'}]},
-      {q:'Blanc de 2 jours dans la conv. Tu relances avec…',
-       sub:'Le timing compte, mais le ton encore plus.',
+        {l:'😄 Je réponds un truc drôle direct',a:'chill',react:'ok toi tu tentes ta chance'},
+        {l:'🎯 Je trouve LE détail que personne d\'autre voit',a:'classe',react:'l\'œil du sniper'},
+        {l:'😏 J\'envoie un truc qui la fait sourire toute seule',a:'spicy',react:'tu joues avec le feu'}]},
+      {q:'Elle t\'a vu. Elle a pas répondu.',
+       sub:'Le vu qui fait mal. Ton move ?',
        opts:[
-        {l:'😌 Une vanne, sans pression',a:'chill'},
-        {l:'🧐 Une question qui montre que t\'as capté un détail sur elle',a:'classe'},
-        {l:'🔥 Un message qui remet un peu de tension',a:'spicy'}]},
-      {q:'Ta meilleure réplique de tous les temps ressemblait à…',
-       sub:'Celle qui a le mieux marché jusqu\'ici.',
+        {l:'😌 Je relance avec une vanne, zéro pression',a:'chill',react:'le sang-froid, jvalide'},
+        {l:'⏱️ J\'attends d\'avoir un truc qui vaut vraiment le coup',a:'classe',react:'la patience du chasseur'},
+        {l:'⚡ J\'envoie un truc qui l\'oblige à réagir',a:'spicy',react:'aucune peur toi'}]},
+      {q:'C\'est quoi ta meilleure disquette ?',
+       sub:'Celle qui a vraiment fonctionné.',
        opts:[
-        {l:'😂 Une vanne qui a fait rire aux éclats',a:'chill'},
-        {l:'✨ Une phrase sortie du lot, qui a marqué',a:'classe'},
-        {l:'😈 Une ligne avec un sous-entendu bien placé',a:'spicy'}]},
-      {q:'Le premier message à quelqu\'un qui te plaît, tu préfères…',
+        {l:'😂 Celle qui l\'a fait rire aux éclats',a:'chill',react:'le rire, arme fatale'},
+        {l:'✨ Celle qui l\'a scotchée genre "il est différent"',a:'classe',react:'sortir du lot, c\'est ça'},
+        {l:'😈 Celle avec le sous-entendu bien placé',a:'spicy',react:'ohla, jnote'}]},
+      {q:'Le tout premier DM à ta crush :',
        sub:'L\'ouverture donne le ton de toute la conv.',
        opts:[
-        {l:'👋 Simple et sympa',a:'chill'},
-        {l:'🔍 Ancré dans un détail précis de son profil',a:'classe'},
-        {l:'😏 Direct, qui donne le ton tout de suite',a:'spicy'}]},
-      {q:'Elle met 3 jours à répondre à ton message. Ta réaction :',
-       sub:'Ça arrive à tout le monde — la question, c\'est comment tu gères.',
+        {l:'👋 Simple, naturel, pas de prise de tête',a:'chill',react:'safe, mais ça passe'},
+        {l:'🔍 Accroché sur un truc précis de son profil',a:'classe',react:'ça, ça marche toujours'},
+        {l:'😏 Cash, le ton est posé dès la 1re ligne',a:'spicy',react:'no time to waste'}]},
+      {q:'Elle te ratio en une ligne. Genre "ok".',
+       sub:'Beaucoup abandonnent ici. Pas toi ?',
        opts:[
-        {l:'😅 Tu relances soft, pas de stress',a:'chill'},
-        {l:'⏱️ Tu attends d\'avoir un truc qui vaut le coup',a:'classe'},
-        {l:'⚡ Tu envoies un message qui la fait réagir illico',a:'spicy'}]},
-      {q:'Ce qui coince le plus dans tes conversations en ce moment :',
-       sub:'Sois honnête, ça sert à mieux cibler ton plan.',
+        {l:'😅 Je rebondis dessus en rigolant',a:'chill',react:'insubmersible'},
+        {l:'🧊 Je reste calme et je change d\'angle',a:'classe',react:'du sang-froid pur'},
+        {l:'🔥 Je remonte la tension d\'un cran',a:'spicy',react:'tu montes les enchères'}]},
+      {q:'Ce qui te bloque VRAIMENT en ce moment :',
+       sub:'Sois cash, c\'est ce qui sert à te cibler.',
        opts:[
-        {l:'😶 Le silence qui s\'installe après 3-4 messages',a:'chill'},
-        {l:'📱 Sonner comme n\'importe quel autre mec sur l\'appli',a:'classe'},
-        {l:'🌶️ Rester trop sage alors que le vibe pourrait chauffer',a:'spicy'}]},
-      {q:'Si le renard devait résumer ton style en un mot :',
-       sub:'Le mot qui te ressemble le plus, pas celui qui sonne bien.',
+        {l:'😶 La conv s\'éteint après 3-4 messages',a:'chill',react:'le fameux blanc'},
+        {l:'📱 Je sonne comme tous les autres mecs',a:'classe',react:'le pire ennemi'},
+        {l:'🌶️ Je reste trop sage alors que ça pourrait chauffer',a:'spicy',react:'faut oser'}]},
+      {q:'En un mot, tu gères comment ?',
+       sub:'Le mot vrai, pas celui qui sonne bien.',
        opts:[
-        {l:'😄 Décontracté',a:'chill'},
-        {l:'🎩 Affûté',a:'classe'},
-        {l:'😈 Osé',a:'spicy'}]},
+        {l:'😄 Chill',a:'chill',react:'noté'},
+        {l:'🎩 Affûté',a:'classe',react:'noté'},
+        {l:'😈 Chaud',a:'spicy',react:'noté'}]},
     ];
     const QUIZ_ARCHETYPES={
       chill:{title:'Le Renard Chill',fox:'assets/fox_chill.png',desc:"T'as un humour qui détend tout le monde. Ton axe : transformer ta décontraction en relances qui gardent la conv vivante."},
@@ -1193,9 +1231,19 @@
     });
     // Rejoue l'animation d'entrée d'un élément (retire/relit/rajoute la classe → force le navigateur à la relancer).
     function replayAnim(el,cls){ el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+    // Barre de progression en segments (un par question) : il voit exactement combien
+    // il en reste, au lieu d'une barre continue qui ne dit rien.
+    function renderQuizSegs(done){
+      const box=document.getElementById('quizSegs');
+      if(box.children.length!==QUIZ_QUESTIONS.length){
+        box.innerHTML='';
+        QUIZ_QUESTIONS.forEach(()=>{const s=document.createElement('div');s.className='quiz-seg';s.innerHTML='<i></i>';box.appendChild(s);});
+      }
+      [...box.children].forEach((s,i)=>s.classList.toggle('done',i<done));
+    }
     function renderQuizStep(i){
       const step=QUIZ_QUESTIONS[i];
-      document.getElementById('quizBar').style.width=Math.round((i/QUIZ_QUESTIONS.length)*100)+'%';
+      renderQuizSegs(i);
       document.getElementById('quizStep').textContent=(i+1)+'/'+QUIZ_QUESTIONS.length;
       document.getElementById('quizQ').textContent=step.q;
       document.getElementById('quizQSub').textContent=step.sub||'';
@@ -1208,20 +1256,35 @@
         b.style.animationDelay=(oi*45)+'ms';
         b.textContent=o.l;
         b.addEventListener('click',()=>{
-          // feedback tactile : on montre le choix sélectionné avant d'enchaîner (ça donne le rythme d'un jeu, pas d'un formulaire)
-          wrap.querySelectorAll('.quiz-opt').forEach(x=>x.disabled=true);
+          // Le choix se voit : coche sur l'option prise, les autres s'effacent, et le
+          // renard réagit. C'est ce qui fait la différence entre un jeu et un formulaire.
+          wrap.querySelectorAll('.quiz-opt').forEach(x=>{x.disabled=true;if(x!==b)x.classList.add('dim');});
           b.classList.add('sel');
           quizAnswers.push(o.a);
+          if(navigator.vibrate){try{navigator.vibrate(14);}catch(e){}}
+          if(o.react){
+            const stage=document.querySelector('#screen-quiz .quiz-fox-stage');
+            if(stage){
+              // La question suivante arrive avant la fin de l'animation : sans ça, deux
+              // bulles se superposaient et on lisait la réaction du choix précédent.
+              stage.querySelectorAll('.quiz-react').forEach(x=>x.remove());
+              const tag=document.createElement('div');
+              tag.className='quiz-react';tag.textContent=o.react;
+              stage.appendChild(tag);
+              setTimeout(()=>tag.remove(),1000);
+            }
+          }
+          renderQuizSegs(i+1);
           setTimeout(()=>{
             if(i+1<QUIZ_QUESTIONS.length){renderQuizStep(i+1);}else{finishQuiz();}
-          },260);
+          },620);
         });
         wrap.appendChild(b);
       });
     }
     function archToTone(a){return a==='chill'?'drole':a==='spicy'?'spicy':'classe';}
     function finishQuiz(){
-      document.getElementById('quizBar').style.width='100%';
+      renderQuizSegs(QUIZ_QUESTIONS.length);
       const tally={chill:0,classe:0,spicy:0};
       quizAnswers.forEach(a=>{if(a in tally)tally[a]++;});
       let archetype='chill';
@@ -1237,6 +1300,17 @@
       // rejoue l'effet d'entrée du renard au moment du reveal (sinon l'animation ne joue qu'une fois, au chargement de la page)
       const foxWrap=document.getElementById('quizFoxWrap');
       foxWrap.style.animation='none';void foxWrap.offsetWidth;foxWrap.style.animation='tt-pop .55s cubic-bezier(.34,1.56,.64,1) both';
+      // Les 7 réponses deviennent 3 jauges. Plancher à 25 % : une barre quasi vide
+      // donnerait l'impression d'être nul, on veut un diagnostic, pas une punition.
+      const n=QUIZ_QUESTIONS.length;
+      const pct=k=>Math.round(25+(tally[k]/n)*70);
+      const stats=[['Humour','chill'],['Style','classe'],['Tension','spicy']];
+      stats.forEach(([nom,key])=>{
+        const v=pct(key);
+        document.getElementById('qstat'+nom).style.width='0%';
+        document.getElementById('qstat'+nom+'Val').textContent=v+'%';
+      });
+      setTimeout(()=>{stats.forEach(([nom,key])=>{document.getElementById('qstat'+nom).style.width=pct(key)+'%';});},220);
       track('archetype_shown',{archetype});
       fetch('/api/quiz/complete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({archetype})}).catch(()=>{});
     }
@@ -2208,16 +2282,21 @@
     document.getElementById('resultBackBtn').addEventListener('click',resetToUpload);
 
     // ══════════════ DÉMO (exemple pré-rempli, sans upload ni compte) ══════════════
+    // ⚠️ Ces répliques sont ce que le visiteur voit AVANT de payer, en aperçu partiel :
+    // les ~35 premiers % restent nets, la fin est floutée. Elles sont donc écrites pour
+    // ça — un début qui accroche, la chute dans la partie cachée. Elles suivent aussi
+    // l'école de la disquette du prompt serveur : courtes, une seule idée, du concret,
+    // du culot. Le ton "drôle" est celui affiché par défaut au tease : c'est LA vitrine.
     const DEMO_REPLIES={
-      classe:["un rooftop, un coucher de soleil et toi qui te demandes pourquoi t'as pas proposé avant… vendredi ?","t'as un truc qui change des autres, jserais bête de pas t'inviter à boire un verre","bien sûr, et toi quel arrondissement ?"],
-      drole:["clairement pas un escape room, jme connais jvais te regarder galérer sans rien faire 😭","mdrr bon jte préviens jchoisis jamais le bon resto mais jte fais marrer grave en attendant deal","ptdrr notre premier rdv va être tellement bien que tu vas regretter d'avoir pas proposé avant moi"],
-      spicy:["un ciné mais chez moi… le film aura aucune importance de toute façon","ouuu toi t'as l'air dangereuse jdevrais me méfier mais t'es bien trop mon style pour que jjoue la sécurité","jsens que si on se voit jvais avoir du mal à te laisser partir, on tente le coup ?"],
+      classe:["jsuis déjà en train de choisir le bar, tu préfères jeudi ou vendredi ?","t'as le genre de réponse qui donne envie de continuer en vrai","on arrête de se tourner autour, jeudi 19h jm'occupe du reste"],
+      drole:["attends jnote ta réponse, elle est trop bien pour que jla laisse passer","ok là tu viens de me griller à mon propre jeu","jte préviens jsuis nul pour choisir un resto, imbattable pour te faire rire"],
+      spicy:["un ciné mais chez moi… le film aura aucune importance de toute façon","réponds pas si vite tu vas vraiment finir par me monter à la tête","jsens que si on se voit jvais avoir du mal à te laisser partir"],
     };
     // Chaque outil a SON exemple (avant, DM/Coach/Bio montraient l'exemple de Répondre)
     const DEMO_OPENER={
-      classe:["ta bio dit « souvent en retard mais ça vaut le coup » — jsuis prêt à vérifier autour d'un verre","une photo en rando, une au resto… t'es le combo parfait, faut qu'on en parle","jparie que t'as un rire qui s'entend de loin, confirme autour d'un café ?"],
-      drole:["alors comme ça tu mets 4 photos de ton chien et UNE de toi ? il est mieux vendu que toi mdr","ta bio dit team sushi, moi team pizza… on est foutus mais on tente quand même ?","jsuis passé 3 fois sur ton profil avant d'oser, note l'effort"],
-      spicy:["t'as le genre de sourire qui fait faire des bêtises, jle sens d'ici","jsais pas ce qui est le plus dangereux, ta photo 2 ou ta bio","23h47 et jsuis toujours là… le destin veut qu'on se parle maintenant"],
+      classe:["jvais pas faire semblant d'avoir hésité avant d'écrire","ta bio m'a fait sourire tout seul, faut qu'on en parle en vrai","jsuis passé trois fois sur ton profil avant d'oser, note l'effort"],
+      drole:["jai une question grave importante avant qu'on aille plus loin","alors comme ça quatre photos de ton chien et une de toi","jvais faire comme si javais pas vu la troisième photo"],
+      spicy:["t'as le genre de sourire qui fait faire des bêtises, jle sens d'ici","jsais pas ce qui est le plus dangereux, ta photo 2 ou ta bio","jdevrais me méfier de toi et pourtant jsuis là"],
     };
     const DEMO_COACH={
       score:72,
@@ -2486,12 +2565,15 @@
         document.getElementById('prefsSummary').textContent='🔒 Premium';
       }
     }
-    // "Revenir plus tard" = abandon → contre-offre one-shot (-30% Hebdo) avant de le laisser filer
-    document.getElementById('gateClose').addEventListener('click',()=>{
-      gate.classList.remove('show');stopGateCountdown();
+    // Sortie du paywall = abandon → contre-offre one-shot (-30% Hebdo) avant de le laisser filer.
+    // Deux portes possibles : la croix en haut et le lien "Revenir plus tard" en bas.
+    function leaveGate(){
+      gate.classList.remove('show','sheet');stopGateCountdown();
       if(downsellEligible()){showDownsell();return;} // le tease reste flouté derrière
       endTease();
-    });
+    }
+    document.getElementById('gateClose').addEventListener('click',leaveGate);
+    document.getElementById('gateCloseTop').addEventListener('click',leaveGate);
     document.getElementById('gateLogin').addEventListener('click',()=>{gate.classList.remove('show');stopGateCountdown();openAuth();});
 
     // ══════════════ DOWNSELL DE SORTIE (-30% Hebdo, 15 min) ══════════════
