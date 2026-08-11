@@ -301,6 +301,14 @@
 
     /* ── Tease paywall : le résultat est là, flouté, à 1 cm — il ne manque qu'un paiement ── */
     .tease-blur{filter:blur(7px)!important;pointer-events:none;user-select:none}
+    /* Aperçu partiel : les premiers mots restent NETS, la fin se noie. Un rectangle
+       entièrement flouté décourage ; c'est ce qu'on entrevoit qui crée le manque. */
+    .tease-tail{filter:blur(6px);opacity:.9;user-select:none}
+    /* Paywall en panneau bas : la réplique floutée reste visible au-dessus pendant
+       qu'il paie. Il doit voir CE QU'IL ACHÈTE au moment où il achète. */
+    @keyframes tt-sheet-up{from{transform:translateY(30px);opacity:.4}to{transform:translateY(0);opacity:1}}
+    .gate-overlay.sheet{align-items:flex-end;padding:0;background:linear-gradient(180deg,rgba(8,8,8,.15) 0%,rgba(8,8,8,.7) 30%,rgba(8,8,8,.92) 100%);backdrop-filter:none}
+    .gate-overlay.sheet .gate-card{max-height:80dvh;border-radius:24px 24px 0 0;border-bottom:none;animation:tt-sheet-up .38s cubic-bezier(.22,.68,0,1) both}
 
     /* ── Refaire : feedback de chargement (spinner + réplique estompée) ── */
     .spin-sm{display:inline-block;width:11px;height:11px;border:2px solid rgba(255,154,69,.3);border-top-color:#FF9A45;border-radius:50%;animation:tt-spin .7s linear infinite;vertical-align:-1px;margin-right:3px}
@@ -1009,6 +1017,12 @@
           <div class="pw-feat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#FF9A45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Renard <b style="color:#fff;font-weight:700;">personnalisé</b> : âge, objectif, style de message</span></div>
         </div>
 
+        <!-- Rappel de l'archétype du QCM : son blocage nommé, juste avant les plans -->
+        <div id="gateArchetype" style="display:none;margin-top:18px;background:#1a1108;border:1px solid rgba(255,122,24,.3);border-radius:14px;padding:14px 16px;text-align:left;">
+          <div id="gateArchetypeTitle" style="color:#FF9A45;font-size:13.5px;font-weight:700;line-height:1.35;"></div>
+          <p id="gateArchetypeText" style="color:#B5ABA0;font-size:12.5px;line-height:1.55;margin:8px 0 0;"></p>
+        </div>
+
         <!-- Preuve sociale : la meute avant toi -->
         <div style="margin-top:18px;background:#0d0d0d;border:1px solid #232323;border-radius:14px;padding:14px 16px;text-align:left;">
           <div style="color:#FFB020;font-size:13px;letter-spacing:2.5px;">★★★★★ <span style="color:#9a9aa4;font-size:12px;letter-spacing:0;font-weight:600;">4,8/5 — la meute approuve</span></div>
@@ -1018,13 +1032,16 @@
 
         <!-- Plans (sélection) -->
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:22px;">
-          <button class="plan-opt sel" data-plan="weekly" data-cta="Passer au Premium" data-sub="4,99€/semaine · Résiliable à tout moment">
+          <button class="plan-opt sel" data-plan="weekly" data-cta="Passer au Premium" data-sub="3,99€/semaine · Résiliable à tout moment">
             <span class="plan-dot"></span>
             <span style="flex:1;min-width:0;">
               <span style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;">
                 <span style="font-size:15.5px;font-weight:700;color:#fff;">Hebdo</span>
-                <span style="font-size:15px;font-weight:600;color:#fff;">4,99€<span style="font-size:12px;color:#86868f;font-weight:500;"> /semaine</span></span>
+                <span style="font-size:15px;font-weight:600;color:#fff;">3,99€<span style="font-size:12px;color:#86868f;font-weight:500;"> /semaine</span></span>
               </span>
+              <!-- L'équivalent mensuel affiché fait deux choses : il évite au mec de se
+                   sentir enfumé quand il calcule, et il fait paraître le mensuel évident. -->
+              <span style="display:block;font-size:12px;color:#86868f;margin-top:2px;">soit ≈ 17,30€ / mois</span>
             </span>
           </button>
 
@@ -1079,10 +1096,10 @@
         <p style="color:#9a9aa4;font-size:14px;margin:10px 0 0;line-height:1.55;">Le renard déteste te voir partir. Offre unique, là, maintenant :</p>
         <div style="margin-top:16px;background:#0d0d0d;border:1.5px dashed rgba(255,122,69,.5);border-radius:14px;padding:16px;">
           <div style="color:#FF9A45;font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;">-30% sur l'Hebdo</div>
-          <div style="margin-top:6px;color:#fff;font-size:22px;font-weight:800;"><s style="color:#6c6c75;font-weight:500;font-size:16px;">4,99€</s> 3,49€ <span style="color:#86868f;font-size:13px;font-weight:500;">ta 1re semaine</span></div>
+          <div style="margin-top:6px;color:#fff;font-size:22px;font-weight:800;"><s style="color:#6c6c75;font-weight:500;font-size:16px;">3,99€</s> 2,79€ <span style="color:#86868f;font-size:13px;font-weight:500;">ta 1re semaine</span></div>
         </div>
         <div style="margin-top:12px;color:#B5ABA0;font-size:13px;">L'offre s'évapore dans <b id="downsellTimer" style="color:#FF9A45;font-variant-numeric:tabular-nums;">15:00</b></div>
-        <button class="cta" id="downsellGo" style="margin-top:16px;height:52px;font-size:15px;">J'en profite → 3,49€</button>
+        <button class="cta" id="downsellGo" style="margin-top:16px;height:52px;font-size:15px;">J'en profite → 2,79€</button>
         <button id="downsellNo" style="display:block;margin:14px auto 0;background:none;border:none;color:#6c6c75;font-family:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline;">Non merci, je préfère payer plein tarif plus tard</button>
       </div>
     </div>
@@ -1600,7 +1617,8 @@
       const t=tones[selectedTone];const list=currentList();
       curEmoji.textContent=t.emoji;curLabel.textContent=t.label;
       toneBadge.textContent=`${t.emoji} Mode ${t.label}`;
-      replyText.textContent=list[variant%list.length];
+      if(teasing)renderTeasedReply(list[variant%list.length]);
+      else replyText.textContent=list[variant%list.length];
       replyText.classList.remove('revealing');void replyText.offsetWidth;replyText.classList.add('revealing');
       if(navigator.vibrate){try{navigator.vibrate(12);}catch(e){}}
       if(animateFox){resultFox.style.animation='none';void resultFox.offsetWidth;resultFox.style.animation='';}
@@ -2308,6 +2326,16 @@
     // de contenu factice flouté (zéro appel IA), avec le paywall par-dessus. Son résultat
     // est à 1 cm — il ne manque qu'un paiement.
     let teasing=false,teaseEls=[],teaseHidden=[];
+    // Coupe la réplique sur un mot entier : ~35 % visible, le reste flouté.
+    function renderTeasedReply(full){
+      const words=String(full||'').split(/\s+/).filter(Boolean);
+      if(words.length<4){replyText.textContent=full;replyText.classList.add('tease-tail');return;}
+      const keep=Math.max(3,Math.min(words.length-2,Math.round(words.length*0.35)));
+      replyText.textContent='';
+      const head=document.createElement('span');head.textContent=words.slice(0,keep).join(' ')+' ';
+      const tail=document.createElement('span');tail.className='tease-tail';tail.textContent=words.slice(keep).join(' ');
+      replyText.append(head,tail);
+    }
     function applyTeaseBlur(blurSels,hideSels){
       teaseEls=[];teaseHidden=[];
       blurSels.forEach(s=>document.querySelectorAll(s).forEach(el=>{el.classList.add('tease-blur');teaseEls.push(el);}));
@@ -2323,7 +2351,9 @@
         applyTeaseBlur(['#screen-6 .bio-card','#bioAnalyse'],['#bioReset','#bioBackBtn']);
       }else{ // reply (funnel hard paywall) & opener partagent le même écran/flou
         replies=(mode==='reply')?DEMO_REPLIES:DEMO_OPENER;selectedTone='drole';variant=0;showResults(false);
-        applyTeaseBlur(['#screen-4 .result-card'],['#copyBtn','#shareBtn','#copyUpsell','#premiumTease','#resetBtn','#resultBackBtn']);
+        // Plus de flou sur toute la carte : seule la FIN de la réplique est floutée
+        // (renderTeasedReply), le début reste net pour créer le manque.
+        applyTeaseBlur([],['#copyBtn','#shareBtn','#copyUpsell','#premiumTease','#resetBtn','#resultBackBtn']);
       }
       track('tease_view',{mode});
       // On laisse d'abord voir la page normale avec le résultat flouté (3s), le paywall
@@ -2334,6 +2364,8 @@
       if(!teasing)return;
       teasing=false;
       teaseEls.forEach(el=>el.classList.remove('tease-blur'));
+      replyText.classList.remove('tease-tail'); // repli des répliques très courtes
+      gate.classList.remove('sheet');
       teaseHidden.forEach(([el,d])=>{el.style.display=d;});
       teaseEls=[];teaseHidden=[];
       replies=null;coachData=null;bioData=null;
@@ -2364,13 +2396,34 @@
     }
     function stopGateCountdown(){clearInterval(gateCdInt);gateCdInt=null;}
 
+    // Rappelle son archétype (issu du QCM) et le point précis où il plafonne, juste
+    // au-dessus des plans. Sans QCM rempli, le bloc reste masqué.
+    const ARCHETYPE_PITCH={
+      chill:['Le Renard Chill plafonne toujours au même endroit','Tu mets à l\'aise, mais la conv s\'endort avant que tu proposes quoi que ce soit. Les tons <b style="color:#FF9A45;">Spicy</b> et <b style="color:#FF9A45;">Sexto</b> servent exactement à ça : faire monter d\'un cran au bon moment.'],
+      classe:['Le Renard Classe plafonne toujours au même endroit','Tu sors du lot, puis tu restes poli trop longtemps et elle attend. Le <b style="color:#FF9A45;">Coach de conv</b> te dit quand passer à l\'attaque, et le ton <b style="color:#FF9A45;">Sexto</b> te donne les mots.'],
+      spicy:['Le Renard Spicy plafonne toujours au même endroit','Tu crées la tension, mais tu la relâches trop vite et ça retombe. Le ton <b style="color:#FF9A45;">Mystère</b> et l\'<b style="color:#FF9A45;">Entraînement</b> t\'apprennent à la tenir jusqu\'au date.'],
+    };
+    function applyArchetypePitch(){
+      const box=document.getElementById('gateArchetype');
+      if(!box)return;
+      const a=ARCHETYPE_PITCH[quizArchetype];
+      if(!a){box.style.display='none';return;}
+      document.getElementById('gateArchetypeTitle').textContent=a[0];
+      document.getElementById('gateArchetypeText').innerHTML=a[1];
+      box.style.display='block';
+    }
     function openGate(context){
       if(quota.isPremium)return;
+      const abox=document.getElementById('gateArchetype');
+      if(abox)abox.style.display='none'; // réaffiché seulement en mode tease
       const title=document.getElementById('gateTitle'), sub=document.getElementById('gateSub');
       // le countdown n'apparaît que sur le paywall "quota épuisé"
       const cd=document.getElementById('gateCountdown');
       if(context==='quota'&&!teasing){cd.style.display='block';startGateCountdown();}
       else{cd.style.display='none';stopGateCountdown();}
+      // Le paywall du tease monte en panneau bas : la réplique à moitié lisible
+      // reste visible au-dessus pendant qu'il choisit son plan.
+      gate.classList.toggle('sheet',Boolean(teasing));
       if(teasing){
         const T={
           reply:['Ta réplique est prête 🔒','Ta meilleure réponse est écrite, juste derrière le flou. Débloque pour la lire.'],
@@ -2380,6 +2433,9 @@
         };
         const c=T[context]||T.opener;
         title.textContent=c[0];sub.innerHTML=c[1];
+        // Il a rempli 8 questions pour qu'on lui dise qui il est : on le lui rappelle
+        // pile au moment de payer, plutôt qu'un argumentaire générique.
+        applyArchetypePitch();
       }else if(context==='quota'){
         title.textContent='T\'as tout donné aujourd\'hui 🕐';
         sub.innerHTML='Tes 3 analyses gratuites reviennent à minuit. Ou passe en <b style="color:#FF9A45;">illimité</b> maintenant et continue sur ta lancée.';

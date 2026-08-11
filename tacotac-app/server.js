@@ -1345,11 +1345,30 @@ unmatch=true si ton intérêt tombe ≤ 8, ou au 3e message lourd/needy d'affil�
 };
 
 // Funnel hard paywall : réponse du 1er message, scriptée (zéro appel IA, zéro coût), avant paywall.
-const CANNED_FIRST_REPLY = {
-  lea: ["Hey toi 😊 ça va ?"],
-  chloe: ['Salut 👀 toi c\'est qui ?'],
-  maeva: ['Salut.'],
+// Funnel hard paywall : les 3 premiers échanges sont SCRIPTÉS (zéro appel IA, zéro
+// coût). Ils ne servent pas à simuler une vraie conv, ils servent à faire MONTER la
+// jauge d'intérêt sous ses yeux — on coupe ensuite pile quand elle est au plus haut.
+// Couper une progression qu'on regarde grimper fait beaucoup plus mal que couper
+// avant qu'elle démarre. Les réponses restent volontairement ouvertes et courtes
+// pour rester crédibles quoi qu'il ait écrit.
+const CANNED_TRAIL = {
+  lea: [
+    { messages: ['Hey toi 😊 ça va ?'], bump: 0 },
+    { messages: ['ah ouais ? raconte 👀'], bump: 9 },
+    { messages: ["mdrr t'es pas timide toi", 'jaime bien'], bump: 14 },
+  ],
+  chloe: [
+    { messages: ["Salut 👀 toi c'est qui ?"], bump: 0 },
+    { messages: ['hmm ok tu marques un point'], bump: 11 },
+    { messages: ['bon là tu commences à mintéresser'], bump: 16 },
+  ],
+  maeva: [
+    { messages: ['Salut.'], bump: 0 },
+    { messages: ['jsuis pas facile tu sais'], bump: 8 },
+    { messages: ["ok j'avoue là t'as de la répartie"], bump: 15 },
+  ],
 };
+const CANNED_FREE_STEPS = 3; // nombre d'échanges offerts avant le paywall
 
 const trainLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -1383,13 +1402,16 @@ app.post('/api/train', trainLimiter, async (req, res) => {
 
     const isPremium = getStatus(deviceId, req.account).isPremium;
 
-    // Funnel hard paywall : message 1 = réponse scriptée (zéro appel IA, zéro coût),
-    // message 2+ = hardpaywall direct — jamais de vrai message IA gratuit.
+    // Funnel hard paywall : les 3 premiers échanges sont scriptés (zéro appel IA, zéro
+    // coût) et font monter la jauge d'intérêt. Au 4e, paywall — pile au sommet.
     if (FUNNEL_HARD && !isPremium) {
-      if (userMsgCount <= 1) {
+      const trail = CANNED_TRAIL[req.body.persona] || CANNED_TRAIL.lea;
+      if (userMsgCount <= CANNED_FREE_STEPS) {
+        const step = trail[Math.min(userMsgCount, trail.length) - 1] || trail[0];
         return res.json({
-          messages: CANNED_FIRST_REPLY[req.body.persona] || ["Hey salut 😊"],
-          interet: persona.start, date_acceptee: false, unmatch: false, source: 'canned',
+          messages: step.messages,
+          interet: Math.min(100, persona.start + step.bump),
+          date_acceptee: false, unmatch: false, source: 'canned',
         });
       }
       return res.status(403).json({ error: 'La suite de la conversation est réservée aux Premium.', code: 'premium_required' });
@@ -1972,8 +1994,12 @@ app.post('/api/checkout', async (req, res) => {
       ...(req.account ? { customer_email: req.account.email } : {}),
       subscription_data: {
         metadata: { device_id: deviceId, account_email: req.account?.email || '' },
-        // Funnel hard paywall : jamais d'essai pendant le test, paiement direct sur tous les plans.
-        ...(!FUNNEL_HARD && TRIAL_DAYS[plan] ? { trial_period_days: TRIAL_DAYS[plan] } : {}),
+        // L'essai 3 jours du mensuel s'applique TOUJOURS, même en funnel hard : la carte
+        // du paywall promet "3 jours offerts / Commencer l'essai gratuit". Le désactiver
+        // ici (ce qu'on faisait) débitait le client 9,99€ sur-le-champ malgré la promesse
+        // — c'est arrivé pour de vrai le 06/08. Si un jour tu veux le paiement direct,
+        // il faut retirer la promesse de la carte EN MÊME TEMPS (public/app.html).
+        ...(TRIAL_DAYS[plan] ? { trial_period_days: TRIAL_DAYS[plan] } : {}),
       },
       ...(discounts ? { discounts } : { allow_promotion_codes: true }),
       success_url: `${PUBLIC_URL}/app?paid=1&session_id={CHECKOUT_SESSION_ID}`,
