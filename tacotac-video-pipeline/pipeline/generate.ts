@@ -173,31 +173,41 @@ ${list(punchlines, 25)}`;
 // vidéo, piochés sans jamais répéter avant d'avoir épuisé tout le pool.
 // Contrainte conservée pour storyReply/hook : jamais de détail visuel inventé
 // (la vraie photo n'est choisie qu'après, au hasard).
+// ⚠️ Répondre à une story, C'EST envoyer un DM à une meuf qu'on ne connaît pas
+// vraiment. Le message doit donc tenir tout seul comme premier DM : il ne parle
+// JAMAIS de la story ni du fait de l'avoir postée.
+//
+// L'ancien pool faisait exactement l'inverse : 6 angles sur 10 ordonnaient de
+// commenter l'acte de poster ("elle savait l'effet que ça allait faire", "son
+// intention en postant ça", "le concept même de poster une story"…) pendant que
+// le prompt l'interdisait par ailleurs. L'angle imposé gagnait : 8 des 15
+// dernières vidéos commentaient le fait de poster, dont "toi tu savais très bien
+// ce que tu faisais en postant ça" — le 1er angle, mot pour mot.
 const STORY_REPLY_ANGLES = [
-  "reproche taquin : elle savait très bien l'effet que ça allait faire (jamais mot pour mot 'tu savais que t'étais belle', invente ta propre formulation)",
-  "vanne sur le nombre de tentatives avant la bonne pose ('la 15e prise ou direct la bonne')",
-  "question direct et confiante sur son intention en postant ça, sans compliment explicite",
-  "faux reproche joueur : elle aurait dû prévenir avant de poster un truc pareil",
-  "hypothèse audacieuse et un peu provocante sur pourquoi elle poste ça maintenant",
-  "second degré sur le concept même de poster une story, ironie légère",
-  "compliment qui bascule en vanne ou en défi à la fin de la phrase",
-  "fausse indifférence jouée, presque blasé, à l'inverse total de s'extasier",
-  "constat sec et confiant, presque grognon, zéro compliment direct",
-  "comparaison ou image inattendue et un peu absurde, sans inventer de détail visuel réel",
+  "une AMORCE qui ne veut rien dire toute seule et qui l'oblige à demander pourquoi ('jvais avoir un problème avec toi', 'faut qu'on parle sérieusement')",
+  "une accusation taquine et complètement inventée, qu'il assume avec un calme total",
+  "un constat sec et gonflé sur elle, zéro compliment, comme une évidence",
+  "un faux diagnostic ('t'as tout du genre de meuf qui...') qu'elle aura envie de contester",
+  "une fausse indifférence jouée, presque blasé — l'inverse total de s'extasier",
+  "un défi léger qui l'oblige à se positionner tout de suite",
+  "une comparaison absurde et hyper précise sur son énergie (jamais sur son physique)",
+  "un ordre tranquille et sans explication ('note ce que jte dis', 'prépare toi')",
+  "une question directe et culottée à laquelle on ne peut pas répondre par oui ou non",
+  "un compliment qui bascule en vanne à la toute fin de la phrase",
 ];
 // Même registre que STORY_REPLY_ANGLES, pronoms inversés (elle → il) pour le profil
 // "rôles inversés" (la cliente répond à SA story à LUI).
 const STORY_REPLY_ANGLES_REVERSED = [
-  "reproche taquin : il savait très bien l'effet que ça allait faire (jamais mot pour mot 'tu savais que t'étais beau', invente ta propre formulation)",
-  "vanne sur le nombre de tentatives avant la bonne pose ('la 15e prise ou direct la bonne')",
-  "question directe et confiante sur son intention en postant ça, sans compliment explicite",
-  "faux reproche joueur : il aurait dû prévenir avant de poster un truc pareil",
-  "hypothèse audacieuse et un peu provocante sur pourquoi il poste ça maintenant",
-  "second degré sur le concept même de poster une story, ironie légère",
-  "compliment qui bascule en vanne ou en défi à la fin de la phrase",
-  "fausse indifférence jouée, presque blasée, à l'inverse total de s'extasier",
-  "constat sec et confiant, presque grognon, zéro compliment direct",
-  "comparaison ou image inattendue et un peu absurde, sans inventer de détail visuel réel",
+  "une AMORCE qui ne veut rien dire toute seule et qui l'oblige à demander pourquoi ('jvais avoir un problème avec toi', 'faut qu'on parle sérieusement')",
+  "une accusation taquine et complètement inventée, qu'elle assume avec un calme total",
+  "un constat sec et gonflé sur lui, zéro compliment, comme une évidence",
+  "un faux diagnostic ('t'as tout du genre de mec qui...') qu'il aura envie de contester",
+  "une fausse indifférence jouée, presque blasée — l'inverse total de s'extasier",
+  "un défi léger qui l'oblige à se positionner tout de suite",
+  "une comparaison absurde et hyper précise sur son énergie (jamais sur son physique)",
+  "un ordre tranquille et sans explication ('note ce que jte dis', 'prépare toi')",
+  "une question directe et culottée à laquelle on ne peut pas répondre par oui ou non",
+  "un compliment qui bascule en vanne à la toute fin de la phrase",
 ];
 const OUTRO_ANGLES = [
   "CTA complice, dans le même esprit que 'l'ia gratuite est dans ma bio les coquins' — mais invente ta propre phrase, jamais celle-ci mot pour mot",
@@ -532,9 +542,16 @@ EXEMPLES DE CE QU'ON NE VEUT PLUS (vraies disquettes ratées : trop longues, ala
 - La chute doit rester VOLABLE : le viewer doit pouvoir la ressortir telle quelle dans sa conv. Donc aucun détail propre à CETTE conv.
 - INTERDIT aussi : les questions molles ("t'as passé une bonne journée ?"), les compliments secs ("t'es trop belle").
 
-⚠️ LE STORY REPLY — même exigence, c'est la 1re seconde de la vidéo :
-- ⛔ Le piège dans lequel toutes les vidéos précédentes sont tombées : commenter LE FAIT DE POSTER une story (combien de prises, quel jour, quelle heure, "t'aurais pu prévenir", "c'est quoi le but"). C'est devenu un tic, n'y touche plus.
-- Vise plutôt : lui prêter une intention précise et assumée, la mettre au défi, la vanner sur un truc qu'elle n'a pas vu venir, ou ouvrir sur une affirmation gonflée qu'elle devra contredire.
+⚠️ LE STORY REPLY — c'est la 1re seconde de la vidéo, et c'est un DM :
+
+Répondre à une story, C'EST envoyer un DM à une meuf qu'on ne connaît pas vraiment. Écris-le donc comme un PREMIER DM à sa crush : il doit tenir tout seul, sans la story.
+
+⛔ INTERDICTION ABSOLUE — ne parle JAMAIS de la story ni du fait de l'avoir postée.
+Sont bannis : les mots "story", "poster/postes/posté/postant", "prise", "photo", "filtre", et toute allusion à pourquoi/quand/comment elle a posté.
+Mesure réelle sur les 15 dernières vidéos : 8 commentaient l'acte de poster, dont "toi tu savais très bien ce que tu faisais en postant ça", "tu postes ça pour toi ou pour qu'on te le dise", "sois honnête tu visais qui exactement en postant ça". C'est le même message réécrit 8 fois. Terminé.
+⛔ Et surtout n'écris JAMAIS une variante de "tu savais très bien ce que tu faisais" / "tu sais très bien l'effet que ça fait" : c'est LA phrase qui revient le plus.
+
+✅ Vise : une amorce qui l'oblige à demander pourquoi, une accusation inventée assumée au calme, un faux diagnostic sur elle, un ordre tranquille sans explication. Bref, du CULOT sur ELLE — jamais un commentaire sur son contenu.
 - Il doit APPELER une réponse : après l'avoir lu, elle a envie de répliquer, pas juste de liker.
 
 ⚠️ FORMAT COURT ET LISIBLE (priorité n°1 — c'est ce qui fait la différence entre une vidéo qui tourne et une qui meurt) :
@@ -781,6 +798,18 @@ function punchlineProblems(script: Candidate): string[] {
 
   if (script.storyReply && script.storyReply.length > MAX_STORY_CHARS) {
     problems.push(`storyReply ${script.storyReply.length} car (max ${MAX_STORY_CHARS}) : "${script.storyReply}"`);
+  }
+  // Le tic n°1 remonté par Tom : le 1er message commente le fait d'avoir posté la
+  // story. C'était dans 8 des 15 dernières vidéos, toujours la même phrase. Le
+  // prompt l'interdit, mais un interdit se contourne — celui-ci non.
+  if (script.storyReply) {
+    const sr = script.storyReply.toLowerCase();
+    if (/\bstor(y|ies)\b|\bpost(e|es|er|é|ée|ant|ais|ait)\b|\bprise\b|\bfiltre\b/.test(sr)) {
+      problems.push(`storyReply parle de la story / du fait de poster : "${script.storyReply}"`);
+    }
+    if (/tu sav(ais|es).{0,20}(ce que|l'effet|quoi)/.test(sr)) {
+      problems.push(`storyReply reprend le tic "tu savais très bien ce que tu faisais" : "${script.storyReply}"`);
+    }
   }
   return problems;
 }
