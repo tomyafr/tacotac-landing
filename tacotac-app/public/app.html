@@ -2974,10 +2974,12 @@
         wrap.appendChild(b);
       });
       document.getElementById('drawerCta').style.display=quota.isPremium?'none':'block';
-      // La gestion d'abonnement n'a de sens que pour un abonné payant. Les accès
-      // offerts (fondateur, collaborateur) n'ont pas d'abonnement Stripe.
+      // Visible pour tout accès premium (payant, fondateur, collaborateur). Un
+      // compte fondateur n'a pas de vrai abonnement Stripe : le clic renverra alors
+      // "abonnement introuvable" plutôt qu'un bouton invisible — plus facile à
+      // tester, et le message reste honnête pour ce cas.
       const bill=document.getElementById('drawerBilling');
-      if(bill)bill.style.display=(quota.isPremium&&quota.plan==='premium')?'block':'none';
+      if(bill)bill.style.display=quota.isPremium?'block':'none';
     }
     function openDrawer(){renderDrawer();drawer.classList.add('show');drawerOverlay.classList.add('show');track('menu_open');}
     function closeDrawer(){drawer.classList.remove('show');drawerOverlay.classList.remove('show');}
