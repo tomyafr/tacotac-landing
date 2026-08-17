@@ -183,30 +183,34 @@ ${list(punchlines, 25)}`;
 // le prompt l'interdisait par ailleurs. L'angle imposé gagnait : 8 des 15
 // dernières vidéos commentaient le fait de poster, dont "toi tu savais très bien
 // ce que tu faisais en postant ça" — le 1er angle, mot pour mot.
+// ⚠️ AUCUN exemple entre parenthèses dans ce pool. Le modèle les recopie mot pour
+// mot : "t'as tout du genre de meuf qui..." et "t'as l'énergie de..." venaient de
+// MES propres parenthèses et sont ressortis 6 fois sur 15. On décrit le MOUVEMENT,
+// jamais la formulation.
 const STORY_REPLY_ANGLES = [
-  "une AMORCE qui ne veut rien dire toute seule et qui l'oblige à demander pourquoi ('jvais avoir un problème avec toi', 'faut qu'on parle sérieusement')",
   "une accusation taquine et complètement inventée, qu'il assume avec un calme total",
-  "un constat sec et gonflé sur elle, zéro compliment, comme une évidence",
-  "un faux diagnostic ('t'as tout du genre de meuf qui...') qu'elle aura envie de contester",
+  "un reproche à l'envers : il lui reproche un truc qui est en fait un compliment",
+  "une fausse mise en garde contre lui-même, comme s'il était le danger",
   "une fausse indifférence jouée, presque blasé — l'inverse total de s'extasier",
   "un défi léger qui l'oblige à se positionner tout de suite",
-  "une comparaison absurde et hyper précise sur son énergie (jamais sur son physique)",
-  "un ordre tranquille et sans explication ('note ce que jte dis', 'prépare toi')",
   "une question directe et culottée à laquelle on ne peut pas répondre par oui ou non",
+  "une remarque sur SON comportement à elle dans la conv (son temps de réponse, sa façon d'écrire), jamais sur son physique",
+  "un pari qu'il annonce et qu'elle voudra faire échouer",
+  "une conclusion absurde qu'il tire d'un détail minuscule, avec un sérieux total",
   "un compliment qui bascule en vanne à la toute fin de la phrase",
 ];
 // Même registre que STORY_REPLY_ANGLES, pronoms inversés (elle → il) pour le profil
 // "rôles inversés" (la cliente répond à SA story à LUI).
 const STORY_REPLY_ANGLES_REVERSED = [
-  "une AMORCE qui ne veut rien dire toute seule et qui l'oblige à demander pourquoi ('jvais avoir un problème avec toi', 'faut qu'on parle sérieusement')",
   "une accusation taquine et complètement inventée, qu'elle assume avec un calme total",
-  "un constat sec et gonflé sur lui, zéro compliment, comme une évidence",
-  "un faux diagnostic ('t'as tout du genre de mec qui...') qu'il aura envie de contester",
+  "un reproche à l'envers : elle lui reproche un truc qui est en fait un compliment",
+  "une fausse mise en garde contre elle-même, comme si elle était le danger",
   "une fausse indifférence jouée, presque blasée — l'inverse total de s'extasier",
   "un défi léger qui l'oblige à se positionner tout de suite",
-  "une comparaison absurde et hyper précise sur son énergie (jamais sur son physique)",
-  "un ordre tranquille et sans explication ('note ce que jte dis', 'prépare toi')",
   "une question directe et culottée à laquelle on ne peut pas répondre par oui ou non",
+  "une remarque sur SON comportement à lui dans la conv (son temps de réponse, sa façon d'écrire), jamais sur son physique",
+  "un pari qu'elle annonce et qu'il voudra faire échouer",
+  "une conclusion absurde qu'elle tire d'un détail minuscule, avec un sérieux total",
   "un compliment qui bascule en vanne à la toute fin de la phrase",
 ];
 const OUTRO_ANGLES = [
@@ -508,20 +512,40 @@ C'est LA seule chose qui marche, vérifiée sur les vidéos de la chaîne qui on
   2. LA RELANCE — ${her} est OBLIGÉE de demander. 1 à 4 mots, neutres, sans esprit.
   3. LA CHUTE — ${him} referme. C'est LÀ que la vanne tombe, et nulle part ailleurs.
 
-Exemples réels (recopie la MÉCANIQUE, jamais les mots) :
-  1. "ton père serait pas un voleur"      2. "non pourquoi ?"   3. "parce qu'il a pris les étoiles du ciel pour les mettre dans tes yeux"
-  1. "j'espère que t'es forte en premiers secours"   2. "pourquoi tu dis ça ?"   3. "parce que tu viens de me couper le souffle"
-  1. "fais attention"                     2. "à quoi"           3. "à force d'être aussi belle jvais finir par m'attacher"
-  1. "t'as pas volé quelque chose"        2. "non pourquoi ?"   3. "bah jcrois que si, t'as volé mon cœur"
-  1. "ton père serait pas peintre"        2. "non pourquoi"     3. "parce qu'il a fait une œuvre d'art"
+🔑 LE MOTEUR, C'EST UN JEU DE MOTS. PAS UN COMPLIMENT.
 
-POURQUOI ça marche, et pourquoi c'est NON NÉGOCIABLE : le viewer lit l'amorce, il se pose la même question qu'elle, il ATTEND la réponse. Quand la chute arrive, il n'a aucun effort à faire — c'est une réponse à une question qu'il vient de lire. Zéro décodage. Une punchline balancée d'un seul bloc, elle, oblige à tout démêler d'un coup : c'est exactement ce qu'on ne veut plus.
+L'AMORCE PLANTE UN MOT CONCRET (un métier, un objet, une situation). LA CHUTE RÉVÈLE LE SENS AMOUREUX DE CE MOT. Le mot planté EST la vanne :
+
+  1. "ton père serait pas un voleur"   2. "non pourquoi ?"   3. "parce qu'il a pris les étoiles du ciel pour les mettre dans tes yeux"
+     → mot planté : VOLEUR. La chute paie le vol.
+  1. "ton père serait pas peintre"   2. "non pourquoi"   3. "parce qu'il a fait une œuvre d'art"
+     → mot planté : PEINTRE. La chute paie la peinture.
+  1. "j'espère que t'es forte en premiers secours"   2. "pourquoi tu dis ça ?"   3. "parce que tu viens de me couper le souffle"
+     → mot planté : PREMIERS SECOURS. La chute paie la respiration.
+  1. "jvais devoir appeler les pompiers"   2. "pourquoi"   3. "bah tu viens de me faire fondre"
+     → mot planté : POMPIERS. La chute paie le feu.
+  1. "t'aurais pas un gps sur toi"   2. "pourquoi tu dis ça"   3. "parce que jme suis perdu dans tes yeux"
+     → mot planté : GPS. La chute paie le fait d'être perdu.
+
+Tu vois le moule ? Le viewer entend "voleur", il ne comprend pas, elle demande, et le mot explose en compliment. **C'est une DEVINETTE, pas une déclaration.** Sans mot planté, il n'y a AUCUNE vanne — juste un mec qui dit qu'il la trouve jolie.
+
+⛔⛔ L'ERREUR QUI A TUÉ LES 15 DERNIÈRES VIDÉOS — NE LA REFAIS JAMAIS ⛔⛔
+Le modèle a compris "amorce incomplète" comme "ANNONCER qu'on va dire un truc". Résultat, 10 vidéos sur 15 ouvraient par :
+  ✗ "j'ai un souci avec toi" / "je crois que j'ai un problème avec toi"
+  ✗ "faut que jt'avoue un truc" / "jai un aveu à te faire" / "faut que jte prévienne d'un truc"
+  ✗ "attention à toi" / "va falloir que tu te méfies de moi"
+Ces phrases sont VIDES : elles ne plantent aucun mot, donc la chute n'a rien à payer. **Ces formulations sont désormais INTERDITES.** Une amorce qui pourrait précéder N'IMPORTE QUELLE chute est une amorce ratée.
+
+⛔ Et la chute ne doit PLUS JAMAIS être "tu me fais perdre mes moyens" sous ses 12 déguisements. Sur les 15 dernières, 8 disaient exactement ça : "jarrive plus à penser à autre chose", "tu vas me faire craquer", "jarrive plus à te sortir de la tête", "me faire perdre le fil", "jm'attache un peu plus", "jcrois que jtombe pour toi". C'est le MÊME message écrit 8 fois. Si ta chute veut dire "tu m'obsèdes", jette-la et repars d'un mot planté.
+
+POURQUOI ça marche, et pourquoi c'est NON NÉGOCIABLE : le viewer lit l'amorce, il se pose la même question qu'elle, il ATTEND la réponse. Quand la chute arrive, il n'a aucun effort à faire — c'est une réponse à une question qu'il vient de lire. Zéro décodage.
 
 ✅ LES RÈGLES DURES — non négociables :
-1. **L'AMORCE : 45 caractères max**, et elle doit être INCOMPLÈTE. Test : lue seule, elle ne doit pas avoir de sens. Si on peut y répondre autre chose que "pourquoi ?", elle est ratée.
+1. **L'AMORCE : 45 caractères max, et elle DOIT contenir un mot concret que la chute va faire exploser** (un métier, un objet, un lieu, un chiffre, un truc du quotidien : voleur, peintre, pompier, gps, assurance, dentiste, wifi, aspirine, clim, permis, ceinture, boulangerie...). Test : est-ce qu'un mot précis est planté ? Si l'amorce ne parle de RIEN de concret, elle est ratée.
 2. **LA RELANCE : 4 MOTS MAXIMUM, et elle ne fait AUCUNE vanne.** "non pourquoi ?", "pourquoi", "de quoi", "à quoi", "et donc ?", "quel film ?". Elle est un tremplin, pas une partenaire de banter. Si elle réplique avec de l'esprit ici, la chute tombe à plat.
 3. **LA CHUTE : 65 caractères max, UNE SEULE PROPOSITION.** Commence le plus souvent par "parce que" / "bah" — c'est une réponse, elle doit sonner comme une réponse.
-4. **LA CHUTE UTILISE UNE IMAGE ARCHI-CONNUE.** Voler mon cœur, couper le souffle, les étoiles dans les yeux, une œuvre d'art, tomber, s'attacher, le Titanic. **N'ESSAIE PAS D'ÊTRE ORIGINAL SUR L'IMAGE** — le plaisir vient de la variation sur un truc connu, pas de la surprise intellectuelle. C'est un compliment déguisé en devinette, rien de plus.
+4. **LA CHUTE PAIE LE MOT PLANTÉ, avec une image archi-connue.** Voler mon cœur, couper le souffle, les étoiles dans les yeux, une œuvre d'art, faire fondre, se perdre, tomber. **N'ESSAIE PAS D'ÊTRE ORIGINAL SUR L'IMAGE** — l'originalité est dans le MOT PLANTÉ (le chemin), jamais dans l'image finale. Le plaisir vient de la variation sur du connu.
+   Test imparable : cache la chute et relis l'amorce. Si tu ne peux pas deviner de quoi ça va parler, c'est bon. Si l'amorce ne plante aucun mot, tu n'as pas de vanne.
 5. **LA CHUTE DOIT RÉPONDRE GRAMMATICALEMENT À LA RELANCE.** Relis-la à voix haute enchaînée avec la relance : ça doit se dire naturellement.
    ✗ "attention avec ce genre de question" / "attention à quoi" / "**parce que** jsuis du genre à m'attacher" ← on répond "parce que" à un "à quoi", ça ne s'enchaîne pas
    ✓ "attention avec ce genre de question" / "attention à quoi" / "**à moi**, jsuis du genre à m'attacher pour moins"
@@ -770,6 +794,45 @@ function punchlineProblems(script: Candidate): string[] {
     }
   });
 
+  // ── L'AMORCE DOIT PLANTER UN MOT, pas annoncer qu'on va parler ────────────
+  // Sur les 15 dernières vidéos, 10 ouvraient le piège par une phrase VIDE :
+  // "j'ai un souci avec toi", "faut que jt'avoue un truc", "va falloir que tu te
+  // méfies". Elles ne plantent aucun mot, donc la chute n'a rien à payer et il
+  // ne reste qu'un compliment plat. Le prompt l'interdit ; ici c'est mécanique.
+  if (lastTacotac > 0) {
+    let a = lastTacotac - 1;
+    while (a >= 0 && beats[a].type === "meme") a--;
+    a--; // on saute la relance pour atteindre l'amorce
+    while (a >= 0 && beats[a].type === "meme") a--;
+    const amorce = beats[a];
+    if (amorce?.type === "message" || amorce?.type === "tacotac") {
+      const t = (amorce.text || "").toLowerCase();
+      if (/\b(souci|probl[eè]me)\b.{0,12}\b(avec toi|toi)\b|jai un (souci|probl[eè]me)|un (souci|probl[eè]me) avec toi/.test(t)) {
+        problems.push(`amorce vide "j'ai un souci/problème avec toi" : "${amorce.text}"`);
+      }
+      if (/\b(avoue|aveu|pr[ée]venir|pr[ée]viens|dire un truc|te dise un truc|annoncer)\b/.test(t)) {
+        problems.push(`amorce vide (annonce au lieu de planter un mot) : "${amorce.text}"`);
+      }
+      if (/\b(m[ée]fie|m[ée]fier|attention)\b/.test(t) && !/\b(à ton|à ta|à tes)\b/.test(t)) {
+        problems.push(`amorce vide (mise en garde sans mot planté) : "${amorce.text}"`);
+      }
+    }
+  }
+
+  // ── La chute ne doit plus être "tu m'obsèdes" pour la 9e fois ─────────────
+  // 8 des 15 dernières disaient exactement ça, sous 8 déguisements différents.
+  if (lastTacotac >= 0) {
+    const c = (beats[lastTacotac].text || "").toLowerCase();
+    const obsession = [
+      /plus (à |a )?(te sortir|penser)/, /sortir de la t[êe]te/, /penser (à|a) autre chose/,
+      /perdre (le fil|mes moyens)/, /me faire craquer/, /jm'attache/, /m'attacher un peu plus/,
+      /tomber pour toi/, /obs[èe]d/,
+    ];
+    if (obsession.some((r) => r.test(c))) {
+      problems.push(`chute déjà vue 8 fois ("tu m'obsèdes") : "${beats[lastTacotac].text}"`);
+    }
+  }
+
   // La mécanique elle-même : la chute doit RÉPONDRE à une relance courte d'elle.
   // Sans ce contrôle le modèle retombe sur "elle fait une vanne puis il en fait une".
   if (lastTacotac > 0) {
@@ -794,6 +857,17 @@ function punchlineProblems(script: Candidate): string[] {
   const last = beats[beats.length - 1];
   if (last?.type === "message" && last.from === "girl" && last.text.length > MAX_FIN_CHARS) {
     problems.push(`compliment final ${last.text.length} car (max ${MAX_FIN_CHARS}) : "${last.text}"`);
+  }
+
+  // ── Format DM : il écrit forcément en premier ─────────────────────────────
+  // 4 vidéos sur 15 s'ouvraient sur un message de la FILLE alors qu'il ne lui a
+  // jamais écrit ("n'importe quoi jsuis juste hyper occupée" en 1er message) :
+  // elle répondait à rien, la conv était incompréhensible dès la 1re seconde.
+  if (script.openPhoto) {
+    const first = beats.find((b) => b.type !== "meme");
+    if (first?.type === "message" && first.from === "girl") {
+      problems.push(`format DM : la fille parle en premier, impossible ("${first.text}")`);
+    }
   }
 
   if (script.storyReply && script.storyReply.length > MAX_STORY_CHARS) {
