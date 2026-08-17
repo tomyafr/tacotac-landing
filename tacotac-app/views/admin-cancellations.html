@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tacotac — Pourquoi ils partent</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; background:#0b0b0b; color:#F4EEE2; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; padding:28px 16px; }
+  .wrap { max-width:820px; margin:0 auto; }
+  h1 { font-size:23px; margin:0 0 4px; color:#fff; }
+  .sub { color:#8d8781; font-size:13.5px; margin:0 0 28px; }
+  .card { background:#161616; border:1px solid #262626; border-radius:16px; padding:20px; margin-bottom:18px; }
+  h2 { font-size:15px; margin:0 0 14px; color:#fff; text-transform:uppercase; letter-spacing:.5px; }
+  .stat-row { display:flex; align-items:center; gap:12px; padding:9px 0; }
+  .stat-bar-wrap { flex:1; height:10px; background:#0d0d0d; border-radius:99px; overflow:hidden; }
+  .stat-bar { height:100%; background:linear-gradient(90deg,#FF5C00,#FF9A45); border-radius:99px; }
+  .stat-label { width:190px; flex-shrink:0; font-size:13.5px; color:#F4EEE2; }
+  .stat-n { width:34px; flex-shrink:0; text-align:right; font-size:13.5px; font-weight:700; color:#FF9A45; }
+  .row { padding:13px 0; border-bottom:1px solid #222; }
+  .row:last-child { border-bottom:none; }
+  .row-top { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+  .email { font-size:13.5px; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .meta { font-size:11.5px; color:#7d7873; }
+  .badge { display:inline-block; margin-top:5px; padding:3px 9px; border-radius:99px; font-size:11px; font-weight:700; background:#2a1c08; color:#f5c98a; }
+  .badge.involuntary { background:#2a1210; color:#ff9d8f; }
+  .comment { margin-top:7px; font-size:13px; color:#c9c4bd; line-height:1.5; font-style:italic; }
+  .empty { color:#7d7873; font-size:13.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Pourquoi ils partent</h1>
+  <p class="sub">Motif de résiliation coché dans le portail Stripe, + le champ libre s'il a été rempli. Les résiliations subies (carte refusée) sont affichées à part — pas de vrais départs voulus.</p>
+
+  <div class="card">
+    <h2>Motifs (résiliations volontaires uniquement)</h2>
+    <div id="stats"><p class="empty">Chargement…</p></div>
+  </div>
+
+  <div class="card">
+    <h2>Détail, plus récent d'abord</h2>
+    <div id="list"><p class="empty">Chargement…</p></div>
+  </div>
+</div>
+
+<script>
+const LABELS = {
+  too_expensive: 'Trop cher',
+  missing_features: 'Fonctionnalités manquantes',
+  switched_service: 'Est parti ailleurs',
+  unused: 'Ne l\'utilisait plus',
+  low_quality: 'Qualité insuffisante',
+  customer_service: 'Support client',
+  too_complex: 'Trop compliqué',
+  other: 'Autre',
+  '(aucun motif donné)': 'Aucun motif donné',
+};
+const label = (k) => LABELS[k] || k;
+const fmtDate = (ts) => new Date(ts).toLocaleString('fr-FR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+const fmtAmount = (cents, interval) => cents == null ? '' : (cents/100).toFixed(2).replace('.',',') + '€' + (interval ? '/' + { week:'sem', month:'mois', year:'an' }[interval] || interval : '');
+
+async function load() {
+  const r = await fetch('/admin/cancellations/data');
+  const { stats, rows } = await r.json();
+
+  const statsEl = document.getElementById('stats');
+  if (!stats.length) {
+    statsEl.innerHTML = '<p class="empty">Aucune résiliation volontaire enregistrée pour l\'instant.</p>';
+  } else {
+    const max = Math.max(...stats.map(s => s.n));
+    statsEl.innerHTML = '';
+    for (const s of stats) {
+      const row = document.createElement('div');
+      row.className = 'stat-row';
+      row.innerHTML = `<div class="stat-label">${label(s.feedback)}</div>
+        <div class="stat-bar-wrap"><div class="stat-bar" style="width:${Math.round(s.n/max*100)}%"></div></div>
+        <div class="stat-n">${s.n}</div>`;
+      statsEl.appendChild(row);
+    }
+  }
+
+  const listEl = document.getElementById('list');
+  listEl.innerHTML = rows.length ? '' : '<p class="empty">Rien encore.</p>';
+  for (const row of rows) {
+    const div = document.createElement('div');
+    div.className = 'row';
+    div.innerHTML = `<div class="row-top">
+        <span class="email">${row.email || '(email inconnu)'}</span>
+        <span class="meta">${fmtDate(row.created_at)} · ${fmtAmount(row.amount_cents, row.plan_interval)}</span>
+      </div>
+      <span class="badge ${row.involuntary ? 'involuntary' : ''}">${row.involuntary ? 'subie (paiement refusé)' : label(row.feedback)}</span>
+      ${row.comment ? `<div class="comment">« ${row.comment} »</div>` : ''}`;
+    listEl.appendChild(div);
+  }
+}
+load();
+</script>
+</body>
+</html>

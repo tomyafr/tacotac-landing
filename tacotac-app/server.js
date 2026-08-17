@@ -20,7 +20,8 @@ import disposableDomains from 'disposable-email-domains/index.json' with { type:
 import { consumeQuota, getStatus, activatePremium, syncSubscription, deactivatePremium, claimEmailBonus, claimFounderCode, seedFounderCodes, reserveGiftEmail, setGiftPromo, releaseGiftEmail,
          createAccount, getAccountByEmail, getAccountByGoogleId, attachGoogleToAccount, linkDeviceToAccount, createSession, getSessionAccount, destroySession, effectivePlan,
          accountsForLifecycle, markAccountEmail, consumeTrainQuota, trainUsedToday, claimGiftTone, refundGiftTone,
-         getCollaboratorByPromoId, recordSale, completeQuiz } from './db.js';
+         getCollaboratorByPromoId, recordSale, completeQuiz,
+         recordCancellationFeedback, listCancellationFeedback, cancellationStats, getEmailByCustomerId } from './db.js';
 import { createPartnerRouter } from './partner.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -79,7 +80,25 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
         break;
       }
       case 'customer.subscription.deleted': {
-        deactivatePremium(event.data.object.customer);
+        const sub = event.data.object;
+        // cancellation_details existe dès qu'on active cancellation_reason côté portail
+        // (fait le 17/08) : feedback = motif coché dans la liste, comment = le champ
+        // libre que le portail affiche en plus. On collectait déjà cette donnée sans
+        // jamais la lire — ce bloc la sauvegarde avant de couper l'accès.
+        const cd = sub.cancellation_details || {};
+        const item = sub.items?.data?.[0];
+        recordCancellationFeedback({
+          customerId: sub.customer,
+          email: getEmailByCustomerId(sub.customer),
+          planInterval: item?.price?.recurring?.interval,
+          amountCents: item?.price?.unit_amount,
+          feedback: cd.feedback,
+          comment: cd.comment,
+          // reason==='cancellation_requested' = choix volontaire. payment_failed /
+          // payment_disputed = subi (carte refusée) : pas un vrai signal de départ voulu.
+          involuntary: cd.reason && cd.reason !== 'cancellation_requested',
+        });
+        deactivatePremium(sub.customer);
         break;
       }
     }
@@ -273,6 +292,14 @@ function listVideos() {
 // directement par son nom de fichier, sans passer par requireAdmin.
 app.get('/admin/tiktok', requireAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'admin-tiktok.html'));
+});
+
+// ── Console "pourquoi ils partent" — motifs de résiliation collectés via Stripe ──
+app.get('/admin/cancellations', requireAdmin, (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'admin-cancellations.html'));
+});
+app.get('/admin/cancellations/data', requireAdmin, (req, res) => {
+  res.json({ stats: cancellationStats(), rows: listCancellationFeedback(200) });
 });
 
 app.get('/admin/tiktok/data', requireAdmin, (req, res) => {

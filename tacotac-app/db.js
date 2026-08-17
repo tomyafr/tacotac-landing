@@ -110,6 +110,22 @@ db.exec(`
     stripe_session_id  TEXT UNIQUE,                       -- idempotence : jamais 2 fois la même vente
     created_at         INTEGER NOT NULL
   );
+  -- Pourquoi les gens résilient. Rempli au moment où Stripe reçoit l'annulation
+  -- (portail client) : feedback = raison cochée dans la liste fixe Stripe, comment
+  -- = le champ libre qu'affiche le portail en plus, involuntary = résiliation subie
+  -- (carte refusée) plutôt que voulue. Sans cette table on payait la collecte de la
+  -- donnée (cancellation_reason activé côté Stripe) sans jamais la lire.
+  CREATE TABLE IF NOT EXISTS cancellation_feedback (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    customer_id    TEXT,
+    email          TEXT,
+    plan_interval  TEXT,                                  -- week | month | year
+    amount_cents   INTEGER,
+    feedback       TEXT,                                  -- code Stripe : too_expensive | missing_features | ...
+    comment        TEXT,                                  -- champ libre saisi dans le portail
+    involuntary    INTEGER NOT NULL DEFAULT 0,             -- 1 = carte refusée/litige, pas un vrai choix
+    created_at     INTEGER NOT NULL
+  );
   CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
   CREATE INDEX IF NOT EXISTS idx_collab_promo ON collaborators(stripe_promo_id);
 `);
@@ -378,6 +394,13 @@ const qDowngradeCustomer = db.prepare(`
 export function getUserByCustomerId(customerId) {
   return customerId ? qByCustomer.get(customerId) : undefined;
 }
+// Email le plus fiable qu'on ait déjà en local pour ce Customer Stripe — évite un
+// appel réseau à Stripe depuis le webhook pour un simple besoin d'affichage.
+const qAccByCustomer = db.prepare('SELECT email FROM accounts WHERE stripe_customer_id = ? LIMIT 1');
+export function getEmailByCustomerId(customerId) {
+  if (!customerId) return null;
+  return qAccByCustomer.get(customerId)?.email || qByCustomer.get(customerId)?.email || null;
+}
 export function getUserByEmail(email) {
   return email ? qByEmail.get(email) : undefined;
 }
@@ -412,6 +435,35 @@ export function deactivatePremium(customerId) {
   db.prepare("UPDATE accounts SET plan = 'free', plan_expires_at = NULL WHERE stripe_customer_id = ? AND plan != 'founder'")
     .run(customerId);
   return res.changes > 0;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  POURQUOI ILS PARTENT — feedback de résiliation
+// ══════════════════════════════════════════════════════════════
+const qInsertCancelFeedback = db.prepare(`
+  INSERT INTO cancellation_feedback (customer_id, email, plan_interval, amount_cents, feedback, comment, involuntary, created_at)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+`);
+export function recordCancellationFeedback({ customerId, email, planInterval, amountCents, feedback, comment, involuntary }) {
+  qInsertCancelFeedback.run(
+    customerId || null, email || null, planInterval || null, amountCents ?? null,
+    feedback || null, comment || null, involuntary ? 1 : 0, Date.now()
+  );
+}
+export function listCancellationFeedback(limit = 200) {
+  return db.prepare('SELECT * FROM cancellation_feedback ORDER BY created_at DESC LIMIT ?').all(limit);
+}
+// Compte par motif : sert à voir en un coup d'œil ce qui revient le plus, sans
+// dérouler toute la liste. Les lignes 'involuntary' (carte refusée) sont exclues
+// du décompte — ce ne sont pas des DÉPARTS VOULUS, les mélanger fausserait le signal.
+export function cancellationStats() {
+  return db.prepare(`
+    SELECT COALESCE(feedback, '(aucun motif donné)') AS feedback, COUNT(*) AS n
+    FROM cancellation_feedback
+    WHERE involuntary = 0
+    GROUP BY feedback
+    ORDER BY n DESC
+  `).all();
 }
 
 // ══════════════════════════════════════════════════════════════
