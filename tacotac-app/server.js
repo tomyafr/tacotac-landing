@@ -1968,6 +1968,29 @@ app.post('/api/checkout', async (req, res) => {
     const price = PRICES[plan];
     if (!price) return res.status(500).json({ error: 'Offre indisponible.' });
 
+    // Anti-double-abonnement. Vu en vrai le 17/08 : un client a payé deux fois le
+    // Mensuel (2× 9,99€/mois) en rouvrant le paywall sur un 2e appareil/onglet
+    // avant que le 1er paiement soit reconnu côté app — Checkout crée un NOUVEAU
+    // Customer Stripe à chaque appel de customer_email, rien n'empêchait ça.
+    // 1) Vérif locale (rapide, couvre le même appareil).
+    if (getStatus(deviceId, req.account).isPremium) {
+      return res.json({ alreadyPremium: true });
+    }
+    // 2) Vérif directe sur Stripe par email (couvre un 2e appareil AVANT que le
+    // webhook/la confirmation ait eu le temps de mettre à jour la base locale —
+    // c'est exactement le trou qui a laissé passer le doublon).
+    if (req.account?.email) {
+      try {
+        const existing = await stripe.customers.list({ email: req.account.email, limit: 5 });
+        for (const c of existing.data) {
+          const subs = await stripe.subscriptions.list({ customer: c.id, status: 'all', limit: 5 });
+          if (subs.data.some((s) => s.status === 'active' || s.status === 'trialing')) {
+            return res.json({ alreadyPremium: true });
+          }
+        }
+      } catch (e) { console.error('[checkout] vérif doublon Stripe:', e?.message); }
+    }
+
     // Code promo optionnel (cadeau -10%) : on le pré-applique s'il est valide.
     // Stripe interdit d'avoir à la fois `discounts` et `allow_promotion_codes`.
     let discounts;

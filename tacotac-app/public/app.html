@@ -2606,6 +2606,12 @@
       try{
         const d=await (await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({plan:'weekly',downsell:true})})).json();
         if(d.url){window.location.href=d.url;return;}
+        if(d.alreadyPremium){
+          hideDownsell();
+          fetch('/api/me').then(r=>r.json()).then(applyQuota);
+          showNotice('T\'es déjà Premium 🦊','Ton abonnement est actif, pas besoin de repayer.',{fox:true,cta:'Nickel 🦊'});
+          return;
+        }
         throw new Error(d.error||'Erreur');
       }catch(e){
         toast('Le paiement n\'a pas pu démarrer, réessaie');
@@ -2689,6 +2695,15 @@
         const r=await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({plan:selectedPlan,promo:promoCode})});
         const data=await r.json();
         if(data.url){window.location.href=data.url;return;} // → Stripe Checkout
+        // Le serveur a détecté un abonnement déjà actif (même appareil ou même email) :
+        // on évite un 2e paiement plutôt que d'afficher une erreur générique.
+        if(data.alreadyPremium){
+          gate.classList.remove('show','sheet');
+          fetch('/api/me').then(r=>r.json()).then(applyQuota);
+          showNotice('T\'es déjà Premium 🦊','Ton abonnement est actif, pas besoin de repayer.',{fox:true,cta:'Nickel 🦊'});
+          lbl.textContent=prev;btn.style.pointerEvents='auto';btn.style.opacity='1';
+          return;
+        }
         throw new Error(data.error||'Erreur');
       }catch(e){
         err.textContent="Le paiement n'a pas pu démarrer. Réessaie."; err.style.display='block';
