@@ -473,9 +473,13 @@ function buildGenInstruction(angles: { story: string; outro: string; archetype: 
       ? `RÈGLES DE STRUCTURE — FORMAT "DM" (${him} n'a jamais parlé à ${her} avant) :
 - storyReply : laisse une chaîne VIDE "". Ce format ne répond à aucune story.
 - La vidéo s'ouvre sur la PHOTO de ${her} en plein écran (ajoutée automatiquement, tu n'as rien à écrire pour ça).
+⛔⛔ ${him} N'A JAMAIS PARLÉ À ${her}. C'EST LUI QUI ÉCRIT LE PREMIER, TOUJOURS.
+Le tout premier message de la conv est donc SON DM à lui. ${her} ne peut PAS parler avant : elle répondrait à un message qui n'existe pas.
+⚠️ L'archétype imposé plus haut décrit une situation qui vient d'ELLE ("elle est occupée", "elle mentionne un autre mec"...) : en format DM, elle ne peut l'exprimer QUE dans sa RÉPONSE, jamais dans le premier message. C'est l'erreur qui a été commise 4 fois sur 15 — la vidéo s'ouvrait sur "n'importe quoi jsuis juste hyper occupée" alors que personne ne lui avait rien dit.
+
 - beats : 7 à 9 éléments, dans CET ordre — c'est la MÉCANIQUE EN 3 TEMPS, respecte-la à la lettre :
   1. {"kind":"meme","asset":"..."} — la RÉACTION en voyant sa photo : choisis un meme qui bave / affamé / coquin / sous le charme. C'est le premier beat, obligatoire.
-  2. {"kind":"tacotac",...} — l'outil DM écrit **L'AMORCE** (45 car. max, incompréhensible seule)
+  2. {"kind":"tacotac",...} — l'outil DM écrit **L'AMORCE** (45 car. max, incompréhensible seule). ⚠️ C'EST LE PREMIER TEXTE DE LA CONV : aucun message de ${her} avant lui.
   3. {"kind":"message","from":"client"} — le même texte, envoyé
   4. {"kind":"message","from":"girl"} — **LA RELANCE** : 4 MOTS MAX, aucune vanne ("non pourquoi ?", "de quoi")
   5. {"kind":"tacotac",...} — l'outil Réplique écrit **LA CHUTE** (65 car. max, image archi-connue)
