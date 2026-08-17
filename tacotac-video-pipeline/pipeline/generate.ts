@@ -462,10 +462,13 @@ function buildGenInstruction(angles: { story: string; outro: string; archetype: 
 - ⚠️ Le storyReply fait 60 CARACTÈRES MAXIMUM, une seule idée lui aussi. "tu postes ça un dimanche soir en sachant très bien ce que ça fait aux gens, assume au moins" = beaucoup trop long, coupe.
 - ⚠️ Les messages de la conv sont COURTS eux aussi : une ligne, comme un vrai DM. Jamais deux idées dans un message.
 - ⚠️ ÉCRIS AVEC LES ACCENTS. "reponds", "gerer", "deja", "meme" sans accent = faute visible à l'écran. On écrit en phonétique relâchée (jsuis, jte, tkt), PAS sans accents.
-- ⛔ LA FIN — 40 CARACTÈRES MAX, UNE SEULE IDÉE, PAS DE VIRGULE. "ok tu m'as eue là, l'autre il peut ranger ses affaires" = deux idées, on ne comprend plus qui est "l'autre" : coupe après "ok tu m'as eue là". Le compliment referme la vidéo, il ne raconte pas une histoire.
-- ⛔ LA FIN — varie le compliment. Les 4 dernières vidéos finissaient TOUTES sur "ok là t'es fort". C'est mort, trouve autre chose : "t'es mignon toi", "ok tu m'as eue", "jm'attendais pas à ça", "bon t'as gagné", "arrête jvais rougir", "c'est malin ça". Le compliment doit sonner comme ELLE, pas comme une formule.
+- ⛔ LA FIN — 40 CARACTÈRES MAX, UNE SEULE IDÉE, PAS DE VIRGULE. Le compliment referme la vidéo, il ne raconte pas une histoire.
+- ⛔ LA FIN EST UN COMPLIMENT DIRECT SUR LUI, et rien d'autre. Elle dit qu'il est fort ou qu'il est mignon, point. C'est exactement le registre des vidéos qui marchent :
+  ✅ "t'es trop fort toi", "ok t'es trop mignon", "arrête jvais rougir", "t'es mignon toi", "ok tu m'as eue", "jm'attendais pas à ça", "bon t'as gagné", "c'est malin ça", "ok toi tu sais parler", "t'as de la répartie toi"
+  ⛔ INTERDIT — tout ce qui suppose qu'ils se connaissent déjà ou se sont déjà vus : "tu m'as manqué", "comme d'hab", "ça fait longtemps", "on se revoit quand", "j'ai hâte de te revoir". Ils ne se sont JAMAIS parlé avant cette conv : elle ne peut pas être nostalgique de lui.
+  ⛔ INTERDIT aussi : la logistique ("jdois filer", "on en reparle", "envoie ton snap") et tout ce qui n'est pas un compliment. La vidéo s'arrête sur ELLE qui reconnaît qu'il a gagné, pas sur un rendez-vous.
 - ⛔ Sujets INTERDITS (ils sont revenus dans 1 vidéo sur 4, on n'en veut plus) : le profil fake, les photos truquées, les filtres, demander/donner une preuve que c'est bien lui. Trouve autre chose.
-- Fin OBLIGATOIRE : le tout dernier beat est un message de ${her} qui COMPLIMENTE ${him} — du genre "t'es trop fort", "ok t'es mignon toi", "t'as gagné là". Pas de date, pas de numéro, pas de snap : la vidéo s'arrête sur le compliment, c'est ça la preuve que la disquette a marché.
+- Fin OBLIGATOIRE : le tout dernier beat est un message de ${her} qui COMPLIMENTE ${him} — "t'es trop fort toi", "ok t'es trop mignon", "arrête jvais rougir". Pas de date, pas de numéro, pas de snap, aucune logistique : la vidéo s'arrête sur le compliment, c'est ça la preuve que la disquette a marché.
 - girlName : prénom crédible${REVERSED ? " pour LE MEC dragué (le champ s'appelle « girlName » mais tient ici le prénom du mec)" : ""}. status : ex "en ligne il y a 2h".`;
 
   const structureRules =
@@ -859,8 +862,20 @@ function punchlineProblems(script: Candidate): string[] {
   // Le compliment final : il referme la vidéo, il ne raconte pas une 2e histoire.
   // Sans ce contrôle il dérivait vers deux propositions séparées par une virgule.
   const last = beats[beats.length - 1];
-  if (last?.type === "message" && last.from === "girl" && last.text.length > MAX_FIN_CHARS) {
-    problems.push(`compliment final ${last.text.length} car (max ${MAX_FIN_CHARS}) : "${last.text}"`);
+  if (last?.type === "message" && last.from === "girl") {
+    if (last.text.length > MAX_FIN_CHARS) {
+      problems.push(`compliment final ${last.text.length} car (max ${MAX_FIN_CHARS}) : "${last.text}"`);
+    }
+    const f = last.text.toLowerCase();
+    // Ils ne se sont JAMAIS parlé avant : elle ne peut pas être nostalgique de lui.
+    // Vu en vrai : "bon ok tu m'as manqué en vrai" pour clore un DM à froid.
+    if (/manqu[ée]|comme d'hab|[çc]a fait longtemps|te revoir|se revoit|depuis le temps|retrouver/.test(f)) {
+      problems.push(`fin : suppose qu'ils se connaissent déjà : "${last.text}"`);
+    }
+    // Une fin logistique n'est pas un compliment — elle vole la conclusion.
+    if (/jdois filer|jte laisse|on en reparle|envoie ton|ton snap|plus tard|à plus/.test(f)) {
+      problems.push(`fin logistique au lieu d'un compliment : "${last.text}"`);
+    }
   }
 
   // ── Format DM : il écrit forcément en premier ─────────────────────────────
