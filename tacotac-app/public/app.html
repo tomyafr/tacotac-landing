@@ -410,10 +410,6 @@
           <span style="flex:1;"><span class="dr-name" style="font-size:13.5px;">Mon compte</span></span>
         </button>
         <button class="dr-cta" id="drawerCta" style="margin-top:12px;">✨ Passer Premium</button>
-        <!-- Visible seulement pour les abonnés : ouvre le portail Stripe (résilier,
-             changer de carte, factures). Sans ça, "Résiliable à tout moment" sur le
-             paywall était une promesse impossible à tenir dans l'app. -->
-        <button id="drawerBilling" style="display:none;width:100%;margin-top:10px;background:none;border:1px solid #2a2a2e;border-radius:12px;padding:11px;color:#9a9aa4;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;">Gérer mon abonnement</button>
       </div>
     </aside>
 
@@ -953,13 +949,34 @@
           <button id="authSwitch" style="width:100%;margin-top:12px;background:none;border:none;color:#8a8580;font-family:inherit;font-size:13px;cursor:pointer;">Pas encore de compte ? <span style="color:#FF7A33;font-weight:600;">Inscris-toi</span></button>
         </div>
 
-        <!-- Vue connecté -->
-        <div id="authIn" style="display:none;text-align:center;">
-          <div style="font-size:38px;margin-bottom:6px;">🦊</div>
-          <div class="display" style="color:#fff;font-size:22px;line-height:1.1;">Connecté</div>
-          <p id="authWho" style="color:#8a8580;font-size:14px;margin:8px 0 4px;word-break:break-all;"></p>
-          <div id="authPlan" style="display:inline-block;margin:6px 0 16px;padding:6px 14px;border-radius:99px;font-size:12.5px;font-weight:700;"></div>
-          <button id="authLogout" style="width:100%;padding:13px;background:#141414;border:1.5px solid #2a2a2a;color:#8a8580;font-family:inherit;font-weight:600;font-size:14px;border-radius:14px;cursor:pointer;">Se déconnecter</button>
+        <!-- Vue connecté — profil + statut d'abonnement dans des sections distinctes,
+             plutôt qu'un empilement de lignes centrées. -->
+        <div id="authIn" style="display:none;">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div style="flex-shrink:0;width:56px;height:56px;border-radius:16px;background:rgba(255,92,0,.1);border:1.5px solid rgba(255,122,24,.3);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+              <img src="assets/fox_chill.png" style="width:82%;height:82%;object-fit:contain;">
+            </div>
+            <div style="min-width:0;">
+              <div id="authWho" style="color:#fff;font-size:15.5px;font-weight:700;word-break:break-all;line-height:1.3;"></div>
+              <div id="authPlan" style="display:inline-block;margin-top:5px;padding:4px 11px;border-radius:99px;font-size:11.5px;font-weight:700;"></div>
+            </div>
+          </div>
+
+          <div style="height:1px;background:#232323;margin:20px 0 16px;"></div>
+
+          <div style="color:#6e6a66;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;">Abonnement</div>
+          <!-- Volontairement discret et logé ICI seulement (pas dans le menu principal) :
+               visible pour qui vient le chercher dans "Mon compte", pas mis en avant
+               pour ne pas donner l'idée de résilier à quelqu'un qui n'y pensait pas. -->
+          <button id="authBilling" style="display:none;width:100%;padding:13px 14px;background:#141414;border:1px solid #232323;color:#e8e6e3;font-family:inherit;font-weight:600;font-size:13.5px;border-radius:14px;cursor:pointer;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <span>Gérer mon abonnement</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;"><path d="M9 6l6 6-6 6" stroke="#8a8580" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <p id="authNoSub" style="display:none;color:#56524e;font-size:12.5px;margin:0;line-height:1.5;">Aucun abonnement payant associé à ce compte.</p>
+
+          <div style="height:1px;background:#232323;margin:20px 0 16px;"></div>
+
+          <button id="authLogout" style="width:100%;padding:13px;background:none;border:1px solid #2a2a2a;color:#8a8580;font-family:inherit;font-weight:600;font-size:14px;border-radius:14px;cursor:pointer;">Se déconnecter</button>
         </div>
 
         <button id="authClose" style="display:block;margin:14px auto 0;background:none;border:none;color:#56524e;font-family:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline;">Fermer</button>
@@ -2764,6 +2781,13 @@
         planEl.style.background=isP?'rgba(255,92,0,.15)':'rgba(255,255,255,.06)';
         planEl.style.color=isP?'#FF7A33':'#8a8580';
         planEl.style.border=isP?'1px solid rgba(255,92,0,.4)':'1px solid #2a2a2a';
+        // Le bouton de gestion suppose un abonnement Stripe réel. Un plan gratuit
+        // n'en a pas ; les accès offerts (fondateur, collaborateur) non plus — la
+        // ligne "aucun abonnement" les remplace pour rester honnête plutôt que
+        // d'afficher un bouton qui échouerait au clic.
+        const hasStripeSub=currentAccount.plan==='premium';
+        document.getElementById('authBilling').style.display=hasStripeSub?'flex':'none';
+        document.getElementById('authNoSub').style.display=hasStripeSub?'none':'block';
       }else{
         inV.style.display='none';outV.style.display='block';
         const isLogin=authMode==='login';
@@ -2974,12 +2998,6 @@
         wrap.appendChild(b);
       });
       document.getElementById('drawerCta').style.display=quota.isPremium?'none':'block';
-      // Visible pour tout accès premium (payant, fondateur, collaborateur). Un
-      // compte fondateur n'a pas de vrai abonnement Stripe : le clic renverra alors
-      // "abonnement introuvable" plutôt qu'un bouton invisible — plus facile à
-      // tester, et le message reste honnête pour ce cas.
-      const bill=document.getElementById('drawerBilling');
-      if(bill)bill.style.display=quota.isPremium?'block':'none';
     }
     function openDrawer(){renderDrawer();drawer.classList.add('show');drawerOverlay.classList.add('show');track('menu_open');}
     function closeDrawer(){drawer.classList.remove('show');drawerOverlay.classList.remove('show');}
@@ -2995,15 +3013,16 @@
     document.getElementById('drawerHist').addEventListener('click',()=>{closeDrawer();histRender();renderStats();histOverlay.classList.add('show');track('menu_nav',{to:'hist'});});
     document.getElementById('drawerAccount').addEventListener('click',()=>{closeDrawer();openAuth();track('menu_nav',{to:'account'});});
     document.getElementById('drawerCta').addEventListener('click',()=>{closeDrawer();openGate();track('menu_nav',{to:'premium'});});
-    document.getElementById('drawerBilling').addEventListener('click',async(e)=>{
+    // Logé uniquement dans "Mon compte" (authBilling) — jamais dans le menu principal,
+    // pour ne pas donner l'idée de résilier à quelqu'un qui n'était pas venu pour ça.
+    async function openBillingPortal(e){
       const b=e.currentTarget, prev=b.textContent;
       b.textContent='Un instant…';b.style.pointerEvents='none';
       try{
         const d=await (await fetch('/api/billing-portal',{method:'POST'})).json();
         if(d.url){window.location.href=d.url;return;} // → portail Stripe
         if(d.code==='login_required'){
-          closeDrawer();openAuth();
-          showNotice('Connecte-toi d\'abord','Utilise l\'email avec lequel t\'as payé, puis retourne dans le menu.',{emoji:'🔑',cta:'OK'});
+          showNotice('Connecte-toi d\'abord','Utilise l\'email avec lequel t\'as payé.',{emoji:'🔑',cta:'OK'});
         } else {
           showNotice('Abonnement introuvable',d.error||'Écris-nous et on s\'en occupe à la main.',{emoji:'⚠️',cta:'OK'});
         }
@@ -3011,7 +3030,8 @@
         showNotice('Oups','La gestion de l\'abonnement n\'a pas pu s\'ouvrir, réessaie.',{emoji:'⚠️',cta:'OK'});
       }
       b.textContent=prev;b.style.pointerEvents='auto';
-    });
+    }
+    document.getElementById('authBilling').addEventListener('click',openBillingPortal);
     // swipe depuis le bord gauche pour ouvrir (geste natif d'app)
     (function initDrawerSwipe(){
       let sx=0,sy=0,edge=false;
