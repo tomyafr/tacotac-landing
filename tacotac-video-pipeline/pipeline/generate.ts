@@ -461,6 +461,8 @@ function buildGenInstruction(angles: { story: string; outro: string; archetype: 
 - ⚠️ RAPPEL : la relance de ${her} ("non pourquoi ?") n'est PAS un message creux interdit — c'est le pivot de la mécanique. C'est la SEULE exception à la règle "pas de message creux".
 - ⚠️ Le storyReply fait 60 CARACTÈRES MAXIMUM, une seule idée lui aussi. "tu postes ça un dimanche soir en sachant très bien ce que ça fait aux gens, assume au moins" = beaucoup trop long, coupe.
 - ⚠️ Les messages de la conv sont COURTS eux aussi : une ligne, comme un vrai DM. Jamais deux idées dans un message.
+- ⛔ ${her.toUpperCase()} N'ENVOIE JAMAIS DEUX MESSAGES DE SUITE. Jamais deux beats "girl" consécutifs, nulle part. Deux bulles grises d'affilée = elle se parle à elle-même = on voit tout de suite que la conv est fausse. Elle dit UNE chose, puis elle attend qu'il réponde. Si tu as envie de lui faire dire deux trucs, garde le meilleur et jette l'autre.
+  ⛔ Le piège précis à éviter en fin de vidéo : écrire une réplique tiède ("mdrr sympa mais jai vraiment pas le temps la") PUIS ajouter le compliment dans un 2e message. Le compliment doit être son SEUL et unique dernier message.
 - ⚠️ ÉCRIS AVEC LES ACCENTS. "reponds", "gerer", "deja", "meme" sans accent = faute visible à l'écran. On écrit en phonétique relâchée (jsuis, jte, tkt), PAS sans accents.
 - ⛔ LA FIN — 40 CARACTÈRES MAX, UNE SEULE IDÉE, PAS DE VIRGULE. Le compliment referme la vidéo, il ne raconte pas une histoire.
 - ⛔ LA FIN EST UN COMPLIMENT DIRECT SUR LUI, et rien d'autre. Elle dit qu'il est fort ou qu'il est mignon, point. C'est exactement le registre des vidéos qui marchent :
@@ -875,6 +877,20 @@ function punchlineProblems(script: Candidate): string[] {
     // Une fin logistique n'est pas un compliment — elle vole la conclusion.
     if (/jdois filer|jte laisse|on en reparle|envoie ton|ton snap|plus tard|à plus/.test(f)) {
       problems.push(`fin logistique au lieu d'un compliment : "${last.text}"`);
+    }
+  }
+
+  // ── Elle ne double JAMAIS ses messages ────────────────────────────────────
+  // Deux bulles grises d'affilée, ça donne l'impression qu'elle se parle à
+  // elle-même — c'est le tell n°1 de la fausse conv. Vu 2 fois de suite en fin
+  // de vidéo : le modèle écrivait une réplique tiède ("mdrr sympa mais jai
+  // vraiment pas le temps la"), puis rajoutait le compliment dans un 2e message.
+  // Elle attend toujours qu'il réponde. (Lui peut enchaîner : c'est naturel
+  // qu'un mec envoie deux messages de suite, et ça n'a jamais choqué.)
+  const msgs = beats.filter((b) => b.type === "message");
+  for (let i = 0; i < msgs.length - 1; i++) {
+    if (msgs[i].from === "girl" && msgs[i + 1].from === "girl") {
+      problems.push(`elle envoie 2 messages d'affilée : "${msgs[i].text}" + "${msgs[i + 1].text}"`);
     }
   }
 
