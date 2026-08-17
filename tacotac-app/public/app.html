@@ -410,6 +410,10 @@
           <span style="flex:1;"><span class="dr-name" style="font-size:13.5px;">Mon compte</span></span>
         </button>
         <button class="dr-cta" id="drawerCta" style="margin-top:12px;">✨ Passer Premium</button>
+        <!-- Visible seulement pour les abonnés : ouvre le portail Stripe (résilier,
+             changer de carte, factures). Sans ça, "Résiliable à tout moment" sur le
+             paywall était une promesse impossible à tenir dans l'app. -->
+        <button id="drawerBilling" style="display:none;width:100%;margin-top:10px;background:none;border:1px solid #2a2a2e;border-radius:12px;padding:11px;color:#9a9aa4;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;">Gérer mon abonnement</button>
       </div>
     </aside>
 
@@ -2970,6 +2974,10 @@
         wrap.appendChild(b);
       });
       document.getElementById('drawerCta').style.display=quota.isPremium?'none':'block';
+      // La gestion d'abonnement n'a de sens que pour un abonné payant. Les accès
+      // offerts (fondateur, collaborateur) n'ont pas d'abonnement Stripe.
+      const bill=document.getElementById('drawerBilling');
+      if(bill)bill.style.display=(quota.isPremium&&quota.plan==='premium')?'block':'none';
     }
     function openDrawer(){renderDrawer();drawer.classList.add('show');drawerOverlay.classList.add('show');track('menu_open');}
     function closeDrawer(){drawer.classList.remove('show');drawerOverlay.classList.remove('show');}
@@ -2985,6 +2993,23 @@
     document.getElementById('drawerHist').addEventListener('click',()=>{closeDrawer();histRender();renderStats();histOverlay.classList.add('show');track('menu_nav',{to:'hist'});});
     document.getElementById('drawerAccount').addEventListener('click',()=>{closeDrawer();openAuth();track('menu_nav',{to:'account'});});
     document.getElementById('drawerCta').addEventListener('click',()=>{closeDrawer();openGate();track('menu_nav',{to:'premium'});});
+    document.getElementById('drawerBilling').addEventListener('click',async(e)=>{
+      const b=e.currentTarget, prev=b.textContent;
+      b.textContent='Un instant…';b.style.pointerEvents='none';
+      try{
+        const d=await (await fetch('/api/billing-portal',{method:'POST'})).json();
+        if(d.url){window.location.href=d.url;return;} // → portail Stripe
+        if(d.code==='login_required'){
+          closeDrawer();openAuth();
+          showNotice('Connecte-toi d\'abord','Utilise l\'email avec lequel t\'as payé, puis retourne dans le menu.',{emoji:'🔑',cta:'OK'});
+        } else {
+          showNotice('Abonnement introuvable',d.error||'Écris-nous et on s\'en occupe à la main.',{emoji:'⚠️',cta:'OK'});
+        }
+      }catch(err){
+        showNotice('Oups','La gestion de l\'abonnement n\'a pas pu s\'ouvrir, réessaie.',{emoji:'⚠️',cta:'OK'});
+      }
+      b.textContent=prev;b.style.pointerEvents='auto';
+    });
     // swipe depuis le bord gauche pour ouvrir (geste natif d'app)
     (function initDrawerSwipe(){
       let sx=0,sy=0,edge=false;

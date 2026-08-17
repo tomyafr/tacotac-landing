@@ -2035,6 +2035,47 @@ app.post('/api/checkout', async (req, res) => {
   }
 });
 
+// ── Portail client Stripe : résilier / changer de carte / voir ses factures ──
+// Le paywall promet "Résiliable à tout moment" mais il n'existait AUCUN moyen de
+// le faire dans l'app : un abonné a dû écrire sur TikTok pour demander comment
+// arrêter. Le portail est hébergé par Stripe (rien à maintenir ici) et l'annulation
+// y est configurée en fin de période : il garde ce qu'il a payé, et rien ne se
+// représente ensuite.
+//
+// On retrouve son Customer Stripe par l'email du compte connecté. Sans compte,
+// impossible de l'identifier de façon sûre — on le renvoie donc vers la connexion
+// plutôt que d'ouvrir le portail de quelqu'un d'autre.
+app.post('/api/billing-portal', async (req, res) => {
+  try {
+    if (!stripe) return res.status(500).json({ error: 'Service indisponible.' });
+    attachDevice(req, res);
+    attachAccount(req);
+    const email = req.account?.email;
+    if (!email) {
+      return res.status(401).json({ error: 'Connecte-toi avec l’email utilisé pour payer.', code: 'login_required' });
+    }
+    const customers = await stripe.customers.list({ email, limit: 10 });
+    // Un même email peut avoir plusieurs Customers (anciens doublons) : on prend
+    // celui qui porte un abonnement vivant, sinon le plus récent.
+    let target = null;
+    for (const c of customers.data) {
+      const subs = await stripe.subscriptions.list({ customer: c.id, status: 'all', limit: 5 });
+      if (subs.data.some((s) => s.status === 'active' || s.status === 'trialing')) { target = c; break; }
+    }
+    if (!target) target = customers.data[0];
+    if (!target) return res.status(404).json({ error: 'Aucun abonnement trouvé pour cet email.', code: 'no_subscription' });
+
+    const session = await stripe.billingPortal.sessions.create({
+      customer: target.id,
+      return_url: `${PUBLIC_URL}/app`,
+    });
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error('[billing-portal] erreur:', err?.message || err);
+    res.status(500).json({ error: 'Impossible d’ouvrir la gestion de l’abonnement.' });
+  }
+});
+
 // ── Confirmer au retour de Stripe (active le premium sans dépendre du webhook) ──
 app.get('/api/checkout/confirm', async (req, res) => {
   try {
