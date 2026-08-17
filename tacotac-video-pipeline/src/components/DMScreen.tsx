@@ -55,7 +55,13 @@ export const DMScreen: React.FC<{
           overflow: "hidden",
         }}
       >
-        {girl.storyThumbnail && showStory && (
+        {/* Le bloc story ne s'affiche QUE s'il y a vraiment une réponse à une story
+            (format A). En format DM à froid, storyReply est vide : on affichait
+            quand même le bandeau "Vous avez répondu à sa story" + la vignette,
+            alors qu'il n'a répondu à aucune story. Pire, le bloc apparaissait SEUL
+            (sans bulle, puisque reply était vide) et son 1er message tombait 0,4 s
+            plus tard en bulle séparée — d'où l'effet "fausse conv" vu par Tom. */}
+        {storyReply && girl.storyThumbnail && showStory && (
           <StoryReply thumbnail={girl.storyThumbnail} reply={storyReply} />
         )}
         {visible.map(({ it, index }) => {

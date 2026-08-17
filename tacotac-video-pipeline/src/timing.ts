@@ -55,7 +55,13 @@ export function buildScenes(script: Script): Scene[] {
     if (pending.length === 0) return;
     const base = [...revealed];
     const reveals = [...pending];
-    const lead = firstDm && script.storyReply ? D.storyOpen : D.dmLead;
+    // Délai avant le 1er message de la scène. Cas par cas :
+    //  - format A, 1re scène : on laisse le temps de lire la réponse à la story.
+    //  - écran déjà rempli (base non vide) : petit délai pour laisser finir le fondu.
+    //  - écran VIDE (format DM à froid, 1re scène) : AUCUN délai. Sinon on regardait
+    //    0,4 s de noir avant que son message tombe — c'est ce qui faisait "fausse
+    //    conv". Le message arrive maintenant avec le fondu, d'un seul tenant.
+    const lead = firstDm && script.storyReply ? D.storyOpen : base.length === 0 ? 0 : D.dmLead;
     let t = lead;
     const starts: number[] = [];
     for (const r of reveals) {
