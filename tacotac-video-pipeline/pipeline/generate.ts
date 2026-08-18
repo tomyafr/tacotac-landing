@@ -232,7 +232,7 @@ const CONVERSATION_ARCHETYPES = [
   "elle mentionne un autre mec / une légère compétition, il doit rester confiant sans paraître jaloux ni désespéré",
   "long silence de sa part puis elle relance elle-même, ou l'inverse — le client relance après un silence sans être lourd",
   "elle le vanne sur un détail (son look, sa réplique, son âge...) et le banter monte crescendo en complicité",
-  "elle pose une question piège / directe sur ses intentions (sérieux vs juste physique), il doit répondre avec assurance sans fuir",
+  "elle pose une question piège sur ce qu'il veut vraiment, il doit répondre avec assurance sans fuir ni se justifier",
   "elle change de sujet ou évite une question, le client doit rebondir sans s'accrocher ni paraître vexé",
 ];
 // Même registre que CONVERSATION_ARCHETYPES, rôles inversés : lui teste/négocie/hésite,
@@ -244,7 +244,7 @@ const CONVERSATION_ARCHETYPES_REVERSED = [
   "il mentionne une autre fille / une légère compétition, elle doit rester confiante sans paraître jalouse ni désespérée",
   "long silence de sa part puis il relance lui-même, ou l'inverse — la cliente relance après un silence sans être lourde",
   "il la vanne sur un détail (son look, sa réplique, son âge...) et le banter monte crescendo en complicité",
-  "il pose une question piège / directe sur ses intentions (sérieux vs juste physique), elle doit répondre avec assurance sans fuir",
+  "il pose une question piège sur ce qu'elle veut vraiment, elle doit répondre avec assurance sans fuir ni se justifier",
   "il change de sujet ou évite une question, la cliente doit rebondir sans s'accrocher ni paraître vexée",
 ];
 
@@ -825,6 +825,21 @@ function punchlineProblems(script: Candidate): string[] {
       if (/\b(m[ée]fie|m[ée]fier|attention)\b/.test(t) && !/\b(à ton|à ta|à tes)\b/.test(t)) {
         problems.push(`amorce vide (mise en garde sans mot planté) : "${amorce.text}"`);
       }
+    }
+  }
+
+  // ── Plus jamais "sérieux ou juste le physique" ────────────────────────────
+  // Tom : "il y a trop souvent dans les vidéos un truc du style ok mais toi tu
+  // cherche du sérieux ou juste pour mon physique". Racine : l'archétype de conv
+  // décrivait cette question mot pour mot entre parenthèses — même maladie que
+  // "t'as l'énergie de..." et "snapchat", le modèle recopiait l'exemple au lieu
+  // de s'en inspirer. Le pool est corrigé ; ce filtre couvre les scénarios déjà
+  // en file et toute résurgence, sur TOUS les messages (pas que l'amorce).
+  for (const b of beats) {
+    if (b.type !== "message" || !b.text) continue;
+    const t = b.text.toLowerCase();
+    if (/s[ée]rieux/.test(t) && /(juste|que).{0,20}(physique|le physique)/.test(t)) {
+      problems.push(`tic "sérieux ou juste le physique" : "${b.text}"`);
     }
   }
 
