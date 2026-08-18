@@ -1,7 +1,6 @@
 import React from "react";
 import { AbsoluteFill } from "remotion";
-import { dm, fonts } from "../theme";
-import { Avatar } from "./Avatar";
+import { dm } from "../theme";
 import { MessageBubble } from "./MessageBubble";
 import { StoryReply } from "./StoryReply";
 import type { Girl } from "../schema";
@@ -42,36 +41,22 @@ export const DMScreen: React.FC<{
   const startIndex = fitsWithStory ? 0 : Math.max(0, items.length - MAX_WITHOUT_STORY);
   const visible = items.slice(startIndex).map((it, i) => ({ it, index: startIndex + i }));
 
+  // Le carré story + bulle DOIVENT être UN SEUL bloc visuel qui apparaît d'un coup —
+  // jamais le carré tout seul suivi d'une bulle qui tombe après. Deux cas :
+  //  - format A (storyReply rempli) : c'est le texte de storyReply, comme toujours.
+  //  - format B (DM à froid, storyReply vide) : on réutilise le TOUT PREMIER message
+  //    de la conv (le 1er "client") comme contenu du bloc, au lieu de le laisser
+  //    partir dans la liste normale avec son propre délai — c'est ce détour par
+  //    deux mécanismes séparés qui créait le décalage de 0,4-0,5 s signalé par Tom.
+  const firstItem = items[0] ? asBubble(items[0]) : null;
+  const fusedReply = storyReply || (firstItem?.from === "client" ? firstItem.text : undefined);
+  const showFused = Boolean(girl.storyThumbnail && showStory && fusedReply);
+  // Le 1er message ne doit apparaître qu'UNE fois : dans le bloc fusionné (format B),
+  // pas aussi comme bulle normale juste en dessous.
+  const skipFirstAsBubble = showFused && !storyReply;
+
   return (
     <AbsoluteFill style={{ background: dm.bg }}>
-      {/* En-tête de conv persistant (avatar + nom + statut). Sans lui, le format DM
-          à froid ouvrait sur une bulle SEULE sur fond noir dès que le faux bandeau
-          "Vous avez répondu à sa story" a été retiré (il mentait — aucune story
-          n'existe dans ce format) : ça recréait l'effet "fausse conv" que ce bandeau
-          était censé éviter, juste sous une autre forme. Un vrai DM affiche toujours
-          qui on écrit — c'est ce bloc qui porte cette info maintenant, honnêtement.
-          Toujours là dès la 1re frame de la scène, jamais retardé. */}
-      <div
-        style={{
-          position: "absolute",
-          top: 44,
-          left: 40,
-          right: 40,
-          display: "flex",
-          alignItems: "center",
-          gap: 18,
-        }}
-      >
-        <Avatar name={girl.name} src={girl.avatar} size={64} />
-        <div>
-          <div style={{ fontFamily: fonts.body, fontSize: 30, fontWeight: 700, color: dm.textPrimary }}>
-            {girl.name}
-          </div>
-          <div style={{ fontFamily: fonts.body, fontSize: 22, color: "#8E8E93", marginTop: 2 }}>
-            {girl.status}
-          </div>
-        </div>
-      </div>
       <div
         style={{
           position: "absolute",
@@ -84,28 +69,22 @@ export const DMScreen: React.FC<{
           overflow: "hidden",
         }}
       >
-        {/* Le bloc story ne s'affiche QUE s'il y a vraiment une réponse à une story
-            (format A). En format DM à froid, storyReply est vide : on affichait
-            quand même le bandeau "Vous avez répondu à sa story" + la vignette,
-            alors qu'il n'a répondu à aucune story. Pire, le bloc apparaissait SEUL
-            (sans bulle, puisque reply était vide) et son 1er message tombait 0,4 s
-            plus tard en bulle séparée — d'où l'effet "fausse conv" vu par Tom. */}
-        {storyReply && girl.storyThumbnail && showStory && (
-          <StoryReply thumbnail={girl.storyThumbnail} reply={storyReply} />
-        )}
-        {visible.map(({ it, index }) => {
-          const b = asBubble(it);
-          return (
-            <MessageBubble
-              key={index}
-              from={b.from}
-              text={b.text}
-              showAvatar={showAvatarFor(index)}
-              girlName={girl.name}
-              girlAvatarSrc={girl.avatar}
-            />
-          );
-        })}
+        {showFused && <StoryReply thumbnail={girl.storyThumbnail!} reply={fusedReply!} />}
+        {visible
+          .filter(({ index }) => !(skipFirstAsBubble && index === 0))
+          .map(({ it, index }) => {
+            const b = asBubble(it);
+            return (
+              <MessageBubble
+                key={index}
+                from={b.from}
+                text={b.text}
+                showAvatar={showAvatarFor(index)}
+                girlName={girl.name}
+                girlAvatarSrc={girl.avatar}
+              />
+            );
+          })}
       </div>
     </AbsoluteFill>
   );
