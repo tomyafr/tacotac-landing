@@ -1,6 +1,7 @@
 import React from "react";
 import { AbsoluteFill } from "remotion";
-import { dm } from "../theme";
+import { dm, fonts } from "../theme";
+import { Avatar } from "./Avatar";
 import { MessageBubble } from "./MessageBubble";
 import { StoryReply } from "./StoryReply";
 import type { Girl } from "../schema";
@@ -43,6 +44,34 @@ export const DMScreen: React.FC<{
 
   return (
     <AbsoluteFill style={{ background: dm.bg }}>
+      {/* En-tête de conv persistant (avatar + nom + statut). Sans lui, le format DM
+          à froid ouvrait sur une bulle SEULE sur fond noir dès que le faux bandeau
+          "Vous avez répondu à sa story" a été retiré (il mentait — aucune story
+          n'existe dans ce format) : ça recréait l'effet "fausse conv" que ce bandeau
+          était censé éviter, juste sous une autre forme. Un vrai DM affiche toujours
+          qui on écrit — c'est ce bloc qui porte cette info maintenant, honnêtement.
+          Toujours là dès la 1re frame de la scène, jamais retardé. */}
+      <div
+        style={{
+          position: "absolute",
+          top: 44,
+          left: 40,
+          right: 40,
+          display: "flex",
+          alignItems: "center",
+          gap: 18,
+        }}
+      >
+        <Avatar name={girl.name} src={girl.avatar} size={64} />
+        <div>
+          <div style={{ fontFamily: fonts.body, fontSize: 30, fontWeight: 700, color: dm.textPrimary }}>
+            {girl.name}
+          </div>
+          <div style={{ fontFamily: fonts.body, fontSize: 22, color: "#8E8E93", marginTop: 2 }}>
+            {girl.status}
+          </div>
+        </div>
+      </div>
       <div
         style={{
           position: "absolute",
