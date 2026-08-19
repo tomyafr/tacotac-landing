@@ -21,8 +21,10 @@ import { consumeQuota, getStatus, activatePremium, syncSubscription, deactivateP
          createAccount, getAccountByEmail, getAccountByGoogleId, attachGoogleToAccount, linkDeviceToAccount, createSession, getSessionAccount, destroySession, effectivePlan,
          accountsForLifecycle, markAccountEmail, consumeTrainQuota, trainUsedToday, claimGiftTone, refundGiftTone,
          getCollaboratorByPromoId, recordSale, completeQuiz,
-         recordCancellationFeedback, listCancellationFeedback, cancellationStats, getEmailByCustomerId } from './db.js';
+         recordCancellationFeedback, listCancellationFeedback, cancellationStats, getEmailByCustomerId,
+         recordRevenueEvent } from './db.js';
 import { createPartnerRouter } from './partner.js';
+import { createRevenueRouter, computeSnapshot } from './revenue.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -66,6 +68,64 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
         const s = event.data.object;
         activateFromSession(s).catch((e) => console.error('[webhook] activate:', e.message));
         recordCollaboratorSale(s).catch((e) => console.error('[webhook] collab sale:', e.message));
+        alertFromSession(s, event.id).catch((e) => console.error('[webhook] alerte vente:', e.message));
+        break;
+      }
+      // Renouvellement : `subscription_cycle` = l'échéance automatique, par
+      // opposition à `subscription_create` (déjà couvert par la Checkout Session).
+      case 'invoice.paid': {
+        const inv = event.data.object;
+        if (inv.billing_reason === 'subscription_cycle' && inv.amount_paid > 0) {
+          const line = inv.lines?.data?.[0];
+          logAndAlert({
+            stripeEventId: event.id, kind: 'renewal',
+            email: inv.customer_email || getEmailByCustomerId(inv.customer),
+            customerId: inv.customer, plan: planKeyFromPrice(line?.price || line?.plan),
+            amountCents: inv.amount_paid, currency: inv.currency,
+          });
+        }
+        break;
+      }
+      case 'invoice.payment_failed': {
+        const inv = event.data.object;
+        logAndAlert({
+          stripeEventId: event.id, kind: 'payment_failed',
+          email: inv.customer_email || getEmailByCustomerId(inv.customer),
+          customerId: inv.customer, amountCents: inv.amount_due, currency: inv.currency,
+          detail: inv.next_payment_attempt
+            ? `Nouvelle tentative le ${new Date(inv.next_payment_attempt * 1000).toLocaleDateString('fr-FR')}`
+            : 'Plus de tentative prévue',
+        });
+        break;
+      }
+      case 'charge.refunded': {
+        const ch = event.data.object;
+        logAndAlert({
+          stripeEventId: event.id, kind: 'refund',
+          email: ch.billing_details?.email || getEmailByCustomerId(ch.customer),
+          customerId: ch.customer, amountCents: -(ch.amount_refunded || 0), currency: ch.currency,
+          detail: ch.amount_refunded < ch.amount ? 'Remboursement partiel' : null,
+        });
+        break;
+      }
+      case 'charge.dispute.created': {
+        const d = event.data.object;
+        logAndAlert({
+          stripeEventId: event.id, kind: 'dispute',
+          email: getEmailByCustomerId(d.charge?.customer),
+          amountCents: -(d.amount || 0), currency: d.currency, detail: d.reason,
+        });
+        break;
+      }
+      case 'customer.subscription.trial_will_end': {
+        const sub = event.data.object;
+        const { plan, mrrCents } = subInfo(sub);
+        logAndAlert({
+          stripeEventId: event.id, kind: 'trial_ending',
+          email: getEmailByCustomerId(sub.customer), customerId: sub.customer, plan,
+          amountCents: 0, mrrDeltaCents: mrrCents,
+          detail: sub.trial_end ? `Fin d'essai le ${new Date(sub.trial_end * 1000).toLocaleDateString('fr-FR')}` : null,
+        });
         break;
       }
       case 'customer.subscription.updated':
@@ -97,6 +157,14 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
           // reason==='cancellation_requested' = choix volontaire. payment_failed /
           // payment_disputed = subi (carte refusée) : pas un vrai signal de départ voulu.
           involuntary: cd.reason && cd.reason !== 'cancellation_requested',
+        });
+        const { plan, mrrCents } = subInfo(sub);
+        logAndAlert({
+          stripeEventId: event.id, kind: 'cancel',
+          email: getEmailByCustomerId(sub.customer), customerId: sub.customer, plan,
+          mrrDeltaCents: -mrrCents,
+          detail: [CANCEL_FR[cd.feedback] || cd.feedback, cd.comment && `« ${cd.comment} »`]
+            .filter(Boolean).join(' — ') || (cd.reason === 'payment_failed' ? 'Carte refusée (résiliation subie)' : 'Aucun motif donné'),
         });
         deactivatePremium(sub.customer);
         break;
@@ -2383,7 +2451,139 @@ app.post('/api/bio', analyzeLimiter, async (req, res) => {
   }
 });
 
-// healthcheck
+// ══════════════════════════════════════════════════════════════
+//  MON DASHBOARD REVENUS — alertes email + journal des événements
+//
+//  Chaque mouvement d'argent chez Stripe déclenche deux choses :
+//    1. une ligne dans `revenue_events` (l'historique lu par /admin/revenus)
+//    2. un email pour toi ("Léa vient de souscrire Premium Mensuel")
+//  Les deux passent par `logAndAlert`, qui s'appuie sur l'id d'événement Stripe
+//  pour l'idempotence : Stripe rejoue ses webhooks, on ne veut ni doublon en
+//  base ni deuxième email.
+// ══════════════════════════════════════════════════════════════
+const OWNER_EMAILS = String(process.env.OWNER_ALERT_EMAILS || process.env.PARTNER_ADMIN_EMAILS || '')
+  .split(',').map((e) => e.trim()).filter(Boolean);
+const ALERTS_ON = process.env.OWNER_ALERTS !== 'off';
+
+const PLAN_BY_PRICE = new Map(Object.entries(PRICES).filter(([, v]) => v).map(([k, v]) => [v, k]));
+const PLAN_LABEL_FR = { weekly: 'Hebdo', monthly: 'Mensuel', annual: 'Annuel' };
+const eurFmt = (cents) => (Math.round(cents || 0) / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+
+function planKeyFromPrice(price) {
+  if (!price) return null;
+  return PLAN_BY_PRICE.get(price.id) || ({ week: 'weekly', month: 'monthly', year: 'annual' }[price.recurring?.interval] || null);
+}
+// Prix ramené au mois : sans ça un annuel à 59 € pèserait 59 € de MRR.
+function priceMonthlyCents(price, quantity = 1) {
+  const r = price?.recurring;
+  if (!r) return 0;
+  const per = (price.unit_amount || 0) * quantity, n = r.interval_count || 1;
+  if (r.interval === 'year') return Math.round(per / (12 * n));
+  if (r.interval === 'week') return Math.round((per * 52) / (12 * n));
+  if (r.interval === 'day') return Math.round((per * 365) / (12 * n));
+  return Math.round(per / n);
+}
+function subInfo(sub) {
+  const item = sub?.items?.data?.[0];
+  return { plan: planKeyFromPrice(item?.price), mrrCents: priceMonthlyCents(item?.price, item?.quantity || 1) };
+}
+
+// Coquille des emails internes : volontairement différente des emails clients
+// (pas de pied de page marketing, un filet de couleur selon la nouvelle).
+function ownerEmailHtml({ title, accent, lines, cta = 'Ouvrir mon dashboard →' }) {
+  const rows = lines.map(([k, v]) => `<tr>
+    <td style="padding:9px 0;color:#8C8880;font-size:13.5px;border-top:1px solid #232328">${k}</td>
+    <td style="padding:9px 0;color:#F5F2EC;font-size:13.5px;font-weight:700;text-align:right;border-top:1px solid #232328">${v}</td>
+  </tr>`).join('');
+  return `<div style="background:#08080A;padding:30px 14px;font-family:Arial,Helvetica,sans-serif">
+    <div style="max-width:460px;margin:0 auto;background:#131317;border:1px solid #232328;border-radius:20px;overflow:hidden">
+      <div style="height:4px;background:${accent}"></div>
+      <div style="padding:26px 24px">
+        <h1 style="margin:0 0 18px;font-size:20px;color:#fff;line-height:1.35;font-weight:700">${title}</h1>
+        <table style="width:100%;border-collapse:collapse">${rows}</table>
+        <a href="${PUBLIC_URL}/admin/revenus" style="display:block;text-align:center;background:${accent};color:#08080A;text-decoration:none;font-weight:700;font-size:15px;padding:14px;border-radius:12px;margin-top:22px">${cta}</a>
+      </div>
+    </div>
+    <p style="color:#4A4744;font-size:11px;text-align:center;margin:14px 0 0">Alerte interne Tacotac · OWNER_ALERTS=off pour couper</p>
+  </div>`;
+}
+
+const ALERT_STYLE = {
+  new_sub:        { accent: '#3DDC8A', subject: (e) => `💸 +${eurFmt(e.amountCents)} — ${e.email || 'nouveau client'} vient de s’abonner` },
+  trial_started:  { accent: '#FFC96B', subject: (e) => `🕒 Essai démarré — ${e.email || 'nouveau visiteur'}` },
+  renewal:        { accent: '#3DDC8A', subject: (e) => `🔁 +${eurFmt(e.amountCents)} — renouvellement` },
+  cancel:         { accent: '#FF5470', subject: (e) => `👋 Résiliation — ${e.email || 'client inconnu'}` },
+  payment_failed: { accent: '#FF5470', subject: (e) => `⚠️ Paiement refusé — ${e.email || 'client inconnu'}` },
+  refund:         { accent: '#FF5470', subject: (e) => `↩️ Remboursement ${eurFmt(Math.abs(e.amountCents))}` },
+  dispute:        { accent: '#FF5470', subject: () => '⚖️ Litige bancaire ouvert — à contester' },
+  trial_ending:   { accent: '#FFC96B', subject: (e) => `⏳ Essai bientôt fini — ${e.email || 'client'}` },
+};
+
+const ALERT_TITLE = {
+  new_sub: (e) => `<b>${e.email || 'Un nouveau client'}</b> vient de souscrire un abonnement <b style="color:#3DDC8A">Premium ${PLAN_LABEL_FR[e.plan] || ''}</b>.`,
+  trial_started: (e) => `<b>${e.email || 'Quelqu&rsquo;un'}</b> a démarré son <b style="color:#FFC96B">essai gratuit</b> Premium ${PLAN_LABEL_FR[e.plan] || ''}.`,
+  renewal: (e) => `<b>${e.email || 'Un client'}</b> a <b style="color:#3DDC8A">renouvelé</b> son abonnement.`,
+  cancel: (e) => `<b>${e.email || 'Un client'}</b> a <b style="color:#FF5470">résilié</b> son abonnement.`,
+  payment_failed: (e) => `Le paiement de <b>${e.email || 'un client'}</b> a été <b style="color:#FF5470">refusé</b>. Stripe va réessayer automatiquement.`,
+  refund: (e) => `Un <b style="color:#FF5470">remboursement</b> vient d&rsquo;être effectué à <b>${e.email || 'un client'}</b>.`,
+  dispute: (e) => `<b>${e.email || 'Un client'}</b> a ouvert un <b style="color:#FF5470">litige bancaire</b>. Réponds dans Stripe avant la date limite.`,
+  trial_ending: (e) => `L&rsquo;essai de <b>${e.email || 'quelqu&rsquo;un'}</b> se termine bientôt : il sera débité si sa carte passe.`,
+};
+
+// Enregistre l'événement puis envoie l'alerte. L'email ne part que si la ligne a
+// réellement été insérée — donc jamais deux fois pour un même webhook rejoué.
+function logAndAlert(e) {
+  const fresh = recordRevenueEvent(e);
+  if (!fresh || !ALERTS_ON || !OWNER_EMAILS.length || !ALERT_STYLE[e.kind]) return;
+  const lines = [];
+  if (e.email) lines.push(['Client', e.email]);
+  if (e.plan) lines.push(['Formule', PLAN_LABEL_FR[e.plan] || e.plan]);
+  if (e.amountCents) lines.push([e.amountCents < 0 ? 'Montant sortant' : 'Encaissé', eurFmt(Math.abs(e.amountCents))]);
+  if (e.mrrDeltaCents) lines.push(['Impact MRR', `${e.mrrDeltaCents > 0 ? '+' : '−'}${eurFmt(Math.abs(e.mrrDeltaCents))} / mois`]);
+  if (e.promoCode) lines.push(['Code promo', e.promoCode]);
+  if (e.detail) lines.push(['Détail', e.detail]);
+  sendEmail({
+    to: OWNER_EMAILS,
+    subject: ALERT_STYLE[e.kind].subject(e),
+    html: ownerEmailHtml({ title: ALERT_TITLE[e.kind](e), accent: ALERT_STYLE[e.kind].accent, lines }),
+  }).catch((err) => console.error('[alerte]', err?.message));
+}
+
+// Une Checkout Session complétée : vraie vente, ou démarrage d'essai (montant 0).
+async function alertFromSession(session, eventId) {
+  let sub = null;
+  if (session.subscription) {
+    try { sub = await stripe.subscriptions.retrieve(session.subscription); } catch { /* on alerte quand même, sans la formule */ }
+  }
+  const { plan, mrrCents } = subInfo(sub);
+  const isTrial = sub?.status === 'trialing' || session.payment_status === 'no_payment_required';
+  let promoCode = null;
+  try {
+    const pc = session.discounts?.[0]?.promotion_code;
+    if (pc) promoCode = typeof pc === 'object' ? pc.code : (await stripe.promotionCodes.retrieve(pc)).code;
+  } catch { /* pas de code = vente directe */ }
+
+  logAndAlert({
+    stripeEventId: eventId,
+    kind: isTrial ? 'trial_started' : 'new_sub',
+    email: session.customer_details?.email || session.customer_email,
+    customerId: typeof session.customer === 'string' ? session.customer : session.customer?.id,
+    plan,
+    amountCents: session.amount_total || 0,
+    currency: session.currency,
+    mrrDeltaCents: isTrial ? 0 : mrrCents,
+    promoCode,
+    detail: isTrial && sub?.trial_end ? `Essai jusqu'au ${new Date(sub.trial_end * 1000).toLocaleDateString('fr-FR')}` : null,
+  });
+}
+
+// Motifs de résiliation : mêmes codes que la console /admin/cancellations.
+const CANCEL_FR = {
+  too_expensive: 'Trop cher', missing_features: 'Fonctionnalités manquantes', switched_service: 'Parti chez un concurrent',
+  unused: "Ne l'utilisait plus", low_quality: 'Qualité insuffisante', customer_service: 'Support client',
+  too_complex: 'Trop compliqué', other: 'Autre',
+};
+
 // ══════════════════════════════════════════════════════════════
 //  ESPACE COLLABORATEUR (/partner) — portail privé des affiliés + console admin.
 //  Monté ici (et pas plus haut) car il réutilise les helpers de session
@@ -2393,6 +2593,54 @@ app.use(createPartnerRouter({
   openSession, destroySession, attachAccount,
   sessionCookieName: SESSION_COOKIE, stripe, publicUrl: PUBLIC_URL, sendMail: sendEmail,
 }));
+
+// Mon dashboard à moi : /admin/revenus (accès ADMIN_TOKEN, comme /admin/tiktok)
+app.use(createRevenueRouter({ stripe, requireAdmin, prices: PRICES }));
+
+// ── Récap quotidien par email ───────────────────────────────────
+// Une fois par jour à l'heure choisie (Europe/Paris) : l'état du business en
+// 30 secondes de lecture, sans ouvrir quoi que ce soit. Coupé par défaut si
+// aucune adresse d'alerte n'est configurée.
+const DIGEST_HOUR = Number(process.env.OWNER_DIGEST_HOUR ?? 9);
+let lastDigestDay = null;
+async function sendDailyDigest() {
+  const d = await computeSnapshot(stripe, PRICES, 1);
+  const week = await computeSnapshot(stripe, PRICES, 7);
+  const solde = d.newSubCount - d.churnedCount;
+  await sendEmail({
+    to: OWNER_EMAILS,
+    subject: `🌮 ${eurFmt(d.mrrCents)} de MRR · ${d.activeCount} abonnés · ${solde >= 0 ? '+' : ''}${solde} hier`,
+    html: ownerEmailHtml({
+      title: `Ton récap de la veille — <b style="color:#3DDC8A">${eurFmt(d.netCents)}</b> encaissés net.`,
+      accent: solde >= 0 ? '#3DDC8A' : '#FF5470',
+      cta: 'Voir le détail →',
+      lines: [
+        ['MRR', eurFmt(d.mrrCents)],
+        ['Abonnés payants', String(d.activeCount)],
+        ['Essais en cours', String(d.trialCount)],
+        ['Nouveaux (hier)', String(d.newSubCount)],
+        ['Résiliations (hier)', String(d.churnedCount)],
+        ['Encaissé net (hier)', eurFmt(d.netCents)],
+        ['Encaissé net (7 j)', eurFmt(week.netCents)],
+        ['Renouvellements 7 j', `${eurFmt(d.renewalCents)} · ${d.renewalCount} échéances`],
+        ['Impayés', d.openInvoiceCents ? eurFmt(d.openInvoiceCents) : 'aucun'],
+        ['Inscriptions (hier)', String(d.signups.period)],
+      ],
+    }),
+  });
+}
+if (stripe && OWNER_EMAILS.length && process.env.OWNER_DIGEST !== 'off') {
+  // Vérification chaque quart d'heure plutôt qu'un timer calé à minuit : un
+  // redémarrage du serveur ne fait pas sauter le récap du jour.
+  setInterval(() => {
+    const now = new Date();
+    const paris = new Intl.DateTimeFormat('fr-FR', { timeZone: 'Europe/Paris', hour: 'numeric', hour12: false }).format(now);
+    const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(now);
+    if (Number(paris) !== DIGEST_HOUR || lastDigestDay === day) return;
+    lastDigestDay = day;
+    sendDailyDigest().catch((e) => console.error('[récap] ', e?.message));
+  }, 15 * 60 * 1000).unref();
+}
 
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, hasKey: Boolean(process.env.OPENAI_API_KEY), model: MODEL, modelPremium: MODEL_PREMIUM });

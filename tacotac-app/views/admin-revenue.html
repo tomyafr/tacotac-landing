@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>Mes revenus · Tacotac</title>
+<link rel="icon" href="/assets/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{
+  --bg:#08080A; --card:#131317; --line:rgba(255,255,255,.075); --line2:rgba(255,255,255,.13);
+  --txt:#F5F2EC; --muted:#8C8880; --muted2:#605C57;
+  --o:#FF5C00; --o2:#FF8A3D; --o-soft:rgba(255,92,0,.14);
+  --green:#3DDC8A; --red:#FF5470; --blue:#5B8DEF; --violet:#A77BFF; --gold:#FFC96B;
+  --r:18px;
+}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{min-height:100dvh;overflow-x:hidden}
+button{font-family:inherit}
+.display{font-family:'Bricolage Grotesque','Space Grotesk',sans-serif;font-weight:800;letter-spacing:-.035em;line-height:1.02}
+.mono{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+svg{display:block;overflow:visible}
+
+.aurora{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.aurora i{position:absolute;display:block;border-radius:50%;filter:blur(90px);opacity:.45;animation:float 22s ease-in-out infinite}
+.aurora i:nth-child(1){width:52vw;height:52vw;background:radial-gradient(circle,rgba(255,92,0,.30),transparent 65%);top:-16vw;left:-10vw}
+.aurora i:nth-child(2){width:44vw;height:44vw;background:radial-gradient(circle,rgba(61,220,138,.16),transparent 65%);bottom:-14vw;right:-8vw;animation-delay:-8s}
+@keyframes float{0%,100%{transform:translate3d(0,0,0) scale(1)}33%{transform:translate3d(4vw,-3vw,0) scale(1.08)}66%{transform:translate3d(-3vw,3vw,0) scale(.95)}}
+.grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);
+  background-size:56px 56px;mask-image:radial-gradient(ellipse 90% 70% at 50% 0%,#000,transparent 75%)}
+@media (prefers-reduced-motion:reduce){.aurora i{animation:none}}
+
+.topbar{position:sticky;top:0;z-index:40;backdrop-filter:blur(18px);background:rgba(8,8,10,.8);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:1240px;margin:0 auto;padding:12px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.02em}
+.brand img{width:32px;height:32px;border-radius:10px}
+.brand small{display:block;font-size:10.5px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-left:auto}
+.chip{border:1px solid var(--line2);background:rgba(255,255,255,.035);color:var(--muted);border-radius:999px;padding:7px 13px;font-size:13px;cursor:pointer;font-weight:600;white-space:nowrap}
+.chip.on{background:var(--o-soft);border-color:rgba(255,92,0,.45);color:#FFB183}
+.chip:hover{color:var(--txt)}
+
+main{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:22px 18px 90px}
+.card{background:linear-gradient(180deg,rgba(23,23,28,.72),rgba(15,15,18,.72));border:1px solid var(--line);border-radius:var(--r);padding:18px;backdrop-filter:blur(14px)}
+.card h3{margin:0 0 2px;font-size:15px;font-weight:700;letter-spacing:-.01em}
+.card .sub{color:var(--muted);font-size:12.5px;margin:0 0 14px;line-height:1.5}
+.grid{display:grid;gap:14px;margin-bottom:14px}
+.g-kpi{grid-template-columns:repeat(auto-fit,minmax(196px,1fr))}
+.g-2{grid-template-columns:1.55fr 1fr}
+.g-3{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+@media(max-width:900px){.g-2{grid-template-columns:1fr}}
+
+.kpi{position:relative;overflow:hidden}
+.kpi::after{content:'';position:absolute;inset:0;background:radial-gradient(120% 90% at 100% 0%,rgba(255,92,0,.13),transparent 60%);pointer-events:none}
+.kpi>*{position:relative;z-index:1}
+.kpi.hero::after{background:radial-gradient(120% 90% at 100% 0%,rgba(61,220,138,.16),transparent 60%)}
+.kpi .lab{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.kpi .val{font-size:31px;margin:8px 0 3px;letter-spacing:-.04em}
+.kpi.big .val{font-size:40px}
+.kpi .foot{font-size:12.5px;color:var(--muted);line-height:1.5}
+.delta{display:inline-flex;align-items:center;gap:3px;font-weight:600;font-size:12px;padding:2px 7px;border-radius:999px}
+.delta.up{color:#8DEEBB;background:rgba(61,220,138,.12)}
+.delta.down{color:#FF9AAC;background:rgba(255,84,112,.12)}
+.delta.flat{color:var(--muted);background:rgba(255,255,255,.05)}
+
+.rows > div{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--line);font-size:13.5px}
+.rows > div:first-child{border-top:none}
+.rows .k{color:var(--muted);flex:1;min-width:0}
+.rows .v{font-weight:700;white-space:nowrap}
+.tag{display:inline-block;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid var(--line2);color:var(--muted);white-space:nowrap}
+.tag.weekly{color:#9DC0FF;border-color:rgba(91,141,239,.4);background:rgba(91,141,239,.1)}
+.tag.monthly{color:#FFB183;border-color:rgba(255,92,0,.4);background:rgba(255,92,0,.1)}
+.tag.annual{color:#C9AEFF;border-color:rgba(167,123,255,.4);background:rgba(167,123,255,.1)}
+.tag.ok{color:#8DEEBB;border-color:rgba(61,220,138,.4);background:rgba(61,220,138,.1)}
+.tag.bad{color:#FF9AAC;border-color:rgba(255,84,112,.4);background:rgba(255,84,112,.1)}
+.tag.warn{color:#FFD79A;border-color:rgba(255,201,107,.4);background:rgba(255,201,107,.1)}
+
+.alert{display:flex;align-items:center;gap:11px;padding:12px 14px;border-radius:13px;font-size:13.5px;line-height:1.5;margin-bottom:9px;border:1px solid}
+.alert.bad{background:rgba(255,84,112,.09);border-color:rgba(255,84,112,.26);color:#FFB3C0}
+.alert.warn{background:rgba(255,201,107,.08);border-color:rgba(255,201,107,.24);color:#FFDCA8}
+.alert.ok{background:rgba(61,220,138,.07);border-color:rgba(61,220,138,.22);color:#9BE9C0}
+.alert b{font-weight:700}
+
+.feed > div{display:flex;align-items:flex-start;gap:11px;padding:11px 0;border-top:1px solid var(--line)}
+.feed > div:first-child{border-top:none}
+.feed .ico{width:30px;height:30px;flex:none;border-radius:9px;display:grid;place-items:center;font-size:14px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.feed .txt{flex:1;min-width:0;font-size:13.5px;line-height:1.45}
+.feed .who{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.feed .amt{font-weight:700;white-space:nowrap;font-size:13.5px}
+.feed .when{color:var(--muted2);font-size:11.5px;white-space:nowrap}
+
+.bar-row{display:flex;align-items:center;gap:11px;padding:7px 0;font-size:13px}
+.bar-row .lab{width:170px;flex:none;color:var(--txt)}
+.bar-wrap{flex:1;height:9px;background:rgba(255,255,255,.05);border-radius:99px;overflow:hidden}
+.bar{height:100%;background:linear-gradient(90deg,var(--o),var(--o2));border-radius:99px}
+.bar-row .n{width:34px;text-align:right;font-weight:700;color:#FFB183}
+
+.empty{text-align:center;color:var(--muted);padding:34px 16px;font-size:13.5px}
+.empty .big{font-size:34px;margin-bottom:9px;opacity:.6}
+.hint{font-size:12.5px;color:var(--muted2);line-height:1.6}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:10px}
+.legend i{width:9px;height:9px;border-radius:3px;display:inline-block;margin-right:6px}
+.skel{background:linear-gradient(90deg,rgba(255,255,255,.045),rgba(255,255,255,.09),rgba(255,255,255,.045));background-size:200% 100%;animation:sk 1.3s linear infinite;border-radius:8px;color:transparent}
+@keyframes sk{to{background-position:-200% 0}}
+</style>
+</head>
+<body>
+<div class="aurora"><i></i><i></i></div>
+<div class="grid-bg"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <img src="/assets/icon-192.png" alt="">
+      <div>Tacotac<small>Mes revenus</small></div>
+    </div>
+    <div class="chips" id="chips">
+      <button class="chip" data-days="7">7 jours</button>
+      <button class="chip on" data-days="30">30 jours</button>
+      <button class="chip" data-days="90">90 jours</button>
+      <button class="chip" data-days="365">12 mois</button>
+      <button class="chip" id="refresh" style="border-color:rgba(61,220,138,.35);color:#8DEEBB">↻ Rafraîchir</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="err"></div>
+
+  <!-- L'essentiel : ce que la boîte vaut aujourd'hui -->
+  <div class="grid g-kpi" id="kpiTop"></div>
+
+  <!-- La période choisie -->
+  <div class="grid g-kpi" id="kpiPeriod"></div>
+
+  <div class="grid g-2">
+    <div class="card">
+      <h3>Argent encaissé, jour par jour</h3>
+      <p class="sub">Net après frais Stripe (la ligne). Les barres violettes = nouveaux abonnements du jour.</p>
+      <div id="chartMain"></div>
+      <div class="legend"><span><i style="background:#3DDC8A"></i>Encaissé net</span><span><i style="background:rgba(167,123,255,.6)"></i>Nouveaux abos</span></div>
+    </div>
+    <div class="card">
+      <h3>D'où vient le MRR</h3>
+      <p class="sub">Répartition par formule, ramenée au mois.</p>
+      <div id="chartDonut"></div>
+    </div>
+  </div>
+
+  <div class="grid g-3">
+    <div class="card">
+      <h3>À surveiller</h3>
+      <p class="sub">Ce qui menace le revenu, maintenant.</p>
+      <div id="alerts"></div>
+    </div>
+    <div class="card">
+      <h3>Trésorerie Stripe</h3>
+      <p class="sub">Ce qui est à toi, et quand ça arrive sur ton compte.</p>
+      <div class="rows" id="cash"></div>
+    </div>
+    <div class="card">
+      <h3>Essais gratuits</h3>
+      <p class="sub">L'essai mensuel de 3 jours : combien se transforment en client.</p>
+      <div class="rows" id="trials"></div>
+    </div>
+  </div>
+
+  <div class="grid g-3">
+    <div class="card">
+      <h3>Entonnoir</h3>
+      <p class="sub">De l'inscription au paiement — la partie que Stripe ne voit pas.</p>
+      <div class="rows" id="funnel"></div>
+    </div>
+    <div class="card">
+      <h3>Pourquoi ils partent</h3>
+      <p class="sub">Motifs cochés dans le portail Stripe. <a href="/admin/cancellations" style="color:var(--o2)">Tout voir →</a></p>
+      <div id="reasons"></div>
+    </div>
+    <div class="card">
+      <h3>Part des collaborateurs</h3>
+      <p class="sub">Ce que les codes promo affiliés rapportent, sur la période.</p>
+      <div class="rows" id="affiliate"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>En direct</h3>
+    <p class="sub">Chaque mouvement d'argent, le plus récent d'abord. Tu reçois le même en email.</p>
+    <div class="feed" id="feed"></div>
+  </div>
+
+  <p class="hint" style="text-align:center;margin-top:22px">Données Stripe en direct (cache 60 s) + journal local des événements. <span id="stamp"></span></p>
+</main>
+
+<script>
+/* ══════════════ Utilitaires ══════════════ */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const eur = (cents) => (Math.round(cents) / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 });
+const eur0 = (cents) => (Math.round(cents) / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+const pct = (v, d = 1) => v == null ? '—' : (v * 100).toFixed(d).replace('.', ',') + ' %';
+const PLAN_LABEL = { weekly: 'Hebdo', monthly: 'Mensuel', annual: 'Annuel', inconnu: 'Autre' };
+const PLAN_COLOR = { weekly: '#5B8DEF', monthly: '#FF5C00', annual: '#A77BFF', inconnu: '#8C8880' };
+
+function ago(ts) {
+  const s = Math.max(0, Math.floor(Date.now() / 1000) - ts);
+  if (s < 60) return "à l'instant";
+  if (s < 3600) return `il y a ${Math.floor(s / 60)} min`;
+  if (s < 86400) return `il y a ${Math.floor(s / 3600)} h`;
+  if (s < 7 * 86400) return `il y a ${Math.floor(s / 86400)} j`;
+  return new Date(ts * 1000).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+}
+const dayLabel = (d) => { const [, m, j] = d.split('-'); return `${j}/${m}`; };
+
+function smoothPath(pts) {
+  if (pts.length < 2) return pts.length ? `M${pts[0][0]},${pts[0][1]}` : '';
+  let d = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [x0, y0] = pts[i], [x1, y1] = pts[i + 1], mx = (x0 + x1) / 2;
+    d += ` C${mx},${y0} ${mx},${y1} ${x1},${y1}`;
+  }
+  return d;
+}
+const emptyChart = (t) => `<div class="empty"><div class="big">📈</div>${esc(t)}</div>`;
+
+/* ══════════════ Graphiques ══════════════ */
+// Aire (encaissé net) + barres (nouveaux abos) sur la même grille temporelle.
+function drawMain(el, series) {
+  const W = 700, H = 270, PL = 52, PR = 14, PT = 14, PB = 26;
+  const iw = W - PL - PR, ih = H - PT - PB, n = series.length;
+  if (!n) { el.innerHTML = emptyChart('Pas encore de données'); return; }
+  const maxV = Math.max(1, ...series.map((s) => s.netCents));
+  const maxB = Math.max(1, ...series.map((s) => s.newSubs));
+  const x = (i) => PL + (n === 1 ? iw / 2 : (i * iw) / (n - 1));
+  const y = (v) => PT + ih - (Math.max(0, v) / maxV) * ih;
+  const pts = series.map((s, i) => [x(i), y(s.netCents)]);
+  const line = smoothPath(pts);
+  const area = `${line} L${x(n - 1)},${PT + ih} L${x(0)},${PT + ih} Z`;
+  const bw = Math.max(2, Math.min(16, (iw / n) * 0.55));
+  const bars = series.map((s, i) => {
+    const h = (s.newSubs / maxB) * (ih * 0.4);
+    return h > 0 ? `<rect x="${x(i) - bw / 2}" y="${PT + ih - h}" width="${bw}" height="${h}" rx="${Math.min(3, bw / 2)}" fill="rgba(167,123,255,.55)"/>` : '';
+  }).join('');
+  let gy = '';
+  for (let i = 0; i <= 3; i++) {
+    const v = (maxV / 3) * i, yy = y(v);
+    gy += `<line x1="${PL}" x2="${W - PR}" y1="${yy}" y2="${yy}" stroke="rgba(255,255,255,.055)"/>
+           <text x="${PL - 8}" y="${yy + 4}" text-anchor="end" fill="#605C57" font-size="10.5">${eur0(v)}</text>`;
+  }
+  const step = Math.max(1, Math.ceil(n / 7));
+  let gx = '';
+  for (let i = 0; i < n; i += step) gx += `<text x="${x(i)}" y="${H - 6}" text-anchor="middle" fill="#605C57" font-size="10.5">${dayLabel(series[i].day)}</text>`;
+  const dots = series.map((s, i) => `<circle class="hp" data-i="${i}" cx="${x(i)}" cy="${y(s.netCents)}" r="10" fill="transparent"/>`).join('');
+
+  el.style.position = 'relative';
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="height:270px">
+    <defs><linearGradient id="gA" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3DDC8A" stop-opacity=".4"/><stop offset="100%" stop-color="#3DDC8A" stop-opacity="0"/></linearGradient></defs>
+    ${gy}${bars}
+    <path d="${area}" fill="url(#gA)"/>
+    <path d="${line}" fill="none" stroke="#3DDC8A" stroke-width="2.5" stroke-linecap="round"/>
+    ${gx}
+    <g id="cursor" style="display:none"><line stroke="rgba(255,255,255,.25)" y1="${PT}" y2="${PT + ih}"/><circle r="4.5" fill="#3DDC8A" stroke="#0A0A0C" stroke-width="2"/></g>
+    ${dots}
+  </svg><div class="tip" style="position:absolute;pointer-events:none;opacity:0;transition:.12s;background:#1A1A1F;border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:8px 11px;font-size:12.5px;white-space:nowrap;z-index:5;box-shadow:0 14px 34px -14px #000"></div>`;
+
+  const tip = $('.tip', el), svg = el.querySelector('svg'), cur = $('#cursor', el);
+  el.querySelectorAll('.hp').forEach((c) => {
+    c.addEventListener('mouseenter', () => {
+      const s = series[+c.dataset.i];
+      tip.innerHTML = `<b>${dayLabel(s.day)}</b><br><span style="color:#8DEEBB">${eur(s.netCents)}</span> net`
+        + (s.newSubs ? ` · <span style="color:#C9AEFF">+${s.newSubs} abo</span>` : '')
+        + (s.churned ? ` · <span style="color:#FF9AAC">−${s.churned}</span>` : '')
+        + (s.signups ? `<br><span style="color:#8C8880">${s.signups} inscription${s.signups > 1 ? 's' : ''}</span>` : '');
+      tip.style.opacity = 1;
+      const bb = svg.getBoundingClientRect(), eb = el.getBoundingClientRect();
+      const px = (+c.getAttribute('cx') / W) * bb.width;
+      tip.style.left = Math.max(4, Math.min(bb.width - 160, px - 70)) + 'px';
+      tip.style.top = (bb.top - eb.top + (+c.getAttribute('cy') / H) * bb.height - 62) + 'px';
+      cur.style.display = '';
+      for (const a of ['x1', 'x2']) cur.querySelector('line').setAttribute(a, c.getAttribute('cx'));
+      cur.querySelector('circle').setAttribute('cx', c.getAttribute('cx'));
+      cur.querySelector('circle').setAttribute('cy', c.getAttribute('cy'));
+    });
+    c.addEventListener('mouseleave', () => { tip.style.opacity = 0; cur.style.display = 'none'; });
+  });
+}
+
+function drawDonut(el, segs, centerVal, centerLab) {
+  const total = segs.reduce((n, s) => n + s.value, 0);
+  if (!total) { el.innerHTML = emptyChart('Aucun abonnement actif'); return; }
+  const R = 78, r = 52, cx = 100, cy = 100;
+  let a0 = -Math.PI / 2, paths = '';
+  for (const s of segs) {
+    if (!s.value) continue;
+    const a1 = a0 + (s.value / total) * Math.PI * 2;
+    const big = a1 - a0 > Math.PI ? 1 : 0;
+    const p = (rad, ang) => [cx + rad * Math.cos(ang), cy + rad * Math.sin(ang)];
+    const [x1, y1] = p(R, a0), [x2, y2] = p(R, a1), [x3, y3] = p(r, a1), [x4, y4] = p(r, a0);
+    paths += `<path d="M${x1},${y1} A${R},${R} 0 ${big} 1 ${x2},${y2} L${x3},${y3} A${r},${r} 0 ${big} 0 ${x4},${y4} Z" fill="${s.color}" opacity=".92"><title>${esc(s.label)}</title></path>`;
+    a0 = a1;
+  }
+  const rows = segs.filter((s) => s.value).map((s) =>
+    `<div style="display:flex;align-items:center;gap:9px;font-size:13px;padding:6px 0">
+      <i style="width:9px;height:9px;border-radius:3px;background:${s.color};flex:none"></i>
+      <span style="flex:1">${esc(s.label)}</span>
+      <b class="mono">${eur(s.value)}</b>
+      <span style="color:var(--muted);width:42px;text-align:right">${Math.round((s.value / total) * 100)}%</span>
+    </div>`).join('');
+  el.innerHTML = `<div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+    <svg viewBox="0 0 200 200" style="width:168px;height:168px;flex:none">${paths}
+      <text x="100" y="98" text-anchor="middle" fill="#F5F2EC" font-size="21" font-weight="800" font-family="Bricolage Grotesque,sans-serif">${esc(centerVal)}</text>
+      <text x="100" y="117" text-anchor="middle" fill="#8C8880" font-size="11">${esc(centerLab)}</text>
+    </svg>
+    <div style="flex:1;min-width:160px">${rows}</div></div>`;
+}
+
+/* ══════════════ Rendu ══════════════ */
+const kpi = (k) => `<div class="card kpi ${k.cls || ''}">
+  <div class="lab">${esc(k.lab)}</div>
+  <div class="val display mono">${k.val}</div>
+  <div class="foot">${k.foot || ''}</div></div>`;
+
+// `cash` = l'événement fait vraiment bouger la banque, donc on montre le montant
+// signé. Ailleurs (échec de paiement, fin d'essai) le montant n'est qu'un enjeu :
+// l'afficher en « +9,99 € » se lirait comme un encaissement.
+const FEED = {
+  new_sub:       { ico: '🎉', color: '#8DEEBB', verb: 'a souscrit', cash: true },
+  trial_started: { ico: '🕒', color: '#FFD79A', verb: 'a démarré un essai' },
+  renewal:       { ico: '🔁', color: '#8DEEBB', verb: 'a renouvelé', cash: true },
+  cancel:        { ico: '👋', color: '#FF9AAC', verb: 'a résilié' },
+  payment_failed:{ ico: '⚠️', color: '#FF9AAC', verb: 'paiement refusé' },
+  refund:        { ico: '↩️', color: '#FF9AAC', verb: 'remboursé', cash: true },
+  dispute:       { ico: '⚖️', color: '#FF9AAC', verb: 'a ouvert un litige', cash: true },
+  trial_ending:  { ico: '⏳', color: '#FFD79A', verb: 'essai bientôt fini' },
+};
+
+function render(d) {
+  const churnBadge = d.churnRate > 0.1 ? 'down' : d.churnRate > 0 ? 'flat' : 'up';
+
+  $('#kpiTop').innerHTML = [
+    { lab: 'MRR', val: eur(d.mrrCents), cls: 'hero big',
+      foot: `${eur(d.arrCents)} par an si rien ne bouge` },
+    { lab: 'Abonnés payants', val: d.activeCount, cls: 'big',
+      foot: d.trialCount ? `+ ${d.trialCount} en essai (${eur(d.trialMrrCents)} potentiels)` : 'aucun essai en cours' },
+    { lab: 'Panier moyen / mois', val: eur(d.arpuCents),
+      foot: 'MRR ÷ abonnés actifs' },
+    { lab: 'Valeur d’un client', val: d.ltvCents == null ? '—' : eur(d.ltvCents),
+      foot: d.ltvCents == null ? 'pas encore de résiliation à mesurer' : 'panier moyen ÷ churn mensuel' },
+    { lab: 'Churn mensuel', val: pct(d.churnRate),
+      foot: `<span class="delta ${churnBadge}">${d.churnedCount} résiliation${d.churnedCount > 1 ? 's' : ''}</span> sur ${d.days} j` },
+  ].map(kpi).join('');
+
+  $('#kpiPeriod').innerHTML = [
+    { lab: `Encaissé net · ${d.days} j`, val: eur(d.netCents),
+      foot: `${eur(d.grossCents)} brut − ${eur(d.feeCents)} de frais Stripe` },
+    { lab: 'Nouveaux abonnements', val: d.newSubCount,
+      foot: d.newMrrCents ? `<span class="delta up">+${eur(d.newMrrCents)} de MRR</span>` : 'aucun nouveau MRR' },
+    { lab: 'MRR perdu', val: eur(d.lostMrrCents),
+      foot: d.lostMrrCents ? `<span class="delta down">${d.churnedCount} départ${d.churnedCount > 1 ? 's' : ''}</span>` : 'personne n’est parti 🎉' },
+    { lab: 'Renouvellements 7 j', val: eur(d.renewalCents),
+      foot: `${d.renewalCount} échéance${d.renewalCount > 1 ? 's' : ''} attendue${d.renewalCount > 1 ? 's' : ''}` },
+    { lab: 'Conversion d’essai', val: pct(d.trialConversion, 0),
+      foot: d.trialDecided ? `sur ${d.trialDecided} essai${d.trialDecided > 1 ? 's' : ''} terminé${d.trialDecided > 1 ? 's' : ''}` : 'aucun essai terminé' },
+  ].map(kpi).join('');
+
+  drawMain($('#chartMain'), d.series);
+  drawDonut($('#chartDonut'),
+    d.byPlan.map((p) => ({ label: `${PLAN_LABEL[p.key] || p.key} · ${p.count} abo${p.count > 1 ? 's' : ''}`, value: p.mrrCents, color: PLAN_COLOR[p.key] || '#8C8880' })),
+    eur0(d.mrrCents), 'de MRR');
+
+  // ── À surveiller ──
+  const al = [];
+  if (d.atRiskCount) al.push(['bad', `<b>${d.atRiskCount} paiement${d.atRiskCount > 1 ? 's' : ''} en échec</b> — l'accès sera coupé si la carte ne passe pas.`]);
+  if (d.openInvoiceCents) al.push(['bad', `<b>${eur(d.openInvoiceCents)} d'impayés</b> sur ${d.openInvoiceCount} facture${d.openInvoiceCount > 1 ? 's' : ''} ouverte${d.openInvoiceCount > 1 ? 's' : ''}.`]);
+  if (d.cancelAtEndCount) al.push(['warn', `<b>${d.cancelAtEndCount} résiliation${d.cancelAtEndCount > 1 ? 's' : ''} programmée${d.cancelAtEndCount > 1 ? 's' : ''}</b> — encore actives jusqu'à la fin de période.`]);
+  if (d.refundCents) al.push(['warn', `<b>${eur(d.refundCents)} remboursés</b> sur la période.`]);
+  if (d.disputeCents) al.push(['bad', `<b>${eur(d.disputeCents)} de litiges</b> (chargebacks) — à contester dans Stripe.`]);
+  if (!al.length) al.push(['ok', 'Rien à signaler : aucun impayé, aucun litige, aucune résiliation en attente.']);
+  $('#alerts').innerHTML = al.map(([c, t]) => `<div class="alert ${c}">${t}</div>`).join('');
+
+  // ── Trésorerie ──
+  const p = d.nextPayout;
+  $('#cash').innerHTML = [
+    ['Disponible', eur(d.balanceAvailableCents), '#8DEEBB'],
+    ['En attente de compensation', eur(d.balancePendingCents), null],
+    ['Prochain virement', p ? `${eur(p.amount)} · ${new Date(p.arrival_date * 1000).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}` : 'aucun programmé', p ? '#FFB183' : null],
+    ['Frais Stripe payés', eur(d.feeCents), '#FF9AAC'],
+    ['Taux de frais réel', d.grossCents ? pct(d.feeCents / d.grossCents, 2) : '—', null],
+  ].map(([k, v, c]) => `<div><span class="k">${esc(k)}</span><span class="v" style="${c ? `color:${c}` : ''}">${v}</span></div>`).join('');
+
+  // ── Essais ──
+  $('#trials').innerHTML = [
+    ['Essais en cours', String(d.trialCount)],
+    ['MRR potentiel', eur(d.trialMrrCents)],
+    ['Essais terminés (total)', String(d.trialDecided)],
+    ['Taux de conversion', pct(d.trialConversion, 0)],
+    ['MRR si tous convertissaient', eur(d.mrrCents + d.trialMrrCents)],
+  ].map(([k, v]) => `<div><span class="k">${esc(k)}</span><span class="v">${v}</span></div>`).join('');
+
+  // ── Entonnoir ──
+  $('#funnel').innerHTML = [
+    ['Comptes créés (total)', String(d.signups.total)],
+    [`Comptes créés · ${d.days} j`, String(d.signups.period)],
+    ['Comptes premium', String(d.signups.paying)],
+    ['Inscrit → payant', pct(d.signupToPaid, 1)],
+    ['Abonnements Stripe actifs', String(d.activeCount)],
+  ].map(([k, v]) => `<div><span class="k">${esc(k)}</span><span class="v">${v}</span></div>`).join('');
+
+  // ── Motifs de départ ──
+  const rs = d.cancelReasons || [];
+  if (!rs.length) $('#reasons').innerHTML = '<div class="empty"><div class="big">🕊️</div>Personne n’a encore résilié volontairement.</div>';
+  else {
+    const LAB = { too_expensive: 'Trop cher', missing_features: 'Manque des fonctions', switched_service: 'Parti ailleurs', unused: 'Ne l’utilisait plus', low_quality: 'Qualité insuffisante', customer_service: 'Support', too_complex: 'Trop compliqué', other: 'Autre', '(aucun motif donné)': 'Aucun motif' };
+    const max = Math.max(...rs.map((r) => r.n));
+    $('#reasons').innerHTML = rs.map((r) => `<div class="bar-row">
+      <span class="lab">${esc(LAB[r.feedback] || r.feedback)}</span>
+      <span class="bar-wrap"><span class="bar" style="width:${Math.round((r.n / max) * 100)}%"></span></span>
+      <span class="n">${r.n}</span></div>`).join('');
+  }
+
+  // ── Affiliés ──
+  $('#affiliate').innerHTML = [
+    ['Ventes via code promo', String(d.affiliateSaleCount)],
+    ['CA généré', eur(d.affiliateCents)],
+    ['Part du CA total', pct(d.affiliateShare, 0)],
+    ['CA en direct', eur(Math.max(0, d.grossCents - d.affiliateCents))],
+  ].map(([k, v]) => `<div><span class="k">${esc(k)}</span><span class="v">${v}</span></div>`).join('')
+    + '<div style="border-top:1px solid var(--line);padding-top:12px;margin-top:4px"><a href="/partner" style="color:var(--o2);font-size:13px;text-decoration:none">Détail par collaborateur →</a></div>';
+
+  // ── Flux ──
+  const feed = d.feed || [];
+  if (!feed.length) $('#feed').innerHTML = '<div class="empty"><div class="big">📭</div>Aucun mouvement enregistré pour l’instant.<br><span class="hint">Le journal se remplit au premier événement Stripe reçu.</span></div>';
+  else $('#feed').innerHTML = feed.map((e) => {
+    const f = FEED[e.kind] || { ico: '•', color: '#8C8880', verb: e.kind };
+    const amt = !e.amount_cents ? ''
+      : f.cash ? `<span class="amt" style="color:${f.color}">${e.amount_cents < 0 ? '−' : '+'}${eur(Math.abs(e.amount_cents))}</span>`
+      : `<span class="amt" style="color:var(--muted)">${eur(Math.abs(e.amount_cents))} en jeu</span>`;
+    return `<div>
+      <span class="ico">${f.ico}</span>
+      <span class="txt"><b>${esc(e.email || 'client inconnu')}</b> ${esc(f.verb)}${e.plan ? ` <span class="tag ${esc(e.plan)}">${esc(PLAN_LABEL[e.plan] || e.plan)}</span>` : ''}
+        ${e.detail ? `<div class="who">${esc(e.detail)}</div>` : ''}
+        ${e.promo_code ? `<div class="who">code ${esc(e.promo_code)}</div>` : ''}
+      </span>
+      <span style="text-align:right">${amt}<div class="when">${ago(e.created_at)}</div></span>
+    </div>`;
+  }).join('');
+
+  $('#stamp').textContent = 'Mis à jour ' + ago(d.generatedAt) + '.';
+}
+
+/* ══════════════ Chargement ══════════════ */
+let days = 30;
+function skeleton() {
+  const box = '<div class="card kpi"><div class="lab skel">chargement</div><div class="val display skel">0000</div><div class="foot skel">chargement en cours</div></div>';
+  $('#kpiTop').innerHTML = box.repeat(5);
+  $('#kpiPeriod').innerHTML = box.repeat(5);
+}
+
+async function load(fresh) {
+  skeleton();
+  $('#err').innerHTML = '';
+  try {
+    const r = await fetch(`/admin/revenus/data?days=${days}${fresh ? '&fresh=1' : ''}`);
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Erreur serveur');
+    render(d);
+  } catch (e) {
+    $('#err').innerHTML = `<div class="alert bad" style="margin-bottom:16px">Impossible de charger les chiffres : ${esc(e.message)}</div>`;
+    $('#kpiTop').innerHTML = ''; $('#kpiPeriod').innerHTML = '';
+  }
+}
+
+document.querySelectorAll('#chips .chip[data-days]').forEach((c) => c.addEventListener('click', () => {
+  document.querySelectorAll('#chips .chip[data-days]').forEach((x) => x.classList.remove('on'));
+  c.classList.add('on');
+  days = +c.dataset.days;
+  load();
+}));
+$('#refresh').addEventListener('click', () => load(true));
+setInterval(() => { if (!document.hidden) load(); }, 120000);
+load();
+</script>
+</body>
+</html>

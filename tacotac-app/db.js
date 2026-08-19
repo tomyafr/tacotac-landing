@@ -713,4 +713,79 @@ export function accountSummary(email) {
   return { plan: a.plan, hasPassword: Boolean(a.password_hash), viaGoogle: Boolean(a.google_id), createdAt: a.created_at };
 }
 
+// ══════════════════════════════════════════════════════════════
+//  JOURNAL DES ÉVÉNEMENTS D'ARGENT (dashboard perso /admin/revenus)
+//  Une ligne par événement Stripe qui touche au revenu. Écrit par le webhook,
+//  lu par le dashboard : ça donne un historique instantané (flux en direct,
+//  courbes jour par jour) sans repaginer l'API Stripe à chaque affichage.
+//  `stripe_event_id` UNIQUE = idempotence : Stripe rejoue les webhooks.
+// ══════════════════════════════════════════════════════════════
+db.exec(`
+  CREATE TABLE IF NOT EXISTS revenue_events (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    stripe_event_id TEXT UNIQUE,
+    kind            TEXT NOT NULL,   -- new_sub | trial_started | renewal | cancel | payment_failed | refund | dispute | trial_ending
+    email           TEXT,
+    customer_id     TEXT,
+    plan            TEXT,            -- weekly | monthly | annual
+    amount_cents    INTEGER,         -- encaissé sur l'événement (négatif = sortant)
+    currency        TEXT,
+    mrr_delta_cents INTEGER,         -- impact MRR normalisé au mois (+ à la souscription, − à la résiliation)
+    promo_code      TEXT,
+    detail          TEXT,            -- motif de résiliation, raison d'échec…
+    created_at      INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_revev_created ON revenue_events(created_at);
+  CREATE INDEX IF NOT EXISTS idx_revev_kind ON revenue_events(kind);
+`);
+
+// Renvoie false si l'événement était déjà enregistré (rejeu Stripe) — l'appelant
+// s'en sert pour ne pas renvoyer deux fois l'email d'alerte.
+export function recordRevenueEvent(e) {
+  try {
+    db.prepare(`INSERT INTO revenue_events
+      (stripe_event_id, kind, email, customer_id, plan, amount_cents, currency, mrr_delta_cents, promo_code, detail, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .run(e.stripeEventId || null, e.kind, normEmail(e.email) || null, e.customerId || null, e.plan || null,
+           e.amountCents ?? null, e.currency || null, e.mrrDeltaCents ?? null, e.promoCode || null,
+           e.detail || null, e.createdAt || nowTs());
+    return true;
+  } catch {
+    return false; // contrainte UNIQUE → déjà traité
+  }
+}
+
+export function listRevenueEvents(limit = 60) {
+  return db.prepare('SELECT * FROM revenue_events ORDER BY created_at DESC, id DESC LIMIT ?').all(Math.min(Number(limit) || 60, 500));
+}
+
+export function revenueEventsSince(sinceTs) {
+  return db.prepare('SELECT * FROM revenue_events WHERE created_at >= ? ORDER BY created_at ASC').all(Math.floor(sinceTs));
+}
+
+// ── Inscriptions (pour le taux de conversion inscrit → payant) ──
+export function signupCounts(sinceTs) {
+  const total = db.prepare('SELECT COUNT(*) AS n FROM accounts').get()?.n || 0;
+  const period = db.prepare('SELECT COUNT(*) AS n FROM accounts WHERE created_at >= ?').get(Math.floor(sinceTs))?.n || 0;
+  const paying = db.prepare("SELECT COUNT(*) AS n FROM accounts WHERE plan = 'premium'").get()?.n || 0;
+  return { total, period, paying };
+}
+
+// Inscriptions jour par jour ('YYYY-MM-DD' Europe/Paris), pour superposer
+// la courbe des inscriptions à celle des ventes.
+export function signupsByDay(sinceTs) {
+  const rows = db.prepare('SELECT created_at FROM accounts WHERE created_at >= ?').all(Math.floor(sinceTs));
+  const out = {};
+  for (const r of rows) {
+    const d = parisDay(new Date(r.created_at * 1000));
+    out[d] = (out[d] || 0) + 1;
+  }
+  return out;
+}
+
+// Ventes attribuées à un collaborateur sur la période (part du CA affilié).
+export function affiliateSalesSince(sinceTs) {
+  return db.prepare('SELECT * FROM collaborator_sales WHERE created_at >= ? ORDER BY created_at ASC').all(Math.floor(sinceTs));
+}
+
 export default db;
