@@ -22,9 +22,11 @@ import { consumeQuota, getStatus, activatePremium, syncSubscription, deactivateP
          accountsForLifecycle, markAccountEmail, consumeTrainQuota, trainUsedToday, claimGiftTone, refundGiftTone,
          getCollaboratorByPromoId, recordSale, completeQuiz,
          recordCancellationFeedback, listCancellationFeedback, cancellationStats, getEmailByCustomerId,
-         recordRevenueEvent } from './db.js';
+         recordRevenueEvent, recordAttribution, getAttribution, recordFunnelStep, getDeviceIdByCustomerId,
+         getVideoLink, recordVideoClick } from './db.js';
 import { createPartnerRouter } from './partner.js';
 import { createRevenueRouter, computeSnapshot } from './revenue.js';
+import { createAcquisitionRouter } from './acquisition.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -80,7 +82,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
           logAndAlert({
             stripeEventId: event.id, kind: 'renewal',
             email: inv.customer_email || getEmailByCustomerId(inv.customer),
-            customerId: inv.customer, plan: planKeyFromPrice(line?.price || line?.plan),
+            customerId: inv.customer, deviceId: getDeviceIdByCustomerId(inv.customer), plan: planKeyFromPrice(line?.price || line?.plan),
             amountCents: inv.amount_paid, currency: inv.currency,
           });
         }
@@ -91,7 +93,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
         logAndAlert({
           stripeEventId: event.id, kind: 'payment_failed',
           email: inv.customer_email || getEmailByCustomerId(inv.customer),
-          customerId: inv.customer, amountCents: inv.amount_due, currency: inv.currency,
+          customerId: inv.customer, deviceId: getDeviceIdByCustomerId(inv.customer), amountCents: inv.amount_due, currency: inv.currency,
           detail: inv.next_payment_attempt
             ? `Nouvelle tentative le ${new Date(inv.next_payment_attempt * 1000).toLocaleDateString('fr-FR')}`
             : 'Plus de tentative prévue',
@@ -103,7 +105,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
         logAndAlert({
           stripeEventId: event.id, kind: 'refund',
           email: ch.billing_details?.email || getEmailByCustomerId(ch.customer),
-          customerId: ch.customer, amountCents: -(ch.amount_refunded || 0), currency: ch.currency,
+          customerId: ch.customer, deviceId: getDeviceIdByCustomerId(ch.customer), amountCents: -(ch.amount_refunded || 0), currency: ch.currency,
           detail: ch.amount_refunded < ch.amount ? 'Remboursement partiel' : null,
         });
         break;
@@ -122,7 +124,8 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
         const { plan, mrrCents } = subInfo(sub);
         logAndAlert({
           stripeEventId: event.id, kind: 'trial_ending',
-          email: getEmailByCustomerId(sub.customer), customerId: sub.customer, plan,
+          email: getEmailByCustomerId(sub.customer), customerId: sub.customer,
+          deviceId: getDeviceIdByCustomerId(sub.customer), plan,
           amountCents: 0, mrrDeltaCents: mrrCents,
           detail: sub.trial_end ? `Fin d'essai le ${new Date(sub.trial_end * 1000).toLocaleDateString('fr-FR')}` : null,
         });
@@ -161,7 +164,8 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
         const { plan, mrrCents } = subInfo(sub);
         logAndAlert({
           stripeEventId: event.id, kind: 'cancel',
-          email: getEmailByCustomerId(sub.customer), customerId: sub.customer, plan,
+          email: getEmailByCustomerId(sub.customer), customerId: sub.customer,
+          deviceId: getDeviceIdByCustomerId(sub.customer), plan,
           mrrDeltaCents: -mrrCents,
           detail: [CANCEL_FR[cd.feedback] || cd.feedback, cd.comment && `« ${cd.comment} »`]
             .filter(Boolean).join(' — ') || (cd.reason === 'payment_failed' ? 'Carte refusée (résiliation subie)' : 'Aucun motif donné'),
@@ -464,6 +468,66 @@ app.get('/admin/tiktok/status', requireAdmin, async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
+});
+
+// ══════════════════════════════════════════════════════════════
+//  ACQUISITION — savoir quelle vidéo amène de vrais clients payants
+//
+//  Pourquoi côté serveur et pas seulement gtag() : le navigateur intégré de
+//  TikTok, les bloqueurs et iOS avalent une partie des événements client, et
+//  Google Analytics ne sait de toute façon pas qui a payé. Ici on écrit contre
+//  le cookie device_id signé — la même clé que celle passée à Stripe en
+//  `client_reference_id`. C'est ce chaînon qui permet de dire « cette vidéo a
+//  rapporté 149 € » au lieu de « cette vidéo a fait 300 sessions ».
+// ══════════════════════════════════════════════════════════════
+
+// Lien court à mettre en bio TikTok : /v/CODE. Il compte le clic puis renvoie
+// sur la page voulue avec les UTM déjà injectés — le visiteur ne voit qu'une
+// redirection. Un code inconnu redirige vers l'accueil plutôt que de renvoyer
+// une erreur : un lien mort en bio ne doit jamais afficher une page cassée.
+app.get('/v/:code', (req, res) => {
+  const link = getVideoLink(req.params.code);
+  if (!link || link.archived_at) return res.redirect(302, '/');
+  const deviceId = attachDevice(req, res);
+  recordVideoClick(link.code, deviceId);
+  const dest = new URL(link.dest && link.dest.startsWith('/') ? link.dest : '/', PUBLIC_URL);
+  dest.searchParams.set('utm_source', link.platform || 'tiktok');
+  dest.searchParams.set('utm_medium', 'video');
+  dest.searchParams.set('utm_campaign', link.platform || 'tiktok');
+  dest.searchParams.set('utm_content', link.code);
+  res.redirect(302, dest.pathname + dest.search);
+});
+
+// Capture d'attribution sur les pages HTML. Premier contact figé (c'est lui qui
+// a fait entrer la personne), dernier contact rafraîchi.
+const PAGE_RE = /\.[a-z0-9]{2,5}$/i;
+app.use((req, res, next) => {
+  if (req.method !== 'GET') return next();
+  const p = req.path;
+  if (p.startsWith('/api/') || p.startsWith('/admin/') || p.startsWith('/internal/') || PAGE_RE.test(p)) return next();
+  try {
+    const q = req.query || {};
+    const deviceId = attachDevice(req, res);
+    recordAttribution(deviceId, {
+      source: q.utm_source, medium: q.utm_medium, campaign: q.utm_campaign, content: q.utm_content,
+      referrer: req.get('referer'), landing: p,
+    });
+    recordFunnelStep(deviceId, 'land', p);
+  } catch (e) {
+    console.error('[acquisition]', e?.message); // ne doit jamais empêcher la page de s'afficher
+  }
+  next();
+});
+
+// Étapes que seul le front connaît (affichage du paywall, choix d'un plan).
+// Liste blanche stricte : ce point d'entrée est public, il ne doit pas devenir
+// un moyen d'écrire n'importe quoi en base.
+const CLIENT_STEPS = new Set(['paywall', 'plan_click', 'quiz_done']);
+app.post('/api/track', (req, res) => {
+  const step = String(req.body?.step || '');
+  if (!CLIENT_STEPS.has(step)) return res.status(204).end();
+  recordFunnelStep(attachDevice(req, res), step, String(req.body?.detail || '').slice(0, 60));
+  res.status(204).end();
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -1679,6 +1743,7 @@ app.post('/api/auth/signup', signupLimiter, (req, res) => {
       : 'Un compte existe déjà avec cet email. Connecte-toi.' });
   }
   const account = createAccount({ email, passwordHash: hashPassword(password) });
+  recordFunnelStep(req.deviceId, 'signup', 'email');
   linkDeviceToAccount(req.deviceId, account.id); // l'appareil hérite/donne son premium
   pushToSheet(email, 'account-email');           // nouveau compte → Sheet (marketing)
   sendLifecycleEmail(account, 'welcome').catch(() => {}); // email de bienvenue (best-effort)
@@ -1795,7 +1860,7 @@ app.get('/api/auth/google/callback', async (req, res) => {
     if (!account) {
       const byEmail = getAccountByEmail(email);
       if (byEmail) { attachGoogleToAccount(byEmail.id, googleId); account = getAccountByEmail(email); } // relie Google au compte mdp existant
-      else { account = createAccount({ email, googleId }); pushToSheet(email, 'account-google'); sendLifecycleEmail(account, 'welcome').catch(() => {}); } // nouveau compte Google → Sheet + bienvenue
+      else { account = createAccount({ email, googleId }); recordFunnelStep(req.deviceId, 'signup', 'google'); pushToSheet(email, 'account-google'); sendLifecycleEmail(account, 'welcome').catch(() => {}); } // nouveau compte Google → Sheet + bienvenue
     }
     linkDeviceToAccount(req.deviceId, account.id);
     // l'appareil D'ORIGINE (celui qui a cliqué "Google", ex. la PWA) peut être différent
@@ -2062,6 +2127,7 @@ app.post('/api/checkout', async (req, res) => {
     const plan = ['monthly', 'annual', 'weekly'].includes(req.body?.plan) ? req.body.plan : 'weekly';
     const price = PRICES[plan];
     if (!price) return res.status(500).json({ error: 'Offre indisponible.' });
+    recordFunnelStep(deviceId, 'checkout', plan);
 
     // Anti-double-abonnement. Vu en vrai le 17/08 : un client a payé deux fois le
     // Mensuel (2× 9,99€/mois) en rouvrant le paywall sur un 2e appareil/onglet
@@ -2196,6 +2262,7 @@ app.get('/api/checkout/confirm', async (req, res) => {
 app.post('/api/analyze', analyzeLimiter, async (req, res) => {
   try {
     const deviceId = attachDevice(req, res);
+    recordFunnelStep(deviceId, 'analyze');
     attachAccount(req); // un compte premium connecté = illimité, même sur un appareil vierge
 
     // Mur d'inscription : l'analyse est réservée aux comptes (gratuits inclus).
@@ -2533,6 +2600,15 @@ const ALERT_TITLE = {
 // Enregistre l'événement puis envoie l'alerte. L'email ne part que si la ligne a
 // réellement été insérée — donc jamais deux fois pour un même webhook rejoué.
 function logAndAlert(e) {
+  // D'où venait ce client ? On le sait par son device_id, que Stripe nous
+  // rend dans `client_reference_id`. C'est ce qui rattache un euro encaissé
+  // à la vidéo TikTok qui l'a amené, des mois après le premier clic.
+  const attr = e.deviceId ? getAttribution(e.deviceId) : null;
+  if (attr) {
+    e.source = attr.first_source;
+    e.campaign = attr.first_campaign;
+    e.content = attr.first_content;
+  }
   const fresh = recordRevenueEvent(e);
   if (!fresh || !ALERTS_ON || !OWNER_EMAILS.length || !ALERT_STYLE[e.kind]) return;
   const lines = [];
@@ -2563,11 +2639,17 @@ async function alertFromSession(session, eventId) {
     if (pc) promoCode = typeof pc === 'object' ? pc.code : (await stripe.promotionCodes.retrieve(pc)).code;
   } catch { /* pas de code = vente directe */ }
 
+  // `client_reference_id` = le device_id qu'on a passé au checkout : c'est le
+  // fil qui relie ce paiement au tout premier clic sur le lien TikTok.
+  const deviceId = session.client_reference_id || session.metadata?.device_id || null;
+  if (deviceId) recordFunnelStep(deviceId, isTrial ? 'trial' : 'paid', plan);
+
   logAndAlert({
     stripeEventId: eventId,
     kind: isTrial ? 'trial_started' : 'new_sub',
     email: session.customer_details?.email || session.customer_email,
     customerId: typeof session.customer === 'string' ? session.customer : session.customer?.id,
+    deviceId,
     plan,
     amountCents: session.amount_total || 0,
     currency: session.currency,
@@ -2596,6 +2678,8 @@ app.use(createPartnerRouter({
 
 // Mon dashboard à moi : /admin/revenus (accès ADMIN_TOKEN, comme /admin/tiktok)
 app.use(createRevenueRouter({ stripe, requireAdmin, prices: PRICES }));
+// Acquisition : quelle vidéo TikTok rapporte réellement de l'argent
+app.use(createAcquisitionRouter({ requireAdmin, publicUrl: PUBLIC_URL }));
 
 // ── Récap quotidien par email ───────────────────────────────────
 // Une fois par jour à l'heure choisie (Europe/Paris) : l'état du business en
