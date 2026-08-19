@@ -796,16 +796,14 @@ export function affiliateSalesSince(sinceTs) {
 // ══════════════════════════════════════════════════════════════
 //  ACQUISITION : d'où vient chaque visiteur, et ce qu'il rapporte
 //
-//  Le problème que ça résout : gtag() ne suffit pas. Le navigateur intégré
-//  de TikTok, les bloqueurs et iOS avalent une partie des événements côté
-//  client, et surtout Google Analytics ne sait pas qui a PAYÉ. Ici tout est
-//  écrit côté serveur, contre le cookie device_id signé — la même clé que
-//  celle qui sert au paiement. C'est ce qui permet de dire « cette vidéo a
-//  rapporté 149 € », pas juste « 300 sessions ».
+//  Le problème que ça résout : gtag() ne suffit pas — Google Analytics ne sait
+//  pas qui a PAYÉ. Ici tout est écrit côté serveur, contre le cookie device_id
+//  signé — la même clé que celle qui sert au paiement.
 //
-//  · attribution   : premier et dernier contact par appareil
-//  · funnel_events : chaque étape franchie (arrivée → analyse → paywall → achat)
-//  · video_links   : un lien court par vidéo TikTok, et ses clics
+//  · attribution   : premier et dernier contact par appareil (utm_* génériques,
+//    dormant tant que rien n'envoie de lien avec ces paramètres — sans coût)
+//  · funnel_events : chaque étape franchie depuis la LP (arrivée → analyse →
+//    paywall → achat)
 // ══════════════════════════════════════════════════════════════
 db.exec(`
   CREATE TABLE IF NOT EXISTS attribution (
@@ -824,39 +822,14 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_funnel_step ON funnel_events(step, created_at);
   CREATE INDEX IF NOT EXISTS idx_funnel_device ON funnel_events(device_id);
-
-  -- Un lien court par vidéo TikTok : taco-tac.app/v/CODE. Le code voyage en
-  -- utm_content jusqu'à la vente, donc chaque euro remonte à une vidéo précise.
-  CREATE TABLE IF NOT EXISTS video_links (
-    code        TEXT PRIMARY KEY,      -- court, lisible : "dm3", "spicy7"
-    label       TEXT,                  -- de quoi parle la vidéo
-    platform    TEXT NOT NULL DEFAULT 'tiktok',
-    dest        TEXT,                  -- chemin de destination (défaut : la LP)
-    posted_at   INTEGER,               -- date de publication de la vidéo
-    clicks      INTEGER NOT NULL DEFAULT 0,
-    created_at  INTEGER NOT NULL,
-    archived_at INTEGER
-  );
-  CREATE TABLE IF NOT EXISTS video_clicks (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    code       TEXT NOT NULL,
-    device_id  TEXT,
-    created_at INTEGER NOT NULL
-  );
-  CREATE INDEX IF NOT EXISTS idx_vclicks ON video_clicks(code, created_at);
-
-  -- Stats saisies à la main / importées depuis TikTok Studio (l'app TikTok
-  -- ayant été refusée, l'API ne les donne pas). Un relevé par date : ça permet
-  -- de voir l'évolution d'une même vidéo, pas juste son dernier état.
-  CREATE TABLE IF NOT EXISTS video_stats (
-    code       TEXT NOT NULL,
-    measured_on TEXT NOT NULL,         -- 'YYYY-MM-DD'
-    views      INTEGER, likes INTEGER, comments INTEGER, shares INTEGER, saves INTEGER,
-    created_at INTEGER NOT NULL,
-    PRIMARY KEY (code, measured_on)
-  );
 `);
-// L'attribution suit la vente : ces colonnes disent quelle vidéo a payé.
+// Suivi des liens vidéo TikTok abandonné (2026-08-19, trop de friction à 7 vidéos/jour) —
+// tables vidées, plus jamais recréées si absentes.
+try { db.exec('DROP TABLE IF EXISTS video_links'); } catch { /* déjà nettoyé */ }
+try { db.exec('DROP TABLE IF EXISTS video_clicks'); } catch { /* déjà nettoyé */ }
+try { db.exec('DROP TABLE IF EXISTS video_stats'); } catch { /* déjà nettoyé */ }
+// L'attribution suit la vente : ces colonnes disent d'où elle vient (reste utile
+// pour n'importe quelle source future qui poserait des utm_*, pas seulement TikTok).
 try { db.exec('ALTER TABLE revenue_events ADD COLUMN source TEXT'); } catch { /* déjà migré */ }
 try { db.exec('ALTER TABLE revenue_events ADD COLUMN campaign TEXT'); } catch { /* déjà migré */ }
 try { db.exec('ALTER TABLE revenue_events ADD COLUMN content TEXT'); } catch { /* déjà migré */ }
@@ -927,80 +900,6 @@ export function funnelBySource(sinceTs) {
      WHERE f.created_at >= ?
      GROUP BY source, f.step
   `).all(Math.floor(sinceTs));
-}
-
-// ── Liens courts par vidéo ──────────────────────────────────────
-export function upsertVideoLink({ code, label, platform, dest, postedAt }) {
-  const c = String(code || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 32);
-  if (!c) return null;
-  const existing = db.prepare('SELECT code FROM video_links WHERE code = ?').get(c);
-  if (existing) {
-    db.prepare('UPDATE video_links SET label = ?, platform = ?, dest = ?, posted_at = ?, archived_at = NULL WHERE code = ?')
-      .run(clean(label, 160), clean(platform) || 'tiktok', clean(dest, 200), postedAt || null, c);
-  } else {
-    db.prepare('INSERT INTO video_links (code, label, platform, dest, posted_at, created_at) VALUES (?, ?, ?, ?, ?, ?)')
-      .run(c, clean(label, 160), clean(platform) || 'tiktok', clean(dest, 200), postedAt || null, nowTs());
-  }
-  return getVideoLink(c);
-}
-export function getVideoLink(code) {
-  return db.prepare('SELECT * FROM video_links WHERE code = ?').get(String(code || '').toLowerCase()) || null;
-}
-export function listVideoLinks() {
-  return db.prepare('SELECT * FROM video_links ORDER BY COALESCE(posted_at, created_at) DESC').all();
-}
-export function archiveVideoLink(code) {
-  db.prepare('UPDATE video_links SET archived_at = ? WHERE code = ?').run(nowTs(), String(code || '').toLowerCase());
-}
-export function recordVideoClick(code, deviceId) {
-  const c = String(code || '').toLowerCase();
-  db.prepare('UPDATE video_links SET clicks = clicks + 1 WHERE code = ?').run(c);
-  db.prepare('INSERT INTO video_clicks (code, device_id, created_at) VALUES (?, ?, ?)').run(c, deviceId || null, nowTs());
-}
-
-// ── Relevés TikTok saisis à la main ─────────────────────────────
-export function recordVideoStats({ code, measuredOn, views, likes, comments, shares, saves }) {
-  const c = String(code || '').trim().toLowerCase();
-  if (!c) return false;
-  const num = (v) => (v === '' || v == null ? null : Math.max(0, Math.round(Number(v)) || 0));
-  db.prepare(`INSERT INTO video_stats (code, measured_on, views, likes, comments, shares, saves, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(code, measured_on) DO UPDATE SET
-      views = excluded.views, likes = excluded.likes, comments = excluded.comments,
-      shares = excluded.shares, saves = excluded.saves`)
-    .run(c, measuredOn || parisDay(), num(views), num(likes), num(comments), num(shares), num(saves), nowTs());
-  return true;
-}
-// Dernier relevé connu de chaque vidéo (le plus récent fait foi).
-export function latestVideoStats() {
-  const rows = db.prepare(`
-    SELECT s.* FROM video_stats s
-     WHERE s.measured_on = (SELECT MAX(measured_on) FROM video_stats WHERE code = s.code)
-  `).all();
-  return Object.fromEntries(rows.map((r) => [r.code, r]));
-}
-export function videoStatsHistory(code) {
-  return db.prepare('SELECT * FROM video_stats WHERE code = ? ORDER BY measured_on ASC').all(String(code || '').toLowerCase());
-}
-
-// ── Performance par vidéo : clics → inscriptions → payants → euros ──
-// Le lien entre les deux mondes : utm_content porte le code de la vidéo, donc
-// on regroupe les appareils par `first_content` et on regarde qui a payé.
-export function videoPerformance(sinceTs) {
-  const since = Math.floor(sinceTs);
-  const clicks = db.prepare('SELECT code, COUNT(*) AS n, COUNT(DISTINCT device_id) AS uniques FROM video_clicks WHERE created_at >= ? GROUP BY code').all(since);
-  const signups = db.prepare(`
-    SELECT a.first_content AS code, COUNT(DISTINCT f.device_id) AS n
-      FROM funnel_events f JOIN attribution a ON a.device_id = f.device_id
-     WHERE f.step = 'signup' AND f.created_at >= ? AND a.first_content IS NOT NULL
-     GROUP BY a.first_content`).all(since);
-  const sales = db.prepare(`
-    SELECT content AS code, COUNT(*) AS n, SUM(amount_cents) AS cents
-      FROM revenue_events
-     WHERE kind IN ('new_sub','renewal') AND created_at >= ? AND content IS NOT NULL
-     GROUP BY content`).all(since);
-  const byCode = (rows) => Object.fromEntries(rows.map((r) => [String(r.code).toLowerCase(), r]));
-  return { clicks: byCode(clicks), signups: byCode(signups), sales: byCode(sales) };
 }
 
 // Chiffre d'affaires par source d'acquisition (tous canaux confondus).

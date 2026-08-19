@@ -22,8 +22,7 @@ import { consumeQuota, getStatus, activatePremium, syncSubscription, deactivateP
          accountsForLifecycle, markAccountEmail, consumeTrainQuota, trainUsedToday, claimGiftTone, refundGiftTone,
          getCollaboratorByPromoId, recordSale, completeQuiz,
          recordCancellationFeedback, listCancellationFeedback, cancellationStats, getEmailByCustomerId,
-         recordRevenueEvent, recordAttribution, getAttribution, recordFunnelStep, getDeviceIdByCustomerId,
-         getVideoLink, recordVideoClick } from './db.js';
+         recordRevenueEvent, recordAttribution, getAttribution, recordFunnelStep, getDeviceIdByCustomerId } from './db.js';
 import { createPartnerRouter } from './partner.js';
 import { createRevenueRouter, computeSnapshot } from './revenue.js';
 import { createAcquisitionRouter } from './acquisition.js';
@@ -480,23 +479,6 @@ app.get('/admin/tiktok/status', requireAdmin, async (req, res) => {
 //  `client_reference_id`. C'est ce chaînon qui permet de dire « cette vidéo a
 //  rapporté 149 € » au lieu de « cette vidéo a fait 300 sessions ».
 // ══════════════════════════════════════════════════════════════
-
-// Lien court à mettre en bio TikTok : /v/CODE. Il compte le clic puis renvoie
-// sur la page voulue avec les UTM déjà injectés — le visiteur ne voit qu'une
-// redirection. Un code inconnu redirige vers l'accueil plutôt que de renvoyer
-// une erreur : un lien mort en bio ne doit jamais afficher une page cassée.
-app.get('/v/:code', (req, res) => {
-  const link = getVideoLink(req.params.code);
-  if (!link || link.archived_at) return res.redirect(302, '/');
-  const deviceId = attachDevice(req, res);
-  recordVideoClick(link.code, deviceId);
-  const dest = new URL(link.dest && link.dest.startsWith('/') ? link.dest : '/', PUBLIC_URL);
-  dest.searchParams.set('utm_source', link.platform || 'tiktok');
-  dest.searchParams.set('utm_medium', 'video');
-  dest.searchParams.set('utm_campaign', link.platform || 'tiktok');
-  dest.searchParams.set('utm_content', link.code);
-  res.redirect(302, dest.pathname + dest.search);
-});
 
 // Capture d'attribution sur les pages HTML. Premier contact figé (c'est lui qui
 // a fait entrer la personne), dernier contact rafraîchi.
