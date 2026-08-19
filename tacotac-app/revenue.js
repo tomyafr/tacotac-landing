@@ -94,7 +94,11 @@ async function computeSnapshot(stripe, prices, days) {
   ]);
 
   // ── Abonnements en cours ──────────────────────────────────────
-  const live = subs.filter((s) => ['active', 'past_due', 'unpaid'].includes(s.status));
+  // `active` + `past_due` uniquement, pour matcher exactement la définition du
+  // MRR de Stripe (support.stripe.com : "active and past due subscriptions").
+  // `unpaid` (tentatives de paiement épuisées) reste compté dans `atRisk` —
+  // il pèse plus lourd comme signal d'alerte que comme argent réellement acquis.
+  const live = subs.filter((s) => ['active', 'past_due'].includes(s.status));
   const trialing = subs.filter((s) => s.status === 'trialing');
   const atRisk = subs.filter((s) => ['past_due', 'unpaid'].includes(s.status));
   const cancelAtEnd = live.filter((s) => s.cancel_at_period_end);
