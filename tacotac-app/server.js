@@ -331,10 +331,13 @@ function adminOk(req, res) {
   const expected = process.env.ADMIN_TOKEN;
   if (!expected) return false;
   if (req.query.t === expected) {
+    // 90 jours plutôt que 12h : /admin/home est pensé pour être ajouté à l'écran
+    // d'accueil du téléphone et ouvert comme une app — se reconnecter par le
+    // lien à chaque fois casserait exactement l'usage recherché.
     res.cookie(ADMIN_COOKIE, expected, {
       httpOnly: true, signed: true, sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 1000 * 60 * 60 * 12,
+      maxAge: 1000 * 60 * 60 * 24 * 90,
     });
     return true;
   }
@@ -344,6 +347,13 @@ function requireAdmin(req, res, next) {
   if (!adminOk(req, res)) return res.status(403).send('Accès refusé.');
   next();
 }
+
+// ── Mon dashboard unique (revenus + acquisition + collaborateurs) ──
+// Pensé pour être ajouté à l'écran d'accueil du téléphone (voir /admin-manifest.json) :
+// 3 onglets dans une seule app, chacun un iframe vers la page qui fait déjà le travail.
+app.get('/admin/home', requireAdmin, (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'admin-home.html'));
+});
 
 // Les vidéos proposées viennent d'un dossier local (les rendus du pipeline).
 // On ne renvoie que des noms de fichiers .mp4, et toute publication revalide que

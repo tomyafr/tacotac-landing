@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dashboard">
+<meta name="theme-color" content="#08080A">
+<title>Mon Dashboard · Tacotac</title>
+<link rel="manifest" href="/admin-manifest.json">
+<link rel="icon" href="/assets/icon-192.png">
+<link rel="apple-touch-icon" href="/assets/icon-180.png">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{ --bg:#08080A; --line:rgba(255,255,255,.08); --txt:#F5F2EC; --muted:#8C8880; --o:#FF5C00; --o2:#FF8A3D; }
+html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;height:100%;overflow:hidden}
+body{display:flex;flex-direction:column}
+
+/* Zone de contenu : un iframe par onglet, un seul visible à la fois.
+   Chaque iframe garde son propre état (scroll, filtres) même caché : on ne
+   les recharge pas à chaque changement d'onglet. */
+#content{flex:1;min-height:0;position:relative}
+#content iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg);display:none}
+#content iframe.on{display:block}
+.placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:var(--muted);font-size:13.5px}
+.placeholder .spin{width:26px;height:26px;border-radius:50%;border:3px solid rgba(255,255,255,.15);border-top-color:var(--o);animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* Barre d'onglets en bas, pouce-friendly, comme une vraie app mobile. */
+nav{display:flex;border-top:1px solid var(--line);background:rgba(10,10,12,.96);backdrop-filter:blur(18px);
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom));flex-shrink:0}
+nav button{flex:1;background:none;border:0;color:var(--muted);font-family:inherit;font-size:11px;font-weight:600;
+    padding:8px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border-radius:12px}
+nav button .ico{font-size:21px;line-height:1;filter:grayscale(1);opacity:.65;transition:filter .15s,opacity .15s,transform .15s}
+nav button.on{color:#fff}
+nav button.on .ico{filter:none;opacity:1;transform:translateY(-1px)}
+nav button:active{background:rgba(255,255,255,.05)}
+</style>
+</head>
+<body>
+
+<div id="content">
+  <div class="placeholder" id="ph0"><div class="spin"></div>Chargement…</div>
+  <iframe id="f-revenus" title="Mes revenus"></iframe>
+  <iframe id="f-acquisition" title="Acquisition"></iframe>
+  <iframe id="f-partner" title="Collaborateurs"></iframe>
+</div>
+
+<nav>
+  <button class="tab on" data-tab="revenus"><span class="ico">💰</span>Revenus</button>
+  <button class="tab" data-tab="acquisition"><span class="ico">📈</span>Acquisition</button>
+  <button class="tab" data-tab="partner"><span class="ico">🦊</span>Collaborateurs</button>
+</nav>
+
+<script>
+const SRC = { revenus: '/admin/revenus', acquisition: '/admin/acquisition', partner: '/partner' };
+const loaded = new Set();
+
+function showTab(name) {
+  document.querySelectorAll('nav .tab').forEach((b) => b.classList.toggle('on', b.dataset.tab === name));
+  document.querySelectorAll('#content iframe').forEach((f) => f.classList.remove('on'));
+  const frame = document.getElementById('f-' + name);
+  // Chargement paresseux : le src ne se pose qu'au premier passage sur l'onglet,
+  // pour ne pas payer le coût des 3 pages dès l'ouverture de l'app.
+  if (!loaded.has(name)) {
+    frame.src = SRC[name];
+    loaded.add(name);
+  }
+  frame.classList.add('on');
+  const ph = document.getElementById('ph0');
+  if (ph) ph.remove();
+  try { sessionStorage.setItem('tacotac_admin_tab', name); } catch {}
+}
+
+document.querySelectorAll('nav .tab').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
+
+// Revient sur le dernier onglet ouvert plutôt que de toujours repartir sur "Revenus".
+let start = 'revenus';
+try { start = sessionStorage.getItem('tacotac_admin_tab') || 'revenus'; } catch {}
+showTab(start);
+</script>
+</body>
+</html>
