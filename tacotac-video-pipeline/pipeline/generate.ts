@@ -111,7 +111,7 @@ const clean = (s: string) => stripEmoji(s.replace(/\s*\.\s*$/u, ""));
 // modèle retombe sur la même formulation à l'intérieur de ce registre — en plus
 // de recopier les exemples entre parenthèses. On lui met donc sous les yeux ses
 // propres sorties passées, avec interdiction d'y retoucher.
-function recentOutputs(limit = 25): { stories: string[]; punchlines: string[]; amorces: string[] } {
+function recentOutputs(limit = 25): { stories: string[]; punchlines: string[]; amorces: string[]; fins: string[] } {
   const stories: string[] = [];
   const punchlines: string[] = [];
   // L'AMORCE (le message qui plante le mot) n'était jamais collectée : en format
@@ -120,6 +120,9 @@ function recentOutputs(limit = 25): { stories: string[]; punchlines: string[]; a
   // mêmes mots — "assurance" 3 fois sur 20, "clim" 2 fois, et 7 amorces sur 20
   // qui commençaient par "faudra/faudrait".
   const amorces: string[] = [];
+  // Le compliment final convergeait aussi (2 scripts d'affilee sur "ok toi tu
+  // sais parler") : il n'etait pas non plus dans l'historique montre au modele.
+  const fins: string[] = [];
   try {
     // On lit rendered/ ET queue/ : sans la file d'attente, les vidéos d'un même
     // lot ne se voient pas entre elles et convergent (les 3 titres d'un batch
@@ -156,14 +159,16 @@ function recentOutputs(limit = 25): { stories: string[]; punchlines: string[]; a
           while (a >= 0 && beats[a].type === "meme") a--;
           if (a >= 0 && beats[a]?.text) amorces.push(beats[a].text);
         }
+        const der = beats[beats.length - 1];
+        if (der?.type === "message" && der.from === "girl" && der.text) fins.push(der.text);
       } catch { /* fichier illisible : on l'ignore, l'anti-répétition reste best-effort */ }
     }
   } catch { /* pas encore d'archive (1er run) */ }
-  return { stories, punchlines, amorces };
+  return { stories, punchlines, amorces, fins };
 }
 
 function buildAvoidBlock(): string {
-  const { stories, punchlines, amorces } = recentOutputs();
+  const { stories, punchlines, amorces, fins } = recentOutputs();
   if (!stories.length && !punchlines.length && !amorces.length) return "";
   const list = (arr: string[], max: number) =>
     arr.slice(0, max).map((s) => `- ${s}`).join("\n");
@@ -185,7 +190,10 @@ storyReply déjà utilisés :
 ${list(stories, 25)}
 
 Disquettes déjà utilisées :
-${list(punchlines, 25)}`;
+${list(punchlines, 25)}
+
+Compliments de fin déjà utilisés (trouve autre chose, ne resers pas le même) :
+${list(fins, 20)}`;
 }
 
 // ── Angles imposés pour storyReply / hook / outro ──────────────────────────
@@ -253,7 +261,7 @@ const CONVERSATION_ARCHETYPES = [
   "elle dit qu'elle est occupée / qu'elle a pas le temps, il ne la supplie pas et retourne ça en sa faveur",
   "elle est froide et distante au début (réponses courtes, presque désintéressée), et se réchauffe progressivement au fil de la conv",
   "elle a du caractère et ne se laisse pas mener, elle le reprend quand il va trop vite",
-  "elle mentionne un autre mec / une légère compétition, il doit rester confiant sans paraître jaloux ni désespéré",
+  "elle est intriguée mais garde ses distances, il doit la faire lâcher prise sans forcer",
   "long silence de sa part puis elle relance elle-même, ou l'inverse — le client relance après un silence sans être lourd",
   "elle le vanne sur un détail (son look, sa réplique, son âge...) et le banter monte crescendo en complicité",
   "elle pose une question piège sur ce qu'il veut vraiment, il doit répondre avec assurance sans fuir ni se justifier",
@@ -265,7 +273,7 @@ const CONVERSATION_ARCHETYPES_REVERSED = [
   "il dit qu'il est occupé / qu'il a pas le temps, elle ne le supplie pas et retourne ça en sa faveur",
   "il est froid et distant au début (réponses courtes, presque désintéressé), et se réchauffe progressivement au fil de la conv",
   "il a du caractère et ne se laisse pas mener, il le reprend quand elle va trop vite",
-  "il mentionne une autre fille / une légère compétition, elle doit rester confiante sans paraître jalouse ni désespérée",
+  "il est intrigué mais garde ses distances, elle doit le faire lâcher prise sans forcer",
   "long silence de sa part puis il relance lui-même, ou l'inverse — la cliente relance après un silence sans être lourde",
   "il la vanne sur un détail (son look, sa réplique, son âge...) et le banter monte crescendo en complicité",
   "il pose une question piège sur ce qu'elle veut vraiment, elle doit répondre avec assurance sans fuir ni se justifier",
@@ -900,6 +908,19 @@ function punchlineProblems(script: Candidate): string[] {
       if (/\b(m[ée]fie|m[ée]fier|attention)\b/.test(t) && !/\b(à ton|à ta|à tes)\b/.test(t)) {
         problems.push(`amorce vide (mise en garde sans mot planté) : "${amorce.text}"`);
       }
+    }
+  }
+
+  // ── Elle ne parle JAMAIS d'un autre mec ───────────────────────────────────
+  // Tom : "très souvent la fille disait un mec vient me dire la même chose / t'es
+  // pas tout seul à dire ça... on ressent un peu chiant et c'est répétitif".
+  // Ça venait d'un archétype qui demandait explicitement "elle mentionne un autre
+  // mec / une légère compétition" — remplacé. Verrou pour les rechutes.
+  for (const b of beats) {
+    if (b.type !== "message" || b.from !== "girl" || !b.text) continue;
+    const t = b.text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    if (/(un autre|autre mec|autre gars|t'?es pas le seul|pas le premier|le (deuxieme|troisieme|4eme)|deja un mec|y'?a un mec|un mec qui|la concurrence|comme les autres|tous les mecs|meme chose que)/.test(t)) {
+      problems.push(`elle parle d'un autre mec (tic répétitif) : "${b.text}"`);
     }
   }
 

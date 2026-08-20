@@ -140,7 +140,9 @@ if [ -n "${RCLONE_REMOTE:-}" ]; then
           && echo "purge OK" || echo "⚠️ purge Drive en échec (sans conséquence sur les vidéos du jour)"
       fi
       if [ "${#uploaded_names[@]}" -gt 0 ]; then
-        node pipeline/notify.mjs "${uploaded_names[@]}" || echo "⚠️ email de notif non envoye (upload OK quand meme)"
+        # NOTIFY_OUT_DIR : notify.mjs tourne APRÈS l'archivage, il doit donc savoir
+        # où retrouver les mp4 pour pouvoir les joindre (mode NOTIFY_ATTACH=1).
+        NOTIFY_OUT_DIR="$OUT_DIR" node pipeline/notify.mjs "${uploaded_names[@]}" || echo "⚠️ email de notif non envoye (upload OK quand meme)"
         # Publication TikTok — après l'upload Drive, pour qu'un échec de posting
         # ne fasse jamais perdre les vidéos (elles sont déjà sauvegardées).
         echo "--- publication TikTok ---"
