@@ -15,6 +15,10 @@ export type MusicTrack = {
   file: string; // chemin dans public/
   introTrim: number; // frames coupées au début de l'intro
   drop: number; // instant du drop dans la piste (secondes) — pour vérification
+  // Vitesse de lecture de l'intro. 1 = normal. >1 = accélérée, donc plus courte :
+  // c'est le seul moyen de faire tomber le panier sur un drop TRÈS tôt (couper le
+  // début ferait disparaître le début de l'action, pas juste la raccourcir).
+  introSpeed?: number;
 };
 
 export const MUSIC_TRACKS = {
@@ -27,6 +31,14 @@ export const MUSIC_TRACKS = {
   nba: { file: "music/nba-cale.mp3", introTrim: 114, drop: 2.7 },
   // the-box : l'export d'origine ne coupait rien ; 18 frames (0,6 s) en moins.
   "the-box": { file: "music/the-box-cale.mp3", introTrim: 18, drop: 5.9 },
+  // pistolet : RÉSERVÉE au profil anomy (voir musicKeysFor() dans generate.ts).
+  // Son extrait de la vidéo de référence fournie par Tom. Drop mesuré à 3,50 s
+  // (analyse d'enveloppe RMS : quasi-silence jusqu'à 3,45 s puis explosion).
+  // C'est BEAUCOUP plus tôt que les autres pistes (5,7-6,5 s), d'où l'accélération
+  // plutôt qu'une coupe : 186 frames avant le panier ÷ 1.77 = 105 frames = 3,50 s.
+  // L'intro dure alors 203/1.77 ≈ 115 frames au lieu de 203 — c'est exactement
+  // l'effet "intro plus courte" de la vidéo de référence.
+  pistolet: { file: "music/pistolet_music.m4a", introTrim: 0, drop: 3.5, introSpeed: 1.77 },
 } as const satisfies Record<string, MusicTrack>;
 
 export type MusicKey = keyof typeof MUSIC_TRACKS;

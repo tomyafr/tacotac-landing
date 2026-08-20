@@ -23,8 +23,11 @@ export const MAX_DURATION_FRAMES = MAX_DURATION_SECONDS * video.fps;
 
 // Intro : clip de 203 frames, coupé du début selon la musique (voir music.ts).
 export const INTRO_DURATION_FRAMES = 203; // 6.7667s à 30fps
-export const introDurationFrames = (trim = 0) =>
-  Math.max(1, INTRO_DURATION_FRAMES - Math.max(0, trim));
+// La coupe s'applique AVANT l'accélération (on retire des frames du clip source,
+// puis on lit le reste plus vite). Les deux doivent donc être combinées ici, sinon
+// la scène durerait plus longtemps que ce qu'on voit et l'intro finirait sur du gel.
+export const introDurationFrames = (trim = 0, speed = 1) =>
+  Math.max(1, Math.round((INTRO_DURATION_FRAMES - Math.max(0, trim)) / Math.max(0.1, speed)));
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 const readTime = (text: string) => clamp(Math.round(28 + text.length * 1.6), 42, 120);
@@ -35,7 +38,7 @@ const revealDur = (it: DMItem): number => {
 };
 
 export type Scene =
-  | { kind: "intro"; dur: number; trim: number }
+  | { kind: "intro"; dur: number; trim: number; speed: number }
   | { kind: "photo"; asset: string; dur: number }
   | { kind: "caption"; text: string; background: string; variant: "outro"; dur: number }
   | { kind: "dm"; base: DMItem[]; reveals: DMItem[]; starts: number[]; dur: number }
@@ -79,8 +82,10 @@ export function buildScenes(script: Script): Scene[] {
   // rendu). Le clip est vierge ; la légende (script.introCaption) est un calque
   // Remotion posé par-dessus, voir Intro.tsx. La coupe du début dépend de la
   // musique choisie (chaque drop tombe à un instant différent), voir music.ts.
-  const trim = resolveMusic(script.music).introTrim;
-  scenes.push({ kind: "intro", dur: introDurationFrames(trim), trim });
+  const track = resolveMusic(script.music);
+  const trim = track.introTrim;
+  const speed = track.introSpeed ?? 1;
+  scenes.push({ kind: "intro", dur: introDurationFrames(trim, speed), trim, speed });
 
   // Format "DM" : on la voit AVANT d'ouvrir l'app. Le meme de réaction qui suit
   // est un beat normal placé par le modèle, il arrive donc juste après.

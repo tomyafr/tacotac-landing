@@ -228,7 +228,7 @@ const OUTRO_ANGLES = [
 const CONVERSATION_ARCHETYPES = [
   "elle dit qu'elle est occupée / qu'elle a pas le temps, il ne la supplie pas et retourne ça en sa faveur",
   "elle est froide et distante au début (réponses courtes, presque désintéressée), et se réchauffe progressivement au fil de la conv",
-  "elle négocie fermement la logistique du date (lieu, horaire, qui décide), teste s'il tient bon sans juste céder",
+  "elle a du caractère et ne se laisse pas mener, elle le reprend quand il va trop vite",
   "elle mentionne un autre mec / une légère compétition, il doit rester confiant sans paraître jaloux ni désespéré",
   "long silence de sa part puis elle relance elle-même, ou l'inverse — le client relance après un silence sans être lourd",
   "elle le vanne sur un détail (son look, sa réplique, son âge...) et le banter monte crescendo en complicité",
@@ -240,7 +240,7 @@ const CONVERSATION_ARCHETYPES = [
 const CONVERSATION_ARCHETYPES_REVERSED = [
   "il dit qu'il est occupé / qu'il a pas le temps, elle ne le supplie pas et retourne ça en sa faveur",
   "il est froid et distant au début (réponses courtes, presque désintéressé), et se réchauffe progressivement au fil de la conv",
-  "il négocie fermement la logistique du date (lieu, horaire, qui décide), teste si elle tient bon sans juste céder",
+  "il a du caractère et ne se laisse pas mener, il le reprend quand elle va trop vite",
   "il mentionne une autre fille / une légère compétition, elle doit rester confiante sans paraître jalouse ni désespérée",
   "long silence de sa part puis il relance lui-même, ou l'inverse — la cliente relance après un silence sans être lourde",
   "il la vanne sur un détail (son look, sa réplique, son âge...) et le banter monte crescendo en complicité",
@@ -251,7 +251,12 @@ const CONVERSATION_ARCHETYPES_REVERSED = [
 // Musiques disponibles (voir src/music.ts) — chacune embarque SA coupe d'intro pour
 // que le panier tombe sur le drop. Tirées en rotation comme le reste : sans ça, le
 // champ script.music restait vide et le rendu retombait toujours sur bg-music.
-const MUSIC_KEYS = Object.keys(MUSIC_TRACKS);
+// Musiques réservées à un profil précis : elles ne sortent QUE pour lui, et sont
+// exclues de la rotation de tous les autres. "pistolet" est le son du collab
+// ANOMY — c'est sa signature sonore, elle ne doit jamais apparaître chez Tom.
+const MUSIC_BY_PROFILE: Record<string, string[]> = { anomy: ["pistolet"] };
+const RESERVED_MUSIC = new Set(Object.values(MUSIC_BY_PROFILE).flat());
+const MUSIC_KEYS = MUSIC_BY_PROFILE[PROFILE] ?? Object.keys(MUSIC_TRACKS).filter((k) => !RESERVED_MUSIC.has(k));
 
 // Deux formats de vidéo en alternance stricte (une sur deux) :
 //  A — il répond à la story lui-même, Tacotac ne souffle QUE la réplique
@@ -272,9 +277,14 @@ const STRUCTURES: Structure[] = ["A", "B"];
 // Titres d'intro. Les 4 premiers sont RELEVÉS SUR LES VIDÉOS DE TOM qui ont
 // marché (reference/inspiration/) : première personne + souvent un aparté adressé
 // aux gars entre parenthèses ou astérisques. Le reste suit le même moule.
-const INTRO_CAPTIONS = [
-  // ⛔ JAMAIS "snapchat" ici : le décor rendu dans la vidéo est une conv Instagram.
-  // Un titre "sur snapchat" au-dessus d'un écran Insta se voit immédiatement.
+// ⛔ JAMAIS "snapchat" ici : le décor rendu dans la vidéo est une conv Instagram.
+// Un titre "sur snapchat" au-dessus d'un écran Insta se voit immédiatement.
+//
+// Le CODE ne tire plus le titre au hasard : il envoie toute la liste au modèle,
+// qui choisit celui qui colle le mieux au scénario qu'il vient d'écrire (voir la
+// consigne "TITRE" dans le prompt). Un titre tiré au sort tombait régulièrement à
+// côté (« je dm ma crush » sur une réponse à story).
+const INTRO_CAPTIONS_CLASSIQUES = [
   "je teste mon football sur insta",
   "je drague la plus belle du lycée *prenez des notes*",
   "comment dm sur insta (prenez des notes les gars)",
@@ -286,6 +296,18 @@ const INTRO_CAPTIONS = [
   "je gère mon football par message",
   "regarde comment je dm cette 10/10",
 ];
+// Titres "second degré" : purement là pour faire réagir dans les commentaires
+// ("attends quoi ??"). Ce sont des APPÂTS — la conv en dessous ne doit JAMAIS y
+// faire référence (voir la règle dans le prompt), sinon la vanne tombe à plat et
+// ça devient une histoire bizarre au premier degré.
+const INTRO_CAPTIONS_DROLES = [
+  "je dm la sœur de mon pote",
+  "je drague la demi sœur de mon demi frère",
+  "je dm la meilleure amie de ma sœur",
+  "je drague la fille qui m'a ghost en 2023",
+  "je dm mon ex par erreur *ça part en vrille*",
+];
+const INTRO_CAPTIONS = [...INTRO_CAPTIONS_CLASSIQUES, ...INTRO_CAPTIONS_DROLES];
 
 // Pools actifs pour ce profil (droits pour "solene"/Amelia, par défaut sinon).
 const ACTIVE_STORY_ANGLES = REVERSED ? STORY_REPLY_ANGLES_REVERSED : STORY_REPLY_ANGLES;
@@ -461,6 +483,12 @@ function buildGenInstruction(angles: { story: string; outro: string; archetype: 
 - ⚠️ RAPPEL : la relance de ${her} ("non pourquoi ?") n'est PAS un message creux interdit — c'est le pivot de la mécanique. C'est la SEULE exception à la règle "pas de message creux".
 - ⚠️ Le storyReply fait 60 CARACTÈRES MAXIMUM, une seule idée lui aussi. "tu postes ça un dimanche soir en sachant très bien ce que ça fait aux gens, assume au moins" = beaucoup trop long, coupe.
 - ⚠️ Les messages de la conv sont COURTS eux aussi : une ligne, comme un vrai DM. Jamais deux idées dans un message.
+- ⛔⛔ ${her.toUpperCase()} EST UNE MEUF NORMALE, PAS UN PERSONNAGE. C'est le truc qui fait le plus "faux" quand c'est raté.
+  Elle vient de recevoir un message d'un mec qu'elle ne connaît quasiment pas. Donc :
+  ✗ INTERDIT qu'elle parle de DATE, de LIEU, d'HORAIRE ou de "qui décide" dans les 3 premiers messages. Vu en vrai et ça sonne complètement bidon : "ok mais moi je choisis le lieu et la date" en 2e message — aucune fille n'écrit ça à un inconnu.
+  ✗ INTERDIT qu'elle annonce elle-même ses conditions, ses règles, ou qu'elle mène le jeu comme une pro de la vanne.
+  ✓ Elle répond COURT et normalement : elle est intriguée, ou sceptique, ou occupée, ou elle chambre un peu. Comme quelqu'un qui répond entre deux trucs, pas comme une scénariste.
+  ✓ C'est LUI qui a la répartie et qui pousse. Elle, elle réagit.
 - ⛔ ${her.toUpperCase()} N'ENVOIE JAMAIS DEUX MESSAGES DE SUITE. Jamais deux beats "girl" consécutifs, nulle part. Deux bulles grises d'affilée = elle se parle à elle-même = on voit tout de suite que la conv est fausse. Elle dit UNE chose, puis elle attend qu'il réponde. Si tu as envie de lui faire dire deux trucs, garde le meilleur et jette l'autre.
   ⛔ Le piège précis à éviter en fin de vidéo : écrire une réplique tiède ("mdrr sympa mais jai vraiment pas le temps la") PUIS ajouter le compliment dans un 2e message. Le compliment doit être son SEUL et unique dernier message.
 - ⚠️ ÉCRIS AVEC LES ACCENTS. "reponds", "gerer", "deja", "meme" sans accent = faute visible à l'écran. On écrit en phonétique relâchée (jsuis, jte, tkt), PAS sans accents.
@@ -599,6 +627,16 @@ ${structureRules}
 - storyReply : ${angles.story}
 - outroText : ${angles.outro}
 
+⚠️ LE TITRE (champ "introCaption") — c'est la 1re seconde de la vidéo, c'est lui qui fait s'arrêter le pouce.
+Choisis EXACTEMENT une phrase dans cette liste, recopiée au caractère près (aucune invention, aucune variante) :
+${INTRO_CAPTIONS_CLASSIQUES.map((c) => `  · ${c}`).join("\n")}
+Et les titres "second degré", volontairement provocateurs :
+${INTRO_CAPTIONS_DROLES.map((c) => `  · ${c}`).join("\n")}
+
+Comment choisir : prends celui qui colle le mieux à CE scénario. Format DM à froid → un titre qui parle de dm. Réponse à une story → un titre qui parle de gérer / de répondre. Si la conv est chaude, prends un titre qui promet du lourd.
+
+⛔⛔ RÈGLE ABSOLUE SUR LES TITRES SECOND DEGRÉ : le titre est un APPÂT pour faire réagir en commentaire ("attends QUOI ?"). La conversation, elle, est une conv de drague NORMALE et ne fait JAMAIS référence au titre. Si tu choisis "je dm la sœur de mon pote", il est INTERDIT d'écrire "t'es la sœur de mon pote mais..." ou "si ton frère savait" dans les messages. Zéro mention. Le spectateur fait le lien tout seul, c'est ça qui marche — l'expliquer tue la vanne et rend la vidéo bizarre au premier degré.
+
 ⚠️ CONTRAINTE CRITIQUE — STORY REPLY : tu ne vois PAS la photo réelle qui sera utilisée (elle est choisie séparément, au hasard, parmi des selfies miroir). N'INVENTE JAMAIS un détail visuel précis dans storyReply : pas d'objet (verre, lunettes, téléphone...), pas de lieu (café, plage, restau...), pas d'activité (${REVERSED ? "il boit, il mange" : "elle boit, elle mange"}...), pas d'animal, pas de vêtement précis. Toute affirmation sur le contenu de la photo a de grandes chances d'être fausse et de casser l'immersion. Reste sur des remarques qui marchent avec N'IMPORTE QUEL selfie miroir en tenue.
 
 VOIX (tout le texte) : minuscules, JAMAIS de point final, phonétique naturelle (jsuis, jte, jsp, tkt, mdr), court et ancré, jamais daté ni "coach drague YouTube". Les disquettes suivent STRICTEMENT le system prompt Tacotac ci-dessus.
@@ -619,7 +657,7 @@ Chaque vidéo doit raconter une conv DIFFÉRENTE, avec un vocabulaire et des ima
 }
 
 const jsonShape = `Réponds UNIQUEMENT avec un objet JSON valide, sans aucun texte autour ni bloc de code, de cette forme exacte :
-{"girlName":"...","status":"...","storyReply":"...","outroText":"...","beats":[{"kind":"message","from":"girl","text":"..."}, {"kind":"tacotac","tone":"spicy","text":"..."}, {"kind":"meme","asset":"carton-rouge.jpg"}]}`;
+{"girlName":"...","status":"...","introCaption":"...","storyReply":"...","outroText":"...","beats":[{"kind":"message","from":"girl","text":"..."}, {"kind":"tacotac","tone":"spicy","text":"..."}, {"kind":"meme","asset":"carton-rouge.jpg"}]}`;
 
 // JSON schema (backend API uniquement — sortie structurée garantie)
 const outputSchema = {
@@ -628,6 +666,7 @@ const outputSchema = {
   properties: {
     girlName: { type: "string" },
     status: { type: "string" },
+    introCaption: { enum: INTRO_CAPTIONS },
     storyReply: { type: "string" },
     outroText: { type: "string" },
     beats: {
@@ -641,7 +680,7 @@ const outputSchema = {
       },
     },
   },
-  required: ["girlName", "status", "storyReply", "outroText", "beats"],
+  required: ["girlName", "status", "introCaption", "storyReply", "outroText", "beats"],
 } as const;
 
 type GenBeat =
@@ -651,6 +690,7 @@ type GenBeat =
 type GenOutput = {
   girlName: string;
   status: string;
+  introCaption: string;
   storyReply: string;
   outroText: string;
   beats: GenBeat[];
@@ -739,7 +779,11 @@ function resolveMemeAsset(asset: string): { full: string; beat: string } {
 
 function assemble(g: GenOutput, state: State, structure: Structure, forcedTone: Tone) {
   const girl = nextGirl(state);
-  const introCaption = nextIntroCaption(state);
+  // Titre choisi par le MODÈLE dans la liste fermée, en cohérence avec le scénario
+  // qu'il vient d'écrire. S'il invente une phrase hors liste (backend CLI = pas de
+  // schéma contraignant), on retombe sur la rotation code : jamais de titre inventé
+  // à l'écran, jamais de plantage non plus.
+  const introCaption = INTRO_CAPTIONS.includes(g.introCaption) ? g.introCaption : nextIntroCaption(state);
   const music = nextMusic(state);
   // Quel écran de l'app montrer : en format B le PREMIER moment Tacotac est le DM
   // d'ouverture, tous les suivants sont des réponses. En format A, tout est réponse.
@@ -824,6 +868,24 @@ function punchlineProblems(script: Candidate): string[] {
       }
       if (/\b(m[ée]fie|m[ée]fier|attention)\b/.test(t) && !/\b(à ton|à ta|à tes)\b/.test(t)) {
         problems.push(`amorce vide (mise en garde sans mot planté) : "${amorce.text}"`);
+      }
+    }
+  }
+
+  // ── Elle ne parle pas date/lieu/horaire au début ──────────────────────────
+  // Tom : "aucune fille dès le premier message va dire ok mais moi je choisis le
+  // lieu et la date, c'est trop bidon". Ça venait d'un archétype qui demandait
+  // explicitement de négocier la logistique — corrigé — mais on verrouille aussi,
+  // car c'est LE détail qui trahit une conv écrite d'avance.
+  {
+    let girlSeen = 0;
+    for (const b of beats) {
+      if (b.type !== "message" || b.from !== "girl") continue;
+      girlSeen++;
+      if (girlSeen > 3) break;
+      const t = (b.text || "").toLowerCase();
+      if (/\b(le lieu|l'endroit|l'heure|le jour|qui d[ée]cide|c'est moi qui choisis|je choisis (le|l'|où|quand))\b/.test(t)) {
+        problems.push(`elle parle logistique de date trop tôt (message ${girlSeen}) : "${b.text}"`);
       }
     }
   }

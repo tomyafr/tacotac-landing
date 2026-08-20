@@ -21,12 +21,19 @@ import { fonts } from "../theme";
 // Muet : la musique de cette même vidéo tourne en fond sur TOUTE la durée du montage
 // (voir <BackgroundMusic> dans MasterVideo.tsx), pas seulement pendant l'intro — sinon
 // on aurait le son en double ici + le fond musical en même temps.
-export const Intro: React.FC<{ caption?: string; trimFrames?: number }> = ({ caption, trimFrames = 0 }) => (
+export const Intro: React.FC<{ caption?: string; trimFrames?: number; speed?: number }> = ({
+  caption,
+  trimFrames = 0,
+  speed = 1,
+}) => (
   <AbsoluteFill style={{ background: "#000" }}>
     <OffthreadVideo
       src={staticFile("intro/intro_vierge_basket_spiderman.mov")}
       muted
       startFrom={trimFrames}
+      // Accélération : sert aux musiques dont le drop tombe très tôt (pistolet à
+      // 3,5 s). La durée de la scène est calculée en conséquence dans timing.ts.
+      playbackRate={speed}
       style={{ width: "100%", height: "100%", objectFit: "cover" }}
     />
     {caption && (

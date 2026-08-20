@@ -14,7 +14,7 @@ import type { Script } from "./schema";
 const renderScene = (script: Script, s: Scene) => {
   switch (s.kind) {
     case "intro":
-      return <Intro caption={script.introCaption} trimFrames={s.trim} />;
+      return <Intro caption={script.introCaption} trimFrames={s.trim} speed={s.speed} />;
     case "photo":
       // Plein écran, comme si on regardait sa story juste avant de lui écrire.
       return (
