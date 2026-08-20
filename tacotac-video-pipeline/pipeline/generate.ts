@@ -111,9 +111,15 @@ const clean = (s: string) => stripEmoji(s.replace(/\s*\.\s*$/u, ""));
 // modèle retombe sur la même formulation à l'intérieur de ce registre — en plus
 // de recopier les exemples entre parenthèses. On lui met donc sous les yeux ses
 // propres sorties passées, avec interdiction d'y retoucher.
-function recentOutputs(limit = 25): { stories: string[]; punchlines: string[] } {
+function recentOutputs(limit = 25): { stories: string[]; punchlines: string[]; amorces: string[] } {
   const stories: string[] = [];
   const punchlines: string[] = [];
+  // L'AMORCE (le message qui plante le mot) n'était jamais collectée : en format
+  // story c'est un simple beat "message" du client, pas un beat "tacotac". Le
+  // modèle ne voyait donc jamais ses propres amorces passées et resservait les
+  // mêmes mots — "assurance" 3 fois sur 20, "clim" 2 fois, et 7 amorces sur 20
+  // qui commençaient par "faudra/faudrait".
+  const amorces: string[] = [];
   try {
     // On lit rendered/ ET queue/ : sans la file d'attente, les vidéos d'un même
     // lot ne se voient pas entre elles et convergent (les 3 titres d'un batch
@@ -136,18 +142,29 @@ function recentOutputs(limit = 25): { stories: string[]; punchlines: string[] } 
       try {
         const { script } = JSON.parse(fs.readFileSync(full, "utf8"));
         if (script?.storyReply) stories.push(script.storyReply);
-        for (const b of script?.beats ?? []) {
+        const beats = script?.beats ?? [];
+        for (const b of beats) {
           if (b?.type === "tacotac" && b.text) punchlines.push(b.text);
+        }
+        // Même remontée que la validation : dernier tacotac = la chute, on saute
+        // les memes et la relance pour retomber sur l'amorce.
+        const last = beats.map((b: { type: string }) => b.type).lastIndexOf("tacotac");
+        if (last > 0) {
+          let a = last - 1;
+          while (a >= 0 && beats[a].type === "meme") a--;
+          a--;
+          while (a >= 0 && beats[a].type === "meme") a--;
+          if (a >= 0 && beats[a]?.text) amorces.push(beats[a].text);
         }
       } catch { /* fichier illisible : on l'ignore, l'anti-répétition reste best-effort */ }
     }
   } catch { /* pas encore d'archive (1er run) */ }
-  return { stories, punchlines };
+  return { stories, punchlines, amorces };
 }
 
 function buildAvoidBlock(): string {
-  const { stories, punchlines } = recentOutputs();
-  if (!stories.length && !punchlines.length) return "";
+  const { stories, punchlines, amorces } = recentOutputs();
+  if (!stories.length && !punchlines.length && !amorces.length) return "";
   const list = (arr: string[], max: number) =>
     arr.slice(0, max).map((s) => `- ${s}`).join("\n");
   return `
@@ -156,6 +173,13 @@ function buildAvoidBlock(): string {
 Ne reprends ni ces formulations, ni le RESSORT COMIQUE qu'il y a derrière (même
 idée reformulée = même faute). Si ton brouillon ressemble à l'un de ces exemples,
 jette-le et trouve un autre angle.
+
+⛔ Et surtout : NE REPRENDS AUCUN DES MOTS PLANTÉS ci-dessous. Si "assurance" est
+déjà sorti, tu ne fais pas une autre vanne sur l'assurance — tu changes carrément
+de domaine.
+
+Amorces déjà utilisées (regarde le MOT PLANTÉ dans chacune) :
+${list(amorces, 25)}
 
 storyReply déjà utilisés :
 ${list(stories, 25)}
@@ -251,12 +275,13 @@ const CONVERSATION_ARCHETYPES_REVERSED = [
 // Musiques disponibles (voir src/music.ts) — chacune embarque SA coupe d'intro pour
 // que le panier tombe sur le drop. Tirées en rotation comme le reste : sans ça, le
 // champ script.music restait vide et le rendu retombait toujours sur bg-music.
-// Musiques réservées à un profil précis : elles ne sortent QUE pour lui, et sont
-// exclues de la rotation de tous les autres. "pistolet" est le son du collab
-// ANOMY — c'est sa signature sonore, elle ne doit jamais apparaître chez Tom.
+// Playlist imposée à un profil : il n'aura QUE ces musiques. ANOMY tourne
+// exclusivement sur "pistolet" (son son de signature, et la seule dont l'intro
+// est accélérée — c'est ce qui rend ses vidéos reconnaissables).
+// Les autres profils gardent le catalogue COMPLET, pistolet incluse : Tom veut
+// pouvoir l'utiliser aussi, elle n'est pas réservée, juste imposée à anomy.
 const MUSIC_BY_PROFILE: Record<string, string[]> = { anomy: ["pistolet"] };
-const RESERVED_MUSIC = new Set(Object.values(MUSIC_BY_PROFILE).flat());
-const MUSIC_KEYS = MUSIC_BY_PROFILE[PROFILE] ?? Object.keys(MUSIC_TRACKS).filter((k) => !RESERVED_MUSIC.has(k));
+const MUSIC_KEYS = MUSIC_BY_PROFILE[PROFILE] ?? Object.keys(MUSIC_TRACKS);
 
 // Deux formats de vidéo en alternance stricte (une sur deux) :
 //  A — il répond à la story lui-même, Tacotac ne souffle QUE la réplique
@@ -304,8 +329,10 @@ const INTRO_CAPTIONS_DROLES = [
   "je dm la sœur de mon pote",
   "je drague la demi sœur de mon demi frère",
   "je dm la meilleure amie de ma sœur",
-  "je drague la fille qui m'a ghost en 2023",
-  "je dm mon ex par erreur *ça part en vrille*",
+  "je dm la fille de mon père",
+  "je drague la cousine de ma sœur",
+  "je dm la meuf à mon frère",
+  "je drague la fille de ma belle mère",
 ];
 const INTRO_CAPTIONS = [...INTRO_CAPTIONS_CLASSIQUES, ...INTRO_CAPTIONS_DROLES];
 
@@ -578,6 +605,10 @@ Ces phrases sont VIDES : elles ne plantent aucun mot, donc la chute n'a rien à 
 POURQUOI ça marche, et pourquoi c'est NON NÉGOCIABLE : le viewer lit l'amorce, il se pose la même question qu'elle, il ATTEND la réponse. Quand la chute arrive, il n'a aucun effort à faire — c'est une réponse à une question qu'il vient de lire. Zéro décodage.
 
 ✅ LES RÈGLES DURES — non négociables :
+0. **VARIE — c'est devenu le défaut n°1.** Les exemples plus haut sont là pour te montrer la MÉCANIQUE et le NIVEAU D'HUMOUR, pas pour être resservis. Mesuré sur les 20 dernières vidéos : "assurance" 3 fois, "clim" 2 fois, **7 amorces sur 20 commençaient par "faudra/faudrait"**, et 6 tournaient autour de la température (couverture, thermostat, clim, thermomètre, fièvre).
+   → Change de DOMAINE à chaque fois. Le monde est plein de mots à planter : les métiers (serrurier, plombier, vétérinaire, prof de maths, juge), les objets du quotidien (chargeur, parapluie, écouteurs, cafetière, miroir), les lieux (bibliothèque, pharmacie, station essence, ascenseur), le sport, la bouffe, la musique, la météo, l'école, les transports...
+   → Change aussi de FORMULE d'ouverture. Pas toujours "faudra que...". Autres entrées possibles : une question ("t'aurais pas..." / "ton père serait pas..."), une accusation ("t'as pas volé..."), un constat sec ("toi t'as un truc de..."), un ordre ("note ce que jte dis"), une inquiétude feinte ("jsuis mal là").
+   → Si le mot que tu allais planter apparaît dans la liste "déjà utilisé" en bas du prompt, tu en prends un autre. Point.
 1. **L'AMORCE : 45 caractères max, et elle DOIT contenir un mot concret que la chute va faire exploser** (un métier, un objet, un lieu, un chiffre, un truc du quotidien : voleur, peintre, pompier, gps, assurance, dentiste, wifi, aspirine, clim, permis, ceinture, boulangerie...). Test : est-ce qu'un mot précis est planté ? Si l'amorce ne parle de RIEN de concret, elle est ratée.
 2. **LA RELANCE : 4 MOTS MAXIMUM, et elle ne fait AUCUNE vanne.** "non pourquoi ?", "pourquoi", "de quoi", "à quoi", "et donc ?", "quel film ?". Elle est un tremplin, pas une partenaire de banter. Si elle réplique avec de l'esprit ici, la chute tombe à plat.
 3. **LA CHUTE : 65 caractères max, UNE SEULE PROPOSITION.** Commence le plus souvent par "parce que" / "bah" — c'est une réponse, elle doit sonner comme une réponse.
@@ -868,6 +899,36 @@ function punchlineProblems(script: Candidate): string[] {
       }
       if (/\b(m[ée]fie|m[ée]fier|attention)\b/.test(t) && !/\b(à ton|à ta|à tes)\b/.test(t)) {
         problems.push(`amorce vide (mise en garde sans mot planté) : "${amorce.text}"`);
+      }
+    }
+  }
+
+  // ── Le mot planté ne doit pas resservir ───────────────────────────────────
+  // Le prompt le demande, mais le modèle recyclait quand même ("assurance" 3 fois
+  // sur 20). On compare le vocabulaire de l'amorce à celui des amorces récentes :
+  // un mot "porteur" (>4 lettres, hors mots outils) déjà utilisé = régénération.
+  if (lastTacotac > 0) {
+    let a = lastTacotac - 1;
+    while (a >= 0 && beats[a].type === "meme") a--;
+    a--;
+    while (a >= 0 && beats[a].type === "meme") a--;
+    const amorceText = a >= 0 ? beats[a]?.text || "" : "";
+    if (amorceText) {
+      // Mots outils : ils reviennent forcément d'une phrase à l'autre et ne sont
+      // PAS le mot planté. Les compter ferait rejeter des amorces parfaitement
+      // originales juste parce qu'elles disent "va falloir" ou "une bonne".
+      const STOP = new Set([
+        "faudra", "faudrait", "falloir", "jcrois", "crois", "jespere", "espère", "espere",
+        "quelque", "chose", "parce", "avec", "pour", "dans", "toujours", "vraiment",
+        "clairement", "serait", "aurais", "prendre", "prends", "vais", "avoir", "bonne",
+        "bonnes", "meme", "même", "jamais", "trop", "juste", "peut", "chez", "sans", "plus", "tout", "bien", "cette", "elle", "mais", "quand", "aussi", "encore", "faire", "soir", "nuit", "pere", "père", "frere", "frère", "soeur", "sœur",
+      ]);
+      const motsDe = (s: string) =>
+        (s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").match(/[a-z]{4,}/g) || []).filter((m) => !STOP.has(m));
+      const dejaVus = new Set(recentOutputs().amorces.flatMap(motsDe));
+      const recycle = motsDe(amorceText).find((m) => dejaVus.has(m));
+      if (recycle) {
+        problems.push(`amorce recycle le mot "${recycle}" déjà utilisé récemment : "${amorceText}"`);
       }
     }
   }
