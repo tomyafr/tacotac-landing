@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>Générer des vidéos · Tacotac</title>
+<style>
+  * { box-sizing:border-box; }
+  body { margin:0; background:#0b0b0b; color:#F4EEE2; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; padding:22px 16px calc(22px + env(safe-area-inset-bottom)); }
+  .wrap { max-width:480px; margin:0 auto; }
+  h1 { font-size:21px; margin:0 0 4px; color:#fff; }
+  .sub { color:#8d8781; font-size:13px; margin:0 0 22px; }
+  .card { background:#161616; border:1px solid #262626; border-radius:16px; padding:20px; margin-bottom:16px; }
+  .profiles { display:flex; gap:10px; margin-bottom:18px; }
+  .profile-btn { flex:1; background:#0d0d0d; border:1.5px solid #2a2a2a; border-radius:12px; padding:14px 8px; text-align:center; cursor:pointer; font-family:inherit; color:#8d8781; font-weight:700; font-size:14px; transition:border-color .15s,color .15s,background .15s; }
+  .profile-btn.on { border-color:#FF5C00; color:#fff; background:rgba(255,92,0,.08); }
+  .count-row { display:flex; align-items:center; justify-content:center; gap:18px; margin-bottom:20px; }
+  .count-btn { width:46px; height:46px; border-radius:50%; background:#0d0d0d; border:1.5px solid #2a2a2a; color:#fff; font-size:20px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .count-btn:active { transform:scale(.94); }
+  .count-val { font-size:34px; font-weight:800; color:#fff; min-width:52px; text-align:center; }
+  button.generate { width:100%; background:#FF5C00; color:#fff; border:none; border-radius:12px; padding:16px; font-size:15.5px; font-weight:800; cursor:pointer; font-family:inherit; }
+  button.generate:disabled { opacity:.4; cursor:default; }
+  .status-row { display:flex; align-items:center; gap:10px; margin-bottom:12px; font-size:13.5px; }
+  .dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+  .dot.idle { background:#4a4a4a; }
+  .dot.running { background:#f5c98a; animation:pulse 1.2s ease-in-out infinite; }
+  .dot.done { background:#5fd08a; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+  .log { background:#0a0a0a; border:1px solid #222; border-radius:12px; padding:12px 14px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px; line-height:1.55; color:#a8a29a; white-space:pre-wrap; word-break:break-word; max-height:340px; overflow-y:auto; display:none; }
+  .hint { color:#6e6a66; font-size:12px; margin-top:10px; line-height:1.5; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Générer des vidéos</h1>
+  <p class="sub">En plus des lots automatiques de midi et du soir.</p>
+
+  <div class="card">
+    <div class="profiles">
+      <button class="profile-btn on" data-profile="tom">Toi</button>
+      <button class="profile-btn" data-profile="solene">Solène</button>
+    </div>
+
+    <div class="count-row">
+      <button class="count-btn" id="minus">−</button>
+      <div class="count-val" id="countVal">2</div>
+      <button class="count-btn" id="plus">+</button>
+    </div>
+
+    <button class="generate" id="genBtn">Générer 2 vidéo(s)</button>
+    <p class="hint">Compte quelques minutes par vidéo (génération + rendu + upload Drive). Tu peux fermer la page, ça continue sur le serveur.</p>
+  </div>
+
+  <div class="card">
+    <div class="status-row"><span class="dot idle" id="statusDot"></span><span id="statusText">Rien en cours</span></div>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+<script>
+let profile = 'tom';
+let count = 2;
+let poll = null;
+
+const profileBtns = document.querySelectorAll('.profile-btn');
+const countVal = document.getElementById('countVal');
+const genBtn = document.getElementById('genBtn');
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const logEl = document.getElementById('log');
+
+profileBtns.forEach((b) => b.onclick = () => {
+  profile = b.dataset.profile;
+  profileBtns.forEach((x) => x.classList.toggle('on', x === b));
+  refreshStatus();
+});
+
+document.getElementById('minus').onclick = () => { count = Math.max(1, count - 1); render(); };
+document.getElementById('plus').onclick = () => { count = Math.min(10, count + 1); render(); };
+function render() {
+  countVal.textContent = count;
+  genBtn.textContent = `Générer ${count} vidéo(s)`;
+}
+
+async function refreshStatus() {
+  const r = await fetch('/admin/generate/status?profile=' + profile);
+  const data = await r.json();
+  applyStatus(data);
+}
+
+function applyStatus(data) {
+  genBtn.disabled = data.running;
+  if (data.running) {
+    statusDot.className = 'dot running';
+    statusText.textContent = `En cours (${profile === 'solene' ? 'Solène' : 'Toi'})…`;
+    if (!poll) poll = setInterval(refreshStatus, 3000);
+  } else {
+    statusDot.className = data.tail ? 'dot done' : 'dot idle';
+    statusText.textContent = data.tail ? 'Dernier run terminé' : 'Rien en cours';
+    if (poll) { clearInterval(poll); poll = null; }
+  }
+  if (data.tail) {
+    logEl.style.display = 'block';
+    logEl.textContent = data.tail;
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+}
+
+genBtn.onclick = async () => {
+  genBtn.disabled = true;
+  statusDot.className = 'dot running';
+  statusText.textContent = 'Lancement…';
+  try {
+    const r = await fetch('/admin/generate/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile, count }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'échec du lancement');
+    poll = setInterval(refreshStatus, 3000);
+    refreshStatus();
+  } catch (e) {
+    statusDot.className = 'dot idle';
+    statusText.textContent = '✗ ' + e.message;
+    genBtn.disabled = false;
+  }
+};
+
+render();
+refreshStatus();
+</script>
+</body>
+</html>

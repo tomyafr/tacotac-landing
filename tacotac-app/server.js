@@ -9,7 +9,8 @@
 import 'dotenv/config';
 import express from 'express';
 import path from 'node:path';
-import { statSync, readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
+import { statSync, readFileSync, writeFileSync, existsSync, readdirSync, openSync, closeSync } from 'node:fs';
+import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { randomUUID, randomBytes, scryptSync, timingSafeEqual, createHmac } from 'node:crypto';
 import cookieParser from 'cookie-parser';
@@ -376,6 +377,78 @@ app.get('/admin/tiktok', requireAdmin, (req, res) => {
 });
 
 // ── Console "pourquoi ils partent" — motifs de résiliation collectés via Stripe ──
+// ── Génération de vidéos à la demande ───────────────────────────
+// Lance un batch du pipeline (format "conversation") depuis le téléphone, en
+// plus des runs cron fixes (midi/soir). Le pipeline vit dans un autre repo sur
+// le VPS (pas dans celui-ci) : on le lance par son chemin absolu, tel quel,
+// sans dupliquer sa logique ici.
+const PIPELINE_DIR = process.env.VIDEO_PIPELINE_DIR || '/root/tacotac-video';
+const GENERATE_PROFILES = {
+  tom: { env: { RCLONE_REMOTE: 'gdrive:tacotac-videos' } },
+  solene: {
+    env: {
+      TACOTAC_PROFILE: 'solene',
+      RCLONE_REMOTE: 'gdrive:tacotac-videos-solene',
+      NOTIFY_EMAIL: 'solene.durand2012@gmail.com',
+      DRIVE_FOLDER_URL: 'https://drive.google.com/open?id=1hnKMw6C_Lk92si2BUwhvh5hJ9EoJuZup',
+    },
+  },
+};
+const generateLockFile = (profile) => path.join(PIPELINE_DIR, `pipeline/.generate-lock-${profile}`);
+const generateLogFile = (profile) => path.join(PIPELINE_DIR, `pipeline/generate-manual-${profile}.log`);
+
+// Un PID écrit dans le fichier de verrou peut appartenir à un process déjà mort
+// (crash, redémarrage du VPS) : on vérifie qu'il existe encore avant de refuser
+// un nouveau lancement, sinon un verrou périmé bloquerait tout pour toujours.
+function generateIsRunning(profile) {
+  try {
+    const pid = Number(readFileSync(generateLockFile(profile), 'utf8').trim());
+    if (!pid) return false;
+    process.kill(pid, 0); // ne tue rien : lève juste une erreur si le PID n'existe plus
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+app.get('/admin/generate', requireAdmin, (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'admin-generate.html'));
+});
+
+app.get('/admin/generate/status', requireAdmin, (req, res) => {
+  const profile = GENERATE_PROFILES[req.query.profile] ? req.query.profile : 'tom';
+  let tail = '';
+  try { tail = readFileSync(generateLogFile(profile), 'utf8').split('\n').slice(-80).join('\n'); } catch { /* pas encore de log */ }
+  res.json({ running: generateIsRunning(profile), tail });
+});
+
+app.post('/admin/generate/start', requireAdmin, (req, res) => {
+  const profile = GENERATE_PROFILES[req.body?.profile] ? req.body.profile : 'tom';
+  const count = Math.max(1, Math.min(10, parseInt(req.body?.count, 10) || 1));
+  if (!PIPELINE_DIR || !existsSync(PIPELINE_DIR)) {
+    return res.status(500).json({ error: 'Dossier du pipeline introuvable sur ce serveur.' });
+  }
+  if (generateIsRunning(profile)) {
+    return res.status(409).json({ error: `Un batch "${profile}" tourne déjà — attends qu'il finisse.` });
+  }
+
+  const log = generateLogFile(profile);
+  writeFileSync(log, `=== lancé depuis le téléphone — ${count} vidéo(s), profil ${profile} — ${new Date().toISOString()} ===\n`);
+  const fd = openSync(log, 'a');
+
+  const child = spawn('bash', ['pipeline/run.sh'], {
+    cwd: PIPELINE_DIR,
+    env: { ...process.env, TACOTAC_BATCH: String(count), ...GENERATE_PROFILES[profile].env },
+    detached: true, // survit à la réponse HTTP : un run dure plusieurs minutes
+    stdio: ['ignore', fd, fd],
+  });
+  closeSync(fd); // le enfant garde son propre descripteur ouvert sur le même fichier
+  writeFileSync(generateLockFile(profile), String(child.pid));
+  child.unref();
+
+  res.json({ ok: true, profile, count });
+});
+
 app.get('/admin/cancellations', requireAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'admin-cancellations.html'));
 });

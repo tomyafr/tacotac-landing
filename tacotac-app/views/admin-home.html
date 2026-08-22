@@ -50,16 +50,18 @@ nav button:active{background:rgba(255,255,255,.05)}
   <iframe id="f-revenus" title="Mes revenus"></iframe>
   <iframe id="f-acquisition" title="Acquisition"></iframe>
   <iframe id="f-partner" title="Collaborateurs"></iframe>
+  <iframe id="f-generate" title="Générer des vidéos"></iframe>
 </div>
 
 <nav>
   <button class="tab on" data-tab="revenus"><span class="ico">💰</span>Revenus</button>
   <button class="tab" data-tab="acquisition"><span class="ico">📈</span>Acquisition</button>
   <button class="tab" data-tab="partner"><span class="ico">🦊</span>Collaborateurs</button>
+  <button class="tab" data-tab="generate"><span class="ico">🎬</span>Vidéos</button>
 </nav>
 
 <script>
-const SRC = { revenus: '/admin/revenus', acquisition: '/admin/acquisition', partner: '/partner' };
+const SRC = { revenus: '/admin/revenus', acquisition: '/admin/acquisition', partner: '/partner', generate: '/admin/generate' };
 const loaded = new Set();
 
 function showTab(name) {
