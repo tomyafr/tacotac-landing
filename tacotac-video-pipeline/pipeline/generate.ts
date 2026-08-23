@@ -343,6 +343,13 @@ const INTRO_CAPTIONS_DROLES = [
   "je drague la fille de ma belle mère",
 ];
 const INTRO_CAPTIONS = [...INTRO_CAPTIONS_CLASSIQUES, ...INTRO_CAPTIONS_DROLES];
+// Laissé au modèle, le choix ENTRE les deux pools convergeait vers zéro titre
+// "second degré" (aucun en plusieurs dizaines de vidéos) — probablement le
+// modèle qui évite de lui-même des titres évoquant des liens familiaux, même
+// utilisés comme vanne. Même remède que pour nextTone() : le CODE force le
+// pool en rotation (proportionnelle à leur taille), le modèle choisit
+// seulement LEQUEL dans le pool imposé colle le mieux au scénario.
+type IntroPool = "classique" | "drole";
 
 // Pools actifs pour ce profil (droits pour "solene"/Amelia, par défaut sinon).
 const ACTIVE_STORY_ANGLES = REVERSED ? STORY_REPLY_ANGLES_REVERSED : STORY_REPLY_ANGLES;
@@ -356,11 +363,19 @@ type State = {
   storyAngleOrder: string[]; storyAngleIndex: number;
   outroAngleOrder: string[]; outroAngleIndex: number;
   archetypeOrder: string[]; archetypeIndex: number;
-  captionOrder: string[]; captionIndex: number;
+  captionClassiqueOrder: string[]; captionClassiqueIndex: number;
+  captionDroleOrder: string[]; captionDroleIndex: number;
+  introPoolOrder: IntroPool[]; introPoolIndex: number;
   musicOrder: string[]; musicIndex: number;
   structureOrder: Structure[]; structureIndex: number;
   toneOrder: Tone[]; toneIndex: number;
 };
+// 10 "classique" + 7 "drole" (taille réelle des pools) : sur un cycle complet,
+// chaque titre drôle sort exactement une fois, ni plus ni moins souvent que prévu.
+const introPoolTags = (): IntroPool[] => [
+  ...Array<IntroPool>(INTRO_CAPTIONS_CLASSIQUES.length).fill("classique"),
+  ...Array<IntroPool>(INTRO_CAPTIONS_DROLES.length).fill("drole"),
+];
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -375,7 +390,9 @@ function loadState(): State {
     storyAngleOrder: shuffle(ACTIVE_STORY_ANGLES), storyAngleIndex: 0,
     outroAngleOrder: shuffle(OUTRO_ANGLES), outroAngleIndex: 0,
     archetypeOrder: shuffle(ACTIVE_ARCHETYPES), archetypeIndex: 0,
-    captionOrder: shuffle(INTRO_CAPTIONS), captionIndex: 0,
+    captionClassiqueOrder: shuffle(INTRO_CAPTIONS_CLASSIQUES), captionClassiqueIndex: 0,
+    captionDroleOrder: shuffle(INTRO_CAPTIONS_DROLES), captionDroleIndex: 0,
+    introPoolOrder: shuffle(introPoolTags()), introPoolIndex: 0,
     musicOrder: shuffle(MUSIC_KEYS), musicIndex: 0,
     structureOrder: shuffle(STRUCTURES), structureIndex: 0,
     toneOrder: shuffle([...tones]), toneIndex: 0,
@@ -394,7 +411,9 @@ function loadState(): State {
       sameSet(s.storyAngleOrder, ACTIVE_STORY_ANGLES) &&
       sameSet(s.outroAngleOrder, OUTRO_ANGLES) &&
       sameSet(s.archetypeOrder, ACTIVE_ARCHETYPES) &&
-      sameSet(s.captionOrder, INTRO_CAPTIONS) &&
+      sameSet(s.captionClassiqueOrder, INTRO_CAPTIONS_CLASSIQUES) &&
+      sameSet(s.captionDroleOrder, INTRO_CAPTIONS_DROLES) &&
+      Array.isArray(s.introPoolOrder) && s.introPoolOrder.length === introPoolTags().length &&
       sameSet(s.musicOrder, MUSIC_KEYS) &&
       sameSet(s.structureOrder, STRUCTURES) &&
       sameSet(s.toneOrder, tones);
@@ -444,13 +463,37 @@ function nextTone(state: State): Tone {
   saveState(state);
   return t;
 }
-function nextIntroCaption(state: State): string {
-  if (state.captionIndex >= state.captionOrder.length) {
-    state.captionOrder = shuffle(INTRO_CAPTIONS);
-    state.captionIndex = 0;
+// Quel POOL pour cette vidéo — voir le commentaire sur IntroPool plus haut.
+function nextIntroPool(state: State): IntroPool {
+  if (state.introPoolIndex >= state.introPoolOrder.length) {
+    state.introPoolOrder = shuffle(introPoolTags());
+    state.introPoolIndex = 0;
   }
-  const caption = state.captionOrder[state.captionIndex];
-  state.captionIndex++;
+  const pool = state.introPoolOrder[state.introPoolIndex];
+  state.introPoolIndex++;
+  saveState(state);
+  return pool;
+}
+// Titre DANS le pool imposé — utilisé seulement en secours si le modèle sort
+// une phrase hors liste (voir assemble()) : le pool, lui, ne change jamais
+// après coup, sinon une régénération basculerait un titre drôle en classique.
+function nextIntroCaption(state: State, pool: IntroPool): string {
+  if (pool === "drole") {
+    if (state.captionDroleIndex >= state.captionDroleOrder.length) {
+      state.captionDroleOrder = shuffle(INTRO_CAPTIONS_DROLES);
+      state.captionDroleIndex = 0;
+    }
+    const caption = state.captionDroleOrder[state.captionDroleIndex];
+    state.captionDroleIndex++;
+    saveState(state);
+    return caption;
+  }
+  if (state.captionClassiqueIndex >= state.captionClassiqueOrder.length) {
+    state.captionClassiqueOrder = shuffle(INTRO_CAPTIONS_CLASSIQUES);
+    state.captionClassiqueIndex = 0;
+  }
+  const caption = state.captionClassiqueOrder[state.captionClassiqueIndex];
+  state.captionClassiqueIndex++;
   saveState(state);
   return caption;
 }
@@ -486,7 +529,7 @@ function nextAngles(state: State): { story: string; outro: string; archetype: st
 // sur la même formulation à chaque génération.
 // NB : pas de hookTitle — chaque vidéo ouvre sur l'intro fixe (voir Intro.tsx),
 // le sous-titre "apprends de mon football..." est incrusté dans ce clip.
-function buildGenInstruction(angles: { story: string; outro: string; archetype: string }, structure: Structure, tone: Tone): string {
+function buildGenInstruction(angles: { story: string; outro: string; archetype: string }, structure: Structure, tone: Tone, introPool: IntroPool): string {
   const format = REVERSED
     ? `FORMAT : une fille (la cliente, bulles à droite) drague un mec (bulles à gauche) en DM Instagram — PAS une app de rencontre à "match", ils se suivent déjà ou se connaissent un peu. Elle répond à sa story, la conv s'enchaîne, à un moment elle ouvre Tacotac qui lui donne une réplique qui claque, elle l'envoie, ça marche, la conv finit sur une bonne note (il valide / accepte un date). Des memes réactions ponctuent la conv.`
     : `FORMAT : un mec (le client, bulles à droite) drague une fille (bulles à gauche) en DM Instagram — PAS une app de rencontre à "match", ils se suivent déjà ou se connaissent un peu. Il répond à sa story, la conv s'enchaîne, à un moment il ouvre Tacotac qui lui donne une réplique qui claque, il l'envoie, ça marche, la conv finit sur une bonne note (elle valide / accepte un date). Des memes réactions ponctuent la conv.`;
@@ -668,13 +711,12 @@ ${structureRules}
 
 ⚠️ LE TITRE (champ "introCaption") — c'est la 1re seconde de la vidéo, c'est lui qui fait s'arrêter le pouce.
 Choisis EXACTEMENT une phrase dans cette liste, recopiée au caractère près (aucune invention, aucune variante) :
-${INTRO_CAPTIONS_CLASSIQUES.map((c) => `  · ${c}`).join("\n")}
-Et les titres "second degré", volontairement provocateurs :
-${INTRO_CAPTIONS_DROLES.map((c) => `  · ${c}`).join("\n")}
+${(introPool === "drole" ? INTRO_CAPTIONS_DROLES : INTRO_CAPTIONS_CLASSIQUES).map((c) => `  · ${c}`).join("\n")}
+${introPool === "drole" ? `
+Ces titres sont volontairement "second degré" / provocateurs — c'est un APPÂT pour faire réagir en commentaire ("attends QUOI ?"). Prends celui qui colle le mieux au scénario que tu vas écrire ; ne le rejette pas parce qu'il te semble limite, c'est fait exprès et déjà validé.
 
-Comment choisir : prends celui qui colle le mieux à CE scénario. Format DM à froid → un titre qui parle de dm. Réponse à une story → un titre qui parle de gérer / de répondre. Si la conv est chaude, prends un titre qui promet du lourd.
-
-⛔⛔ RÈGLE ABSOLUE SUR LES TITRES SECOND DEGRÉ : le titre est un APPÂT pour faire réagir en commentaire ("attends QUOI ?"). La conversation, elle, est une conv de drague NORMALE et ne fait JAMAIS référence au titre. Si tu choisis "je dm la sœur de mon pote", il est INTERDIT d'écrire "t'es la sœur de mon pote mais..." ou "si ton frère savait" dans les messages. Zéro mention. Le spectateur fait le lien tout seul, c'est ça qui marche — l'expliquer tue la vanne et rend la vidéo bizarre au premier degré.
+⛔⛔ RÈGLE ABSOLUE : la conversation, elle, est une conv de drague NORMALE et ne fait JAMAIS référence au titre. Si tu choisis "je dm la sœur de mon pote", il est INTERDIT d'écrire "t'es la sœur de mon pote mais..." ou "si ton frère savait" dans les messages. Zéro mention. Le spectateur fait le lien tout seul, c'est ça qui marche — l'expliquer tue la vanne et rend la vidéo bizarre au premier degré.` : `
+Prends celui qui colle le mieux à CE scénario. Format DM à froid → un titre qui parle de dm. Réponse à une story → un titre qui parle de gérer / de répondre. Si la conv est chaude, prends un titre qui promet du lourd.`}
 
 ⚠️ CONTRAINTE CRITIQUE — STORY REPLY : tu ne vois PAS la photo réelle qui sera utilisée (elle est choisie séparément, au hasard, parmi des selfies miroir). N'INVENTE JAMAIS un détail visuel précis dans storyReply : pas d'objet (verre, lunettes, téléphone...), pas de lieu (café, plage, restau...), pas d'activité (${REVERSED ? "il boit, il mange" : "elle boit, elle mange"}...), pas d'animal, pas de vêtement précis. Toute affirmation sur le contenu de la photo a de grandes chances d'être fausse et de casser l'immersion. Reste sur des remarques qui marchent avec N'IMPORTE QUEL selfie miroir en tenue.
 
@@ -698,14 +740,17 @@ Chaque vidéo doit raconter une conv DIFFÉRENTE, avec un vocabulaire et des ima
 const jsonShape = `Réponds UNIQUEMENT avec un objet JSON valide, sans aucun texte autour ni bloc de code, de cette forme exacte :
 {"girlName":"...","status":"...","introCaption":"...","storyReply":"...","outroText":"...","beats":[{"kind":"message","from":"girl","text":"..."}, {"kind":"tacotac","tone":"spicy","text":"..."}, {"kind":"meme","asset":"carton-rouge.jpg"}]}`;
 
-// JSON schema (backend API uniquement — sortie structurée garantie)
-const outputSchema = {
+// JSON schema (backend API uniquement — sortie structurée garantie).
+// Fonction (pas une constante figée) : l'enum introCaption doit refléter le
+// pool imposé pour CETTE vidéo (voir IntroPool), sinon le schéma autoriserait
+// le modèle à reprendre un titre classique alors qu'un titre drôle est dû.
+const buildOutputSchema = (introPool: IntroPool) => ({
   type: "object",
   additionalProperties: false,
   properties: {
     girlName: { type: "string" },
     status: { type: "string" },
-    introCaption: { enum: INTRO_CAPTIONS },
+    introCaption: { enum: introPool === "drole" ? INTRO_CAPTIONS_DROLES : INTRO_CAPTIONS_CLASSIQUES },
     storyReply: { type: "string" },
     outroText: { type: "string" },
     beats: {
@@ -720,7 +765,7 @@ const outputSchema = {
     },
   },
   required: ["girlName", "status", "introCaption", "storyReply", "outroText", "beats"],
-} as const;
+} as const);
 
 type GenBeat =
   | { kind: "message"; from: "girl" | "client"; text: string }
@@ -766,8 +811,8 @@ function resolveClaudeBin(): string {
   return "claude"; // dernier recours : le PATH
 }
 
-function callCli(angles: { story: string; outro: string; archetype: string }, structure: Structure, tone: Tone): GenOutput {
-  const prompt = `${systemPromptTacotac}\n\n═══════════\n${buildGenInstruction(angles, structure, tone)}\n\n${jsonShape}\n\nGénère un nouveau scénario, original et drôle.`;
+function callCli(angles: { story: string; outro: string; archetype: string }, structure: Structure, tone: Tone, introPool: IntroPool): GenOutput {
+  const prompt = `${systemPromptTacotac}\n\n═══════════\n${buildGenInstruction(angles, structure, tone, introPool)}\n\n${jsonShape}\n\nGénère un nouveau scénario, original et drôle.`;
   const isWin = process.platform === "win32";
   const bin = resolveClaudeBin();
   const stdout = execFileSync(bin, ["-p", "--output-format", "json"], {
@@ -790,15 +835,15 @@ function callCli(angles: { story: string; outro: string; archetype: string }, st
 }
 
 // ── Backend API : SDK Anthropic (clé + crédits) ──
-async function callApi(angles: { story: string; outro: string; archetype: string }, structure: Structure, tone: Tone): Promise<GenOutput> {
+async function callApi(angles: { story: string; outro: string; archetype: string }, structure: Structure, tone: Tone, introPool: IntroPool): Promise<GenOutput> {
   const { default: Anthropic } = await import("@anthropic-ai/sdk");
   const client = new Anthropic();
   const params: Record<string, unknown> = {
     model: "claude-opus-4-8",
     max_tokens: 4000,
     thinking: { type: "adaptive" },
-    system: `${systemPromptTacotac}\n\n═══════════\n${buildGenInstruction(angles, structure, tone)}`,
-    output_config: { format: { type: "json_schema", schema: outputSchema } },
+    system: `${systemPromptTacotac}\n\n═══════════\n${buildGenInstruction(angles, structure, tone, introPool)}`,
+    output_config: { format: { type: "json_schema", schema: buildOutputSchema(introPool) } },
     messages: [{ role: "user", content: "Génère un nouveau scénario de vidéo, original et drôle." }],
   };
   const res = await client.messages.create(params as never);
@@ -816,13 +861,16 @@ function resolveMemeAsset(asset: string): { full: string; beat: string } {
   return rand(memeCatalog);
 }
 
-function assemble(g: GenOutput, state: State, structure: Structure, forcedTone: Tone) {
+function assemble(g: GenOutput, state: State, structure: Structure, forcedTone: Tone, introPool: IntroPool) {
   const girl = nextGirl(state);
-  // Titre choisi par le MODÈLE dans la liste fermée, en cohérence avec le scénario
-  // qu'il vient d'écrire. S'il invente une phrase hors liste (backend CLI = pas de
-  // schéma contraignant), on retombe sur la rotation code : jamais de titre inventé
-  // à l'écran, jamais de plantage non plus.
-  const introCaption = INTRO_CAPTIONS.includes(g.introCaption) ? g.introCaption : nextIntroCaption(state);
+  // Titre choisi par le MODÈLE, mais SEULEMENT dans le pool imposé pour cette
+  // vidéo (voir IntroPool) — en cohérence avec le scénario qu'il vient d'écrire.
+  // S'il invente une phrase hors liste, ou pioche dans l'AUTRE pool (backend CLI
+  // = pas de schéma contraignant), on retombe sur la rotation code À L'INTÉRIEUR
+  // du même pool imposé : jamais de titre inventé à l'écran, et le pool forcé
+  // n'est jamais contourné même en cas de fallback.
+  const allowedCaptions = introPool === "drole" ? INTRO_CAPTIONS_DROLES : INTRO_CAPTIONS_CLASSIQUES;
+  const introCaption = allowedCaptions.includes(g.introCaption) ? g.introCaption : nextIntroCaption(state, introPool);
   const music = nextMusic(state);
   // Quel écran de l'app montrer : en format B le PREMIER moment Tacotac est le DM
   // d'ouverture, tous les suivants sont des réponses. En format A, tout est réponse.
@@ -1092,9 +1140,10 @@ async function generateOne(backend: "cli" | "api", state: State) {
   const angles = nextAngles(state); // 1 angle différent par champ, jamais répété avant d'avoir tout épuisé
   const structure = nextStructure(state);
   const tone = nextTone(state); // ton imposé au modèle ET au rendu, voir nextTone()
+  const introPool = nextIntroPool(state); // pool de titre imposé, voir IntroPool
   for (let attempt = 1; attempt <= MAX_LENGTH_RETRIES; attempt++) {
-    const g = backend === "api" ? await callApi(angles, structure, tone) : callCli(angles, structure, tone);
-    const candidate = assemble(g, state, structure, tone);
+    const g = backend === "api" ? await callApi(angles, structure, tone, introPool) : callCli(angles, structure, tone, introPool);
+    const candidate = assemble(g, state, structure, tone, introPool);
     scriptSchema.parse(candidate); // rejette tout scénario invalide (compat render)
     const secs = durationSeconds(scriptSchema.parse(candidate));
     const tooLong = punchlineProblems(candidate);
@@ -1128,6 +1177,7 @@ function selfTest() {
   const fake: GenOutput = {
     girlName: "Léa",
     status: "en ligne il y a 1h",
+    introCaption: "", // hors liste exprès : teste le fallback nextIntroCaption()
     storyReply: "ok tu savais que t'étais belle en postant ça.",
     outroText: "l'ia gratuite est dans ma bio les coquins.",
     beats: [
@@ -1140,8 +1190,14 @@ function selfTest() {
     ],
   };
   const state = loadState();
-  for (const st of STRUCTURES) scriptSchema.parse(assemble(fake, state, st));
-  console.log("✅ self-test OK — assemble + validation zod passent (fallback meme inclus)");
+  // "fake" n'a pas de champ introCaption : chaque appel exerce donc aussi le
+  // fallback nextIntroCaption() (comme le fallback meme, déjà testé plus haut).
+  for (const st of STRUCTURES) {
+    for (const pool of ["classique", "drole"] as const) {
+      scriptSchema.parse(assemble(fake, state, st, tones[0], pool));
+    }
+  }
+  console.log("✅ self-test OK — assemble + validation zod passent (fallback meme + titre inclus)");
 }
 
 async function main() {
