@@ -18,7 +18,7 @@ signé prend le relais 12 h. Aucun lien ne pointe vers cette page depuis le site
 
 | Indicateur | Comment il est calculé |
 |---|---|
-| MRR | tous les abonnements actifs ramenés au mois (un annuel à 59,99 € pèse 5,00 €/mois, un hebdo à 4,99 € pèse 21,62 €) — remises récurrentes déduites |
+| MRR | tous les abonnements actifs ramenés au mois (un annuel à 69,99 € pèse 5,83 €/mois, un hebdo à 3,99 € pèse 17,30 €) — remises récurrentes déduites |
 | ARR | MRR × 12 |
 | Abonnés payants | statuts `active` + `past_due` ; les essais sont comptés à part |
 | Panier moyen | MRR ÷ abonnés actifs |
