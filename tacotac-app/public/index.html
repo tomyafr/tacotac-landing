@@ -961,10 +961,13 @@
           this.on('f-bubble');
         });
 
-        const steps = ['Lecture du contexte…','Analyse du ton…','Détection du vibe…',
-                       'Génération de plusieurs pistes…','Le renard élimine les mauvaises…','Dernière relecture…'];
+        /* 4 étapes sur les 6 de l'app : lire → comprendre → produire → trier.
+           On garde celle qui a le plus de personnalité et on coupe les
+           redondantes (« Analyse du ton… », « Dernière relecture… »). */
+        const steps = ['Lecture du contexte…','Détection du vibe…',
+                       'Génération de plusieurs pistes…','Le renard élimine les mauvaises…'];
         steps.forEach((txt, i) => {
-          this.at(6900 + i * 620, () => {
+          this.at(6900 + i * 560, () => {
             const s = $('f-step'), b = $('f-bar');
             if (s) {
               s.style.opacity = '0';
@@ -975,21 +978,21 @@
         });
 
         /* la réflexion s'efface sur l'écran des répliques */
-        this.at(10700, () => { const t = $('f-think'); if (t) t.classList.add('gone'); });
-        this.at(11000, () => { this.on('f-scan'); this.on('f-tonelabel'); this.on('f-pills'); });
-        this.at(11600, () => { const pd = $('f-pill-spicy'); if (pd) pd.classList.add('sel'); });
-        this.at(12100, () => { this.off('f-scan'); this.on('f-res'); });
-        this.at(13400, () => this.on('f-copied'));
+        this.at(9300, () => { const t = $('f-think'); if (t) t.classList.add('gone'); });
+        this.at(9600, () => { this.on('f-scan'); this.on('f-tonelabel'); this.on('f-pills'); });
+        this.at(10200, () => { const pd = $('f-pill-spicy'); if (pd) pd.classList.add('sel'); });
+        this.at(10700, () => { this.off('f-scan'); this.on('f-res'); });
+        this.at(12000, () => this.on('f-copied'));
 
         /* ─── ACTE 4 : la réponse part, Sophie mord ─── */
-        this.at(14900, () => { this.off('f-app'); this.off('f-bubble'); });
-        this.at(15600, () => this.on('f-sent'));
-        this.at(16600, () => this.on('f-typing2'));
-        this.at(17800, () => { this.off('f-typing2'); this.on('f-m3'); });
-        this.at(18000, () => { const fox = $('f-fox'); if (fox) fox.src = 'assets/fox_spicy.png'; });
+        this.at(13500, () => { this.off('f-app'); this.off('f-bubble'); });
+        this.at(14200, () => this.on('f-sent'));
+        this.at(15200, () => this.on('f-typing2'));
+        this.at(16400, () => { this.off('f-typing2'); this.on('f-m3'); });
+        this.at(16600, () => { const fox = $('f-fox'); if (fox) fox.src = 'assets/fox_spicy.png'; });
 
         /* ─── on rembobine ─── */
-        this.at(21400, () => this.play());
+        this.at(20000, () => this.play());
       },
 
       /* état final figé, pour prefers-reduced-motion */
