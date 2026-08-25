@@ -476,6 +476,25 @@
     /* ── Les deux actions de fin ──
        Il n'en reste que deux, et les deux comptent : elles méritent la même
        présence. « Copier » domine par la couleur, pas par la taille. */
+    /* ══════════════════════════════════════════════════════════════
+       ÉCRAN RÉSULTATS FIGÉ — aucun défilement de haut en bas.
+       Tout tient dans la hauteur de l'écran : la carte absorbe la place
+       restante, le renard se comprime en premier (il est décoratif),
+       et une réplique très longue défile DANS sa bulle plutôt que de
+       faire bouger toute la page.
+       ══════════════════════════════════════════════════════════════ */
+    #screen-4{overflow:hidden}
+    #screen-4 .result-card{flex:1;min-height:0;overflow:hidden}
+    /* Le défilement va sur le TEXTE, pas sur la bulle : la bulle porte sa
+       petite queue en position absolue (.tail, bottom:-8px), et un
+       overflow:auto sur elle la coupait tout en créant un faux débordement
+       de 12px constant. */
+    #screen-4 .bubble{min-height:0;display:flex;flex-direction:column}
+    #screen-4 .bubble .reply{flex:1;min-height:0;overflow-y:auto}
+    #screen-4 .bubble .reply::-webkit-scrollbar{width:0}
+    #screen-4 .result-fox-wrap{flex:1;min-height:0;align-items:center!important}
+    #screen-4 .result-fox{height:100%;max-height:112px;min-height:0}
+
     /* flex-shrink:0 est l'essentiel : .screen est une colonne flex, et les
        boutons se faisaient ecraser sous leur hauteur declaree (52px annonces,
        42px rendus). C'est ce qui rendait le bouton « Copier » si fin. */
@@ -634,6 +653,24 @@
     .menu-btn:hover{border-color:rgba(255,90,31,.5);color:#FF7A45}
 
     @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition-duration:.01ms!important}}
+    /* ══════════════════════════════════════════════════════════════
+       PETITS ÉCRANS (iPhone SE & co) — placé en fin de feuille pour
+       passer devant les règles de base à specificité égale.
+       On récupère la place là où ça se voit le moins : les tons
+       passent sur une seule rangée, et le renard garde de quoi exister.
+       ══════════════════════════════════════════════════════════════ */
+    @media (max-height:730px){
+      #screen-4 .pill-grid{grid-template-columns:repeat(6,1fr);gap:5px}
+      #screen-4 .pill{padding:7px 2px;border-radius:12px;gap:2px}
+      #screen-4 .pill .pe{font-size:16px}
+      #screen-4 .pill .pl{font-size:8px}
+      #screen-4 .pill .plock{font-size:8px}
+      #screen-4 .tone-hint{display:none}
+      #screen-4 .result-card{padding:14px}
+      #screen-4 .result-fox{max-height:96px}
+      #screen-4 .copy-cta{height:52px;margin-top:12px;font-size:15.5px}
+      #screen-4 .btn-lg{height:48px;margin-top:8px;font-size:14px}
+    }
   </style>
 </head>
 
@@ -683,6 +720,13 @@
       <div id="drawerPersonas"></div>
 
       <div class="dr-foot">
+        <!-- Partage : deplacé du bas des resultats vers ici. Il n'a de sens
+             qu'apres une analyse, donc il reste masqué tant qu'il n'y a pas
+             de replique a partager (voir openDrawer). -->
+        <button class="dr-item" id="drawerShare" style="display:none;">
+          <span class="dr-ic" id="drawerShareIc" style="font-size:15px;">🦊</span>
+          <span style="flex:1;"><span class="dr-name" id="drawerShareName" style="font-size:13.5px;">Partager en story</span></span>
+        </button>
         <button class="dr-item" id="drawerHist">
           <span class="dr-ic" style="font-size:15px;">🕘</span>
           <span style="flex:1;"><span class="dr-name" style="font-size:13.5px;">Historique</span></span>
@@ -814,11 +858,11 @@
           <!-- Mode DM : on n'attend pas une conv mais SON profil / sa story.
                La maquette change donc avec l'outil (voir setMode). -->
           <div class="dz-story">
-            <img src="assets/persona-lea.jpg" alt="" class="dz-story-img">
+            <img src="assets/story-girl.jpg" onerror="this.onerror=null;this.src='assets/persona-lea.jpg'" alt="" class="dz-story-img">
             <div class="dz-story-shade"></div>
             <div class="dz-story-bars"><i class="full"></i><i class="half"></i><i></i></div>
             <div class="dz-story-head">
-              <span class="dz-story-av"><img src="assets/persona-lea.jpg" alt=""></span>
+              <span class="dz-story-av"><img src="assets/story-girl.jpg" onerror="this.onerror=null;this.src='assets/persona-lea.jpg'" alt=""></span>
               <span class="dz-story-name">lea_</span>
               <span class="dz-story-time">2 h</span>
             </div>
@@ -953,7 +997,7 @@
       </div>
 
       <div style="margin-top:22px;position:relative;z-index:2;">
-        <div style="color:#6B6153;font-size:12px;letter-spacing:.5px;text-transform:uppercase;font-weight:500;margin-bottom:10px;">Choisis ton ton</div>
+        <div class="tone-hint" style="color:#6B6153;font-size:12px;letter-spacing:.5px;text-transform:uppercase;font-weight:500;margin-bottom:10px;">Choisis ton ton</div>
         <div class="pill-grid" id="pillGrid">
           <button class="pill" data-tone="classe"><span class="pe">🎩</span><span class="pl">Classe</span></button>
           <button class="pill active" data-tone="drole"><span class="pe">😂</span><span class="pl">Drôle</span></button>
@@ -977,10 +1021,10 @@
           <p class="reply" id="replyText" contenteditable="true" spellcheck="false"></p>
           <div class="tail"></div>
         </div>
-        <div style="display:flex;align-items:flex-end;justify-content:center;margin-top:14px;">
+        <div class="result-fox-wrap" style="display:flex;align-items:flex-end;justify-content:center;margin-top:14px;">
           <img id="resultFox" class="result-fox" src="assets/fox_chill.png" alt="renard Tacotac">
         </div>
-        <div style="text-align:center;color:#5C5348;font-size:11px;margin-top:6px;">appuie sur un ton pour changer de style</div>
+        <div class="tone-hint" style="text-align:center;color:#5C5348;font-size:11px;margin-top:6px;">appuie sur un ton pour changer de style</div>
       </div>
 
       <button class="copy-cta" id="copyBtn"><span id="copyIcon" style="font-size:16px;">📋</span> <span id="copyText">Copier la réplique</span></button>
@@ -2115,6 +2159,104 @@
       if(cur)lines.push(cur);
       return lines;
     }
+    async function buildShareCard(toneKey,text){
+      const W=1080,H=1920;
+      const c=document.createElement('canvas');c.width=W;c.height=H;
+      const x=c.getContext('2d');
+      const grad=x.createLinearGradient(0,0,0,H);
+      grad.addColorStop(0,'#1A1613');grad.addColorStop(1,'#0B0908');
+      x.fillStyle=grad;x.fillRect(0,0,W,H);
+
+      await document.fonts.ready;
+      const fox=await loadImageAsset('assets/fox_chill.png');
+
+      // ── Passe 1 : calcul de la mise en page (pour centrer verticalement, réponse courte ou longue) ──
+      const padX=90,cardW=W-padX*2;
+      x.font="500 54px 'General Sans'";
+      const lines=wrapText(x,text,cardW-140);
+      const lineH=76;
+      const cardH=Math.max(280,lines.length*lineH+180);
+      const fh=320,fw=fh*(401/623);
+
+      const logoH=96,gapLogoBadge=90,badgeH=76,gapBadgeCard=74,gapCardFox=36,gapFoxWm=90,wmH=110,bottomPad=70;
+      const totalH=logoH+gapLogoBadge+badgeH+gapBadgeCard+cardH+gapCardFox+fh+gapFoxWm+wmH+bottomPad;
+      const topY=Math.max(90,(H-totalH)/2);
+
+      // glow discret centré sur le logo
+      const glowCy=topY+logoH/2;
+      const glow=x.createRadialGradient(W/2,glowCy,40,W/2,glowCy,700);
+      glow.addColorStop(0,'rgba(255,90,31,.16)');glow.addColorStop(1,'rgba(255,90,31,0)');
+      x.fillStyle=glow;x.fillRect(0,Math.max(0,glowCy-700),W,1400);
+
+      // logo + wordmark
+      const avR=48,avCy=topY+avR;
+      x.save();x.beginPath();x.arc(150,avCy,avR,0,Math.PI*2);x.closePath();x.clip();
+      x.fillStyle='#1F1A16';x.fillRect(150-avR,avCy-avR,avR*2,avR*2);
+      x.drawImage(fox,53,5,280,280,150-avR,avCy-avR-6,avR*2,avR*2*1.15);
+      x.restore();
+      x.strokeStyle='rgba(255,90,31,.8)';x.lineWidth=3;x.beginPath();x.arc(150,avCy,avR,0,Math.PI*2);x.stroke();
+      x.fillStyle='#fff';x.font="700 44px 'Clash Display'";x.textBaseline='middle';
+      x.fillText('Tacotac',220,avCy);
+
+      // badge du ton
+      const t=tones[toneKey]||tones.drole;
+      x.font="600 30px 'General Sans'";
+      const badgeText=t.emoji+'  Mode '+t.label;
+      const bw=x.measureText(badgeText).width+64,by=topY+logoH+gapLogoBadge,bx=(W-bw)/2;
+      roundRect(x,bx,by,bw,badgeH,badgeH/2);x.fillStyle='rgba(255,90,31,.12)';x.fill();
+      roundRect(x,bx,by,bw,badgeH,badgeH/2);x.strokeStyle='rgba(255,90,31,.5)';x.lineWidth=2;x.stroke();
+      x.fillStyle='#FF9A70';x.textAlign='center';x.fillText(badgeText,W/2,by+badgeH/2+2);x.textAlign='left';
+
+      // bulle réponse
+      const cardY=by+badgeH+gapBadgeCard;
+      roundRect(x,padX,cardY,cardW,cardH,40);x.fillStyle='#221D19';x.fill();
+      roundRect(x,padX,cardY,cardW,cardH,40);x.strokeStyle='#332B26';x.lineWidth=2;x.stroke();
+      x.fillStyle='#FF6F1F';x.font="700 26px 'General Sans'";x.fillText('TIENS RÉPOND LUI ÇA',padX+70,cardY+80);
+      x.fillStyle='#F4EEE2';x.font="500 54px 'General Sans'";
+      let ly=cardY+150;
+      for(const line of lines){x.fillText(line,padX+70,ly);ly+=lineH;}
+
+      // renard sous la carte
+      const foxY=cardY+cardH+gapCardFox;
+      x.drawImage(fox,(W-fw)/2,foxY,fw,fh);
+
+      // watermark / CTA
+      const wmY=foxY+fh+gapFoxWm;
+      x.textAlign='center';
+      x.fillStyle='#fff';x.font="700 42px 'Clash Display'";
+      x.fillText('Toi aussi, débloque tes répliques',W/2,wmY);
+      x.fillStyle='#FF7A45';x.font="700 46px 'Clash Display'";
+      x.fillText('taco-tac.app',W/2,wmY+70);
+      x.textAlign='left';
+
+      return c;
+    }
+    // Partage en story, depuis le menu lateral. Le bouton n'apparait que
+    // quand une replique existe (gere a l'ouverture du menu).
+    const drawerShare=document.getElementById('drawerShare');
+    drawerShare.addEventListener('click',async()=>{
+      const ic=document.getElementById('drawerShareIc'),nm=document.getElementById('drawerShareName');
+      const pIc=ic.textContent,pNm=nm.textContent;
+      ic.textContent='⏳';nm.textContent='Génération…';drawerShare.style.pointerEvents='none';
+      try{
+        const canvas=await buildShareCard(selectedTone,replyText.textContent);
+        const blob=await new Promise(res=>canvas.toBlob(res,'image/png'));
+        const file=new File([blob],'tacotac.png',{type:'image/png'});
+        if(navigator.canShare&&navigator.canShare({files:[file]})){
+          await navigator.share({files:[file],title:'Tacotac',text:'Fait avec Tacotac 🦊 taco-tac.app'});
+          track('share_card',{method:'native',tone:selectedTone,from:'drawer'});
+        }else{
+          const url=URL.createObjectURL(blob);
+          const a=document.createElement('a');a.href=url;a.download='tacotac-'+selectedTone+'.png';document.body.appendChild(a);a.click();document.body.removeChild(a);
+          setTimeout(()=>URL.revokeObjectURL(url),4000);
+          track('share_card',{method:'download',tone:selectedTone,from:'drawer'});
+        }
+      }catch(e){
+        if(!e||e.name!=='AbortError')toast('Impossible de générer l\'image, réessaie');
+      }
+      ic.textContent=pIc;nm.textContent=pNm;drawerShare.style.pointerEvents='auto';
+    });
+
     // Tease premium (réplique floutée) : uniquement pour les gratuits, clic → paywall
     document.getElementById('premiumTease').addEventListener('click',()=>{track('tease_click',{from:'results'});openGate('tone');});
 
@@ -3217,7 +3359,13 @@
       });
       document.getElementById('drawerCta').style.display=quota.isPremium?'none':'block';
     }
-    function openDrawer(){renderDrawer();drawer.classList.add('show');drawerOverlay.classList.add('show');track('menu_open');}
+    function openDrawer(){
+      renderDrawer();
+      // le partage n'a de sens que s'il y a une replique a partager
+      const rt=(replyText&&replyText.textContent||'').trim();
+      drawerShare.style.display=rt?'flex':'none';
+      drawer.classList.add('show');drawerOverlay.classList.add('show');track('menu_open');
+    }
     function closeDrawer(){drawer.classList.remove('show');drawerOverlay.classList.remove('show');}
     document.getElementById('menuBtn').addEventListener('click',openDrawer);
     document.getElementById('drawerClose').addEventListener('click',closeDrawer);

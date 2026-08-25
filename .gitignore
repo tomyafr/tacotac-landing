@@ -6,6 +6,8 @@ Thumbs.db
 *.jpg
 # Exception : photos des personas du Mode Entraînement, servies telles quelles
 !tacotac-app/public/assets/persona-*.jpg
+# Exception : la story affichée dans la zone de dépôt du mode DM
+!tacotac-app/public/assets/story-*.jpg
 # Exception : le pipeline vidéo a 136 memes en .jpg — sans ça ils seraient
 # silencieusement exclus et les rendus casseraient sur l'autre machine.
 !tacotac-video-pipeline/**/*.jpg
