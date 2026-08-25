@@ -259,7 +259,7 @@
     .plan-dot{flex-shrink:0;width:20px;height:20px;border-radius:50%;border:2px solid #4A3F36;position:relative;transition:border-color .15s}
     .plan-opt.sel .plan-dot{border-color:#FF7A45}
     .plan-opt.sel .plan-dot::after{content:'';position:absolute;inset:3px;border-radius:50%;background:#FF7A45}
-    .plan-badge{position:absolute;top:-9px;right:13px;font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.3px}
+    .plan-badge{position:absolute;top:-9px;right:13px;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.3px}
     .pw-continue{margin-top:20px;width:100%;border:none;border-radius:16px;cursor:pointer;background:linear-gradient(180deg,#FFA76B,#FF7A45);color:#22140A;font-family:inherit;padding:12px;transition:filter .15s,transform .15s}
     .pw-continue:hover{filter:brightness(1.05)}
     .pw-continue:active{transform:scale(.99)}
@@ -281,11 +281,11 @@
     .quiz-opt:disabled{pointer-events:none}
     /* L'option choisie se coche, les autres s'effacent : le choix se voit, il n'est
        pas juste "enregistré". */
-    .quiz-opt.sel::after{content:'✓';position:absolute;right:15px;top:50%;transform:translateY(-50%);color:#FF7A45;font-size:17px;font-weight:800}
+    .quiz-opt.sel::after{content:'✓';position:absolute;right:15px;top:50%;transform:translateY(-50%);color:#FF7A45;font-size:17px;font-weight:700}
     .quiz-opt.dim{opacity:.32;transform:scale(.985)}
     /* Réaction du renard après le choix — c'est ce qui donne le rythme d'un jeu. */
     @keyframes tt-react{0%{opacity:0;transform:translateY(6px) scale(.9)}18%{opacity:1;transform:translateY(0) scale(1)}82%{opacity:1}100%{opacity:0;transform:translateY(-6px)}}
-    .quiz-react{position:absolute;left:50%;top:-6px;transform:translateX(-50%);white-space:nowrap;background:#FF7A45;color:#22140A;font-size:12.5px;font-weight:800;padding:6px 12px;border-radius:999px;box-shadow:0 8px 20px -8px rgba(255,90,31,.9);animation:tt-react 1s ease both;pointer-events:none;z-index:5}
+    .quiz-react{position:absolute;left:50%;top:-6px;transform:translateX(-50%);white-space:nowrap;background:#FF7A45;color:#22140A;font-size:12.5px;font-weight:700;padding:6px 12px;border-radius:999px;box-shadow:0 8px 20px -8px rgba(255,90,31,.9);animation:tt-react 1s ease both;pointer-events:none;z-index:5}
     /* Progression en segments : on voit d'un coup d'œil combien il en reste. */
     .quiz-seg{flex:1;height:4px;border-radius:99px;background:#221D19;overflow:hidden}
     .quiz-seg i{display:block;height:100%;width:0;background:linear-gradient(90deg,#FF7A45,#FFA76B);transition:width .35s cubic-bezier(.22,.68,0,1)}
@@ -357,6 +357,61 @@
     .quiz-react{text-transform:uppercase;letter-spacing:.08em;font-size:11.5px;
       box-shadow:0 10px 24px -8px rgba(255,90,31,.95),0 0 0 1px rgba(255,255,255,.18) inset}
 
+    /* ══════════════════════════════════════════════════════════════
+       ÉCRAN RÉSULTATS — c'est l'écran qu'on regarde le plus longtemps,
+       il doit avoir la hiérarchie la plus nette : la réplique domine,
+       le reste s'efface.
+       ══════════════════════════════════════════════════════════════ */
+
+    /* Les tons : cibles plus généreuses, état actif franc */
+    .pill{padding:13px 6px;border-radius:16px}
+    .pill:active{transform:scale(.96)}
+    .pill.active{border-color:rgba(255,90,31,.85);background:linear-gradient(180deg,rgba(255,90,31,.20),rgba(255,90,31,.09))}
+    .pill.tone-premium:not(.locked){border-color:rgba(255,122,69,.4)}
+
+    /* La carte de résultat prend de l'air et de la profondeur */
+    .result-card{border-radius:24px;padding:20px}
+    /* La réplique est le héros : plus grande, mieux calée */
+    .bubble{border-radius:20px;padding:17px 18px}
+    .bubble .reply{font-size:17.5px;line-height:1.58}
+    .bubble .lbl{letter-spacing:.09em;font-size:10.5px}
+    /* Le stylo d'édition ne se voit que si la bulle est active */
+    .bubble:focus-within{background:#241F1A}
+
+    /* « Refaire » : discret au repos, net au survol */
+    .refaire{border-radius:99px;padding:7px 13px;font-weight:600}
+    .refaire:hover{border-color:#41372F;color:#CFC7BC}
+
+    /* Le tease premium : le flou doit donner envie, pas paraître cassé */
+    #premiumTease{border-radius:20px;transition:border-color .2s,transform .15s}
+    #premiumTease:hover{border-color:rgba(255,90,31,.45);transform:translateY(-1px)}
+
+    /* ══════════════════════════════════════════════════════════════
+       PAYWALL — c'est là que se joue l'argent : le plan choisi doit
+       être évident, et la carte doit inspirer confiance.
+       ══════════════════════════════════════════════════════════════ */
+    .gate-card{border-radius:28px;padding:28px 22px}
+    .pw-icon{border-radius:20px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 14px 30px -18px rgba(255,90,31,.8)}
+    .pw-feat{color:#C6BDB2;font-size:14px;line-height:1.45;margin-bottom:13px}
+
+    /* Les plans : de vraies lignes tarifaires, pas des boutons ternes */
+    .plan-opt{border-radius:18px;padding:15px 16px;
+      background-image:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,0) 65%);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.05);transition:border-color .18s,background .18s,box-shadow .22s,transform .12s}
+    .plan-opt:active{transform:scale(.995)}
+    .plan-opt.sel{
+      background-image:linear-gradient(180deg,rgba(255,90,31,.14),rgba(255,90,31,.05));
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 0 1px rgba(255,90,31,.4),0 14px 32px -20px rgba(255,90,31,.9);
+    }
+    .plan-opt.sel .plan-dot{box-shadow:0 0 12px rgba(255,90,31,.7)}
+    .plan-badge{box-shadow:0 6px 16px -8px rgba(0,0,0,.9);letter-spacing:.04em}
+
+    /* Le bouton qui encaisse : le plus lumineux de l'écran */
+    .pw-continue{
+      background-image:linear-gradient(180deg,#FFB98F,#FF7A45 55%,#FF5A1F);
+      box-shadow:0 14px 32px -14px rgba(216,67,14,.95),inset 0 1px 0 rgba(255,255,255,.4);
+    }
+
     /* ── Révélation : fiche de personnage ── */
     #quizFoxWrap{position:relative;box-shadow:0 0 0 1px rgba(255,90,31,.18),0 22px 50px -22px rgba(255,90,31,.55)}
     #quizFoxWrap::after{
@@ -372,7 +427,7 @@
     .install-btn:hover{background:rgba(255,90,31,.12);border-color:rgba(255,90,31,.55)}
     .install-btn:active{transform:scale(.98)}
     .ios-step{display:flex;align-items:center;gap:13px;text-align:left;background:#1A1613;border:1px solid #2E2722;border-radius:14px;padding:13px 15px;margin-top:10px}
-    .ios-step .num{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:rgba(255,90,31,.14);color:#FF7A45;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center}
+    .ios-step .num{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:rgba(255,90,31,.14);color:#FF7A45;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
     .ios-step .ic{flex-shrink:0;width:34px;height:34px;border-radius:9px;background:#231E1A;border:1px solid #362D28;display:flex;align-items:center;justify-content:center}
     .ios-step p{margin:0;color:#C6BDB2;font-size:13.5px;line-height:1.45}
     @keyframes tt-bounce{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,9px)}}
@@ -384,7 +439,7 @@
     .persona-card:active{transform:scale(.99)}
     .p-avatar{position:relative;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
     .p-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
-    .lvl-pill{font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.3px;white-space:nowrap}
+    .lvl-pill{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.3px;white-space:nowrap}
     #screen-8{padding:env(safe-area-inset-top) 0 0}
     .chat-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #221D19;background:#101010;flex-shrink:0}
     .chat-scroll{flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:7px}
@@ -445,7 +500,7 @@
     .dr-item.on .dr-ic{background:rgba(255,90,31,.14);border-color:rgba(255,90,31,.5)}
     .dr-name{display:block;color:#ECEAE6;font-size:14px;font-weight:700;letter-spacing:-.2px}
     .dr-desc{display:block;color:#6B6153;font-size:11px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .dr-pro{margin-left:auto;flex-shrink:0;font-size:9px;font-weight:800;letter-spacing:.7px;color:#FF9A70;background:rgba(255,90,31,.12);border:1px solid rgba(255,90,31,.35);border-radius:20px;padding:3px 8px}
+    .dr-pro{margin-left:auto;flex-shrink:0;font-size:9px;font-weight:700;letter-spacing:.7px;color:#FF9A70;background:rgba(255,90,31,.12);border:1px solid rgba(255,90,31,.35);border-radius:20px;padding:3px 8px}
     .dr-foot{margin-top:auto;padding-top:18px}
     .dr-cta{display:block;width:100%;background:linear-gradient(135deg,#FF6F2E,#FF5A1F);border:none;border-radius:14px;color:#fff;font:700 14px 'General Sans',sans-serif;padding:14px;cursor:pointer;box-shadow:0 10px 26px -12px rgba(255,90,31,.6);transition:transform .15s}
     .dr-cta:active{transform:scale(.98)}
@@ -519,7 +574,7 @@
       <div class="glow-center"></div>
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;z-index:2;">
         <div class="speech-bubble tail-down" style="animation:tt-bubble-in .5s .1s cubic-bezier(.22,.68,0,1) both;">
-          <div style="color:#fff;font-size:17px;font-weight:800;">Hey, moi c'est le renard 🦊</div>
+          <div style="color:#fff;font-size:17px;font-weight:700;">Hey, moi c'est le renard 🦊</div>
           <p style="color:#B5ABA0;font-size:14.5px;line-height:1.55;margin-top:9px;">Avant de te lâcher dans l'app, analysons la personne que tu es. Réponds à ce petit questionnaire pour que je personnalise tout, rien que pour toi.</p>
         </div>
         <img id="introFox" src="assets/fox_chill.png" alt="Tacotac" style="width:220px;height:220px;object-fit:contain;filter:drop-shadow(0 20px 42px rgba(255,90,31,.45));opacity:0;animation:tt-pop .6s .25s cubic-bezier(.34,1.56,.64,1) both;">
@@ -565,15 +620,15 @@
              résultat qualitatif en diagnostic, et ça rend le manque mesurable. -->
         <div id="quizStats" style="width:100%;max-width:320px;margin:22px auto 0;text-align:left;">
           <div style="display:flex;justify-content:space-between;align-items:baseline;">
-            <span style="color:#d8d8de;font-size:13px;font-weight:700;">😂 Humour</span><span id="qstatHumourVal" style="color:#FF9A70;font-size:13px;font-weight:800;">0%</span>
+            <span style="color:#d8d8de;font-size:13px;font-weight:700;">😂 Humour</span><span id="qstatHumourVal" style="color:#FF9A70;font-size:13px;font-weight:700;">0%</span>
           </div>
           <div class="qstat-bar"><i id="qstatHumour"></i></div>
           <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;">
-            <span style="color:#d8d8de;font-size:13px;font-weight:700;">🎩 Style</span><span id="qstatStyleVal" style="color:#FF9A70;font-size:13px;font-weight:800;">0%</span>
+            <span style="color:#d8d8de;font-size:13px;font-weight:700;">🎩 Style</span><span id="qstatStyleVal" style="color:#FF9A70;font-size:13px;font-weight:700;">0%</span>
           </div>
           <div class="qstat-bar"><i id="qstatStyle"></i></div>
           <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;">
-            <span style="color:#d8d8de;font-size:13px;font-weight:700;">🌶️ Tension</span><span id="qstatTensionVal" style="color:#FF9A70;font-size:13px;font-weight:800;">0%</span>
+            <span style="color:#d8d8de;font-size:13px;font-weight:700;">🌶️ Tension</span><span id="qstatTensionVal" style="color:#FF9A70;font-size:13px;font-weight:700;">0%</span>
           </div>
           <div class="qstat-bar"><i id="qstatTension"></i></div>
         </div>
@@ -1004,15 +1059,15 @@
         <p style="color:#6B6153;font-size:12px;margin:4px 0 0;line-height:1.45;">Stocké uniquement sur ton appareil — rien sur nos serveurs.</p>
         <div style="display:flex;gap:9px;margin-top:14px;">
           <div style="flex:1;background:#1A1613;border:1px solid #2B2420;border-radius:14px;padding:12px 6px;text-align:center;">
-            <div style="font-size:19px;font-weight:800;color:#FF7A45;" id="statTotal">0</div>
+            <div style="font-size:19px;font-weight:700;color:#FF7A45;" id="statTotal">0</div>
             <div style="font-size:10px;color:#6B6153;margin-top:2px;">analyses</div>
           </div>
           <div style="flex:1;background:#1A1613;border:1px solid #2B2420;border-radius:14px;padding:12px 6px;text-align:center;">
-            <div style="font-size:19px;font-weight:800;color:#FF7A45;" id="statStreak">🔥 0</div>
+            <div style="font-size:19px;font-weight:700;color:#FF7A45;" id="statStreak">🔥 0</div>
             <div style="font-size:10px;color:#6B6153;margin-top:2px;">jours de suite</div>
           </div>
           <div style="flex:1;background:#1A1613;border:1px solid #2B2420;border-radius:14px;padding:12px 6px;text-align:center;">
-            <div style="font-size:17px;font-weight:800;color:#FF7A45;" id="statTone">—</div>
+            <div style="font-size:17px;font-weight:700;color:#FF7A45;" id="statTone">—</div>
             <div style="font-size:10px;color:#6B6153;margin-top:2px;">ton préféré</div>
           </div>
         </div>
@@ -1156,7 +1211,7 @@
         <div class="pw-icon">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M7 10V8a5 5 0 0 1 10 0v2" stroke="#FF7A45" stroke-width="2" stroke-linecap="round"/><rect x="4.5" y="10" width="15" height="10" rx="3" stroke="#FF7A45" stroke-width="2"/></svg>
         </div>
-        <div class="display" id="gateTitle" style="color:#ffffff;font-size:24px;line-height:1.1;font-weight:800;letter-spacing:-.02em;">Débloque tout le potentiel</div>
+        <div class="display" id="gateTitle" style="color:#ffffff;font-size:24px;line-height:1.1;font-weight:700;letter-spacing:-.02em;">Débloque tout le potentiel</div>
         <p id="gateSub" style="color:#9C9082;font-size:15px;margin:10px auto 0;max-width:320px;line-height:1.55;">Personnalise ton renard, débloque les analyses illimitées et tous les tons secrets. Sans engagement.</p>
         <div id="promoBanner" style="display:none;background:#0f2c1e;border:1px solid rgba(52,211,153,.4);border-radius:12px;padding:10px 12px;margin:16px 0 0;color:#34d399;font-size:13px;font-weight:600;">🎁 Ta réduction est appliquée sur le Mensuel</div>
 
@@ -1251,8 +1306,8 @@
         <div class="display" style="color:#fff;font-size:23px;line-height:1.1;margin-top:10px;">Attends deux secondes…</div>
         <p style="color:#9C9082;font-size:14px;margin:10px 0 0;line-height:1.55;">Le renard déteste te voir partir. Offre unique, là, maintenant :</p>
         <div style="margin-top:16px;background:#100D0B;border:1.5px dashed rgba(255,122,69,.5);border-radius:14px;padding:16px;">
-          <div style="color:#FF9A70;font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;">-30% sur l'Hebdo</div>
-          <div style="margin-top:6px;color:#fff;font-size:22px;font-weight:800;"><s style="color:#6B6153;font-weight:500;font-size:16px;">3,99€</s> 2,79€ <span style="color:#8A7F70;font-size:13px;font-weight:500;">ta 1re semaine</span></div>
+          <div style="color:#FF9A70;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">-30% sur l'Hebdo</div>
+          <div style="margin-top:6px;color:#fff;font-size:22px;font-weight:700;"><s style="color:#6B6153;font-weight:500;font-size:16px;">3,99€</s> 2,79€ <span style="color:#8A7F70;font-size:13px;font-weight:500;">ta 1re semaine</span></div>
         </div>
         <div style="margin-top:12px;color:#B5ABA0;font-size:13px;">L'offre s'évapore dans <b id="downsellTimer" style="color:#FF9A70;font-variant-numeric:tabular-nums;">15:00</b></div>
         <button class="cta" id="downsellGo" style="margin-top:16px;height:52px;font-size:15px;">J'en profite → 2,79€</button>
@@ -2381,7 +2436,7 @@
       document.getElementById('ppName').textContent=p.name+', '+p.age;
       document.getElementById('ppMeta').textContent=p.job+' · '+p.city;
       const lv=document.getElementById('ppLevel');lv.textContent='Niveau '+p.levelLabel;
-      lv.style.cssText='color:'+p.color+';background:'+p.color+'1f;border:1px solid '+p.color+'55;font-size:11px;font-weight:800;padding:4px 11px;border-radius:20px;';
+      lv.style.cssText='color:'+p.color+';background:'+p.color+'1f;border:1px solid '+p.color+'55;font-size:11px;font-weight:700;padding:4px 11px;border-radius:20px;';
       document.getElementById('ppBio').textContent=p.bio;
       const tags=document.getElementById('ppTags');tags.innerHTML='';
       p.tags.forEach(t=>{const c=document.createElement('span');c.className='chip';c.style.cursor='default';c.textContent=t;tags.appendChild(c);});
@@ -3092,7 +3147,7 @@
         if(st&&st.status==='won'){status='✅ RDV décroché';color='#34d399';}
         else if(st&&st.status==='dead'){status='💀 elle a coupé court';color='#ff6b5c';}
         else if(st&&st.msgs.length){status='💬 en cours · ❤️ '+st.interest+'%';color='#FF7A45';}
-        mid.innerHTML='<span class="dr-name">'+p.name+', '+p.age+' <span style="font-size:10px;font-weight:800;color:'+p.color+';">'+p.levelLabel+'</span></span>'
+        mid.innerHTML='<span class="dr-name">'+p.name+', '+p.age+' <span style="font-size:10px;font-weight:700;color:'+p.color+';">'+p.levelLabel+'</span></span>'
           +'<span class="dr-desc" style="color:'+color+';">'+status+'</span>';
         b.appendChild(av);b.appendChild(mid);
         b.addEventListener('click',()=>{closeDrawer();openChat(id);track('menu_nav',{to:'persona_'+id});});
