@@ -6,20 +6,21 @@
 
   <!-- ════════════════════ SEO / META ════════════════════ -->
   <title>Tacotac — Coach dating IA français | 3 réponses parfaites en 3 sec</title>
-  <meta name="description" content="Envoie ton screenshot de conv dating, Tacotac te sort 3 réponses parfaites : classe, drôle ou spicy. Rejoins la liste d'attente — accès prioritaire + 2 analyses offertes.">
+  <meta name="description" content="Envoie ton screenshot de conv dating, Tacotac te sort 3 réponses parfaites, en 6 tons : classe, drôle, spicy, romantique, sexto, mystère. 3 analyses gratuites par jour, sans inscription.">
   <meta name="theme-color" content="#17120E">
 
   <meta property="og:type" content="website">
   <meta property="og:title" content="Tacotac — Coach dating IA français">
-  <meta property="og:description" content="1 screenshot → 3 réponses qui claquent. Classe, drôle ou spicy — en 3 secondes. Rejoins la liste d'attente.">
+  <meta property="og:description" content="1 screenshot → 3 réponses qui claquent, en 6 tons. En 3 secondes. Gratuit, sans inscription.">
   <meta property="og:image" content="og-image.png">
   <meta property="og:locale" content="fr_FR">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Tacotac — Coach dating IA français">
-  <meta name="twitter:description" content="1 screenshot → 3 réponses qui claquent. Classe, drôle ou spicy.">
+  <meta name="twitter:description" content="1 screenshot → 3 réponses qui claquent, en 6 tons.">
   <meta name="twitter:image" content="og-image.png">
 
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦊</text></svg>">
+  <link rel="apple-touch-icon" href="/assets/icon-180.png">
 
   <!-- ════════════════════ FONTS ════════════════════ -->
   <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
@@ -110,11 +111,15 @@
     .ig-caret{display:inline-block;width:1.3px;height:12px;background:#FF5A1F;animation:ttCaret 1s step-end infinite;}
 
     /* ═══════════ écran app Tacotac dans le film ═══════════ */
-    .app-pad{padding:14px 12px 12px;display:flex;flex-direction:column;height:100%;}
-    .app-thumb{position:relative;border-radius:11px;overflow:hidden;background:#000;border:1px solid rgba(255,255,255,.1);flex-shrink:0;}
+    .app-pad{padding:13px 11px 11px;display:flex;flex-direction:column;height:100%;}
+    .app-thumb{position:relative;border-radius:10px;overflow:hidden;background:#000;border:1px solid rgba(255,255,255,.1);flex-shrink:0;}
     .app-scan{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#FF5A1F 45%,#FFB08A 50%,#FF5A1F 55%,transparent);box-shadow:0 0 14px 2px rgba(255,90,31,.75);top:-2px;opacity:0;z-index:3;}
     .app-scan.on{animation:ttScanSweep 1.15s cubic-bezier(.5,0,.5,1) 2;}
-    .app-card{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:9px 11px;transition:border-color .3s ease,background .3s ease,transform .3s cubic-bezier(.34,1.3,.4,1);}
+    /* les 6 pastilles de ton, façon app */
+    .app-pill{display:flex;align-items:center;justify-content:center;gap:2px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:99px;padding:4px 2px;font-size:6.5px;font-weight:600;color:#9C9082;transition:background .3s ease,border-color .3s ease,color .3s ease;}
+    .app-pill.sel{background:#FF5A1F;border-color:#FF5A1F;color:#fff;}
+    .app-pill.lock{color:#6b6257;}
+    .app-card{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:7px 9px;transition:border-color .3s ease,background .3s ease,transform .3s cubic-bezier(.34,1.3,.4,1);}
     .app-card.picked{border-color:rgba(255,90,31,.75);background:rgba(255,90,31,.12);transform:scale(1.025);}
 
     /* ═══════════ chapitres du film ═══════════ */
@@ -129,14 +134,20 @@
     .mq-track{display:flex;gap:9px;width:max-content;animation:ttMarquee 26s linear infinite;}
     .mq-chip{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#9C9082;font-size:11.5px;font-weight:600;border-radius:999px;padding:6px 14px;white-space:nowrap;}
 
+    /* ═══════════ démo : sélecteur 6 tons ═══════════ */
+    .tt-tone{display:flex;align-items:center;justify-content:center;gap:5px;border:1.5px solid rgba(23,18,14,.12);background:#FBF7EF;border-radius:99px;padding:9px 6px;font:600 12.5px 'General Sans',sans-serif;color:#6B6153;cursor:pointer;transition:border-color .2s,background .2s,color .2s,transform .15s;}
+    .tt-tone:hover{border-color:rgba(216,67,14,.4);}
+    .tt-tone:active{transform:scale(.97);}
+    .tt-tone.active{background:#FF5A1F;border-color:#FF5A1F;color:#fff;box-shadow:0 6px 16px rgba(216,67,14,.34);}
+    .tt-tone .lk{font-size:9px;opacity:.75;}
+    .tt-tone.prem{background:rgba(255,90,31,.06);border-style:dashed;border-color:rgba(216,67,14,.32);color:#C4400F;}
+    .tt-tone.prem.active{background:#17120E;border-color:#17120E;border-style:solid;color:#fff;box-shadow:0 6px 16px rgba(23,18,14,.3);}
+
     /* ═══════════ divers ═══════════ */
     [data-reveal]{opacity:0;transform:translateY(24px);transition:opacity .75s cubic-bezier(.16,.84,.28,1),transform .75s cubic-bezier(.16,.84,.28,1);}
     .tt-review-card{transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s ease,border-color .3s ease;}
     .tt-review-card:hover{transform:translateY(-4px);box-shadow:0 18px 34px rgba(0,0,0,.35);border-color:rgba(255,90,31,.25);}
     .btn-orange{transition:transform .15s ease,box-shadow .2s ease,filter .2s ease;}
-    .tt-seg{position:relative;display:flex;gap:6px;background:rgba(23,18,14,.06);border-radius:14px;padding:5px;}
-    .tt-seg-glider{position:absolute;top:5px;bottom:5px;left:5px;width:calc((100% - 10px)/3);background:#FF5A1F;border-radius:10px;box-shadow:0 4px 14px rgba(216,67,14,.42);transition:transform .38s cubic-bezier(.34,1.3,.4,1);transform:translateX(100%);z-index:0;}
-    .tt-tone{flex:1;position:relative;z-index:1;border:none;background:transparent;border-radius:10px;padding:11px 3px;font:600 13px 'General Sans',sans-serif;cursor:pointer;color:#8A7F70;transition:color .25s;}
     .step-num{position:relative;font-family:'Clash Display',sans-serif;font-weight:700;font-size:34px;color:#FF5A1F;line-height:1;min-width:44px;}
   </style>
 </head>
@@ -157,7 +168,7 @@
         <img src="assets/fox_full.png" alt="" style="width:26px;height:26px;object-fit:contain;">
         Tacotac
       </span>
-      <a href="#tt-cta" class="js-cta" style="background:#FF5A1F;color:#fff;font-weight:600;font-size:13px;padding:9px 16px;border-radius:11px;text-decoration:none;box-shadow:0 4px 14px rgba(216,67,14,.35);">Rejoindre</a>
+      <a href="/app" class="js-cta" style="background:#FF5A1F;color:#fff;font-weight:600;font-size:13px;padding:9px 16px;border-radius:11px;text-decoration:none;box-shadow:0 4px 14px rgba(216,67,14,.35);">Essayer</a>
     </div>
   </header>
 
@@ -176,15 +187,15 @@
         <span style="position:relative;width:6px;height:6px;border-radius:50%;background:#FF5A1F;">
           <span style="position:absolute;inset:0;border-radius:50%;background:#FF5A1F;animation:ttRingPulse 2s ease-out infinite;"></span>
         </span>
-        Coach dating IA · Accès anticipé
+        Coach dating IA · En ligne
       </div>
 
       <h1 data-reveal style="position:relative;z-index:2;font-family:'Clash Display',sans-serif;font-weight:700;font-size:clamp(42px,13vw,54px);line-height:0.94;letter-spacing:-0.03em;color:#F4EEE2;margin:20px 0 14px;">
         Fini de sécher<br><span style="color:#FF5A1F;">en DM.</span>
       </h1>
 
-      <p data-reveal style="position:relative;z-index:2;font-size:15.5px;line-height:1.5;color:#9C9082;max-width:296px;margin:0 auto 26px;">
-        Envoie 1 screenshot, reçois <span style="color:#F4EEE2;font-weight:600;">3 réponses qui claquent</span>. Classe, drôle ou spicy — en 3 secondes.
+      <p data-reveal style="position:relative;z-index:2;font-size:15.5px;line-height:1.5;color:#9C9082;max-width:300px;margin:0 auto 26px;">
+        Envoie 1 screenshot, reçois <span style="color:#F4EEE2;font-weight:600;">3 réponses qui claquent</span>. En 6 tons, en 3 secondes.
       </p>
 
       <!-- ══ LA SCÈNE ══ -->
@@ -221,13 +232,13 @@
                   <span class="ig-typing-dot" style="animation-delay:.3s;"></span>
                 </div>
                 <div id="f-m2" class="ig-in stg">Tu fais quoi ce week-end ?</div>
-                <div id="f-sent" class="ig-out stg">Rien d'intéressant. Mais ça peut vite changer — t'as une idée ?</div>
+                <div id="f-sent" class="ig-out stg">un ciné chez moi samedi… le film aura aucune importance de toute façon</div>
                 <div id="f-typing2" class="ig-typing stg">
                   <span class="ig-typing-dot" style="animation-delay:0s;"></span>
                   <span class="ig-typing-dot" style="animation-delay:.15s;"></span>
                   <span class="ig-typing-dot" style="animation-delay:.3s;"></span>
                 </div>
-                <div id="f-m3" class="ig-in stg">😏 Ok là tu m'intrigues. Samedi ?</div>
+                <div id="f-m3" class="ig-in stg">😳 ok là t'as osé… samedi alors</div>
               </div>
 
               <div class="ig-inputbar">
@@ -237,16 +248,16 @@
               </div>
             </div>
 
-            <!-- ── couche 2 : app Tacotac ── -->
+            <!-- ── couche 2 : l'app Tacotac ── -->
             <div id="f-app" class="film-layer film-app">
               <div class="app-pad">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px;flex-shrink:0;">
-                  <div style="width:25px;height:25px;border-radius:8px;background:#FF5A1F;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
+                <div style="display:flex;align-items:center;gap:7px;margin-bottom:9px;flex-shrink:0;">
+                  <div style="width:23px;height:23px;border-radius:7px;background:#FF5A1F;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
                     <img src="assets/fox_full.png" alt="" style="width:100%;height:100%;object-fit:contain;">
                   </div>
-                  <span style="color:#F4EEE2;font-size:12px;font-weight:600;">Tacotac</span>
-                  <span id="f-status" style="margin-left:auto;display:flex;align-items:center;gap:5px;color:#FF9A70;font-size:9.5px;font-weight:600;">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" style="animation:ttSpin 1.6s linear infinite;"><path d="M12 3a9 9 0 1 0 9 9" stroke="#FF9A70" stroke-width="3" stroke-linecap="round"/></svg>
+                  <span style="color:#F4EEE2;font-size:11.5px;font-weight:600;">Tacotac</span>
+                  <span id="f-status" style="margin-left:auto;display:flex;align-items:center;gap:4px;color:#FF9A70;font-size:9px;font-weight:600;">
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" style="animation:ttSpin 1.6s linear infinite;"><path d="M12 3a9 9 0 1 0 9 9" stroke="#FF9A70" stroke-width="3" stroke-linecap="round"/></svg>
                     Analyse…
                   </span>
                 </div>
@@ -254,37 +265,42 @@
                 <!-- vignette du screenshot analysé -->
                 <div class="app-thumb">
                   <div id="f-scan" class="app-scan"></div>
-                  <div style="padding:7px 8px;display:flex;flex-direction:column;gap:4px;">
-                    <div style="display:flex;align-items:center;gap:5px;">
-                      <div style="width:12px;height:12px;border-radius:50%;background:linear-gradient(135deg,#f472b6,#e11d48);"></div>
-                      <span style="color:#fff;font-size:7px;font-weight:600;">sophie.m</span>
+                  <div style="padding:6px 7px;display:flex;flex-direction:column;gap:3px;">
+                    <div style="display:flex;align-items:center;gap:4px;">
+                      <div style="width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,#f472b6,#e11d48);"></div>
+                      <span style="color:#fff;font-size:6px;font-weight:600;">sophie.m</span>
                     </div>
-                    <div style="align-self:flex-start;background:#262626;color:#d8d8d8;border-radius:7px;padding:3px 6px;font-size:6.5px;max-width:82%;">Haha t'es vraiment trop 😭</div>
-                    <div style="align-self:flex-start;background:#262626;color:#d8d8d8;border-radius:7px;padding:3px 6px;font-size:6.5px;max-width:82%;">Tu fais quoi ce week-end ?</div>
+                    <div style="align-self:flex-start;background:#262626;color:#d8d8d8;border-radius:6px;padding:3px 5px;font-size:6px;max-width:82%;">Haha t'es vraiment trop 😭</div>
+                    <div style="align-self:flex-start;background:#262626;color:#d8d8d8;border-radius:6px;padding:3px 5px;font-size:6px;max-width:82%;">Tu fais quoi ce week-end ?</div>
                   </div>
                 </div>
-                <p style="margin:7px 0 11px;color:#5C5348;font-size:8.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;flex-shrink:0;">Conv Instagram · capturée</p>
 
-                <p id="f-count" class="stg" style="margin:0 0 8px;color:#9C9082;font-size:10px;font-weight:600;text-align:left;flex-shrink:0;">3 réponses générées <span style="color:#5C5348;">· choisis ton ton</span></p>
+                <!-- les 6 tons, comme dans l'app -->
+                <p id="f-tonelabel" class="stg" style="margin:9px 0 5px;color:#5C5348;font-size:7.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;text-align:left;flex-shrink:0;">Choisis ton ton</p>
+                <div id="f-pills" class="stg" style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;flex-shrink:0;">
+                  <span class="app-pill">🎩 Classe</span>
+                  <span class="app-pill">😂 Drôle</span>
+                  <span id="f-pill-spicy" class="app-pill">🌶️ Spicy</span>
+                  <span class="app-pill lock">🌹 <span style="font-size:5.5px;">🔒</span></span>
+                  <span class="app-pill lock">😈 <span style="font-size:5.5px;">🔒</span></span>
+                  <span class="app-pill lock">🎭 <span style="font-size:5.5px;">🔒</span></span>
+                </div>
 
-                <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+                <div style="display:flex;flex-direction:column;gap:4px;margin-top:8px;flex-shrink:0;">
                   <div id="f-c1" class="app-card stg">
-                    <p style="margin:0 0 3px;color:#FF9A70;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;text-align:left;">🎩 Classe</p>
-                    <p style="margin:0;color:#CFC7BC;font-size:9.5px;line-height:1.4;text-align:left;">J'avais rien de prévu — mais là ça me donne des idées.</p>
+                    <p style="margin:0;color:#CFC7BC;font-size:8.5px;line-height:1.4;text-align:left;">un ciné chez moi samedi… le film aura aucune importance de toute façon</p>
                   </div>
                   <div id="f-c2" class="app-card stg">
-                    <p style="margin:0 0 3px;color:#FF9A70;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;text-align:left;">😏 Drôle</p>
-                    <p style="margin:0;color:#F4EEE2;font-size:9.5px;line-height:1.4;text-align:left;">Rien d'intéressant. Mais ça peut vite changer — t'as une idée ?</p>
+                    <p style="margin:0;color:#CFC7BC;font-size:8.5px;line-height:1.4;text-align:left;">rien encore… mais ta question vient de remplir mon samedi soir</p>
                   </div>
                   <div id="f-c3" class="app-card stg">
-                    <p style="margin:0 0 3px;color:#FF9A70;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;text-align:left;">🌶 Spicy</p>
-                    <p style="margin:0;color:#CFC7BC;font-size:9.5px;line-height:1.4;text-align:left;">Soirée libre… ça dépend surtout de ce qu'on me propose.</p>
+                    <p style="margin:0;color:#CFC7BC;font-size:8.5px;line-height:1.4;text-align:left;">jallais dire rien, mais vu comment tu demandes jsens que t'as déjà une idée…</p>
                   </div>
                 </div>
 
-                <div id="f-copied" class="stg" style="margin-top:auto;padding-top:10px;flex-shrink:0;">
-                  <div style="display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(255,90,31,.16);border:1px solid rgba(255,90,31,.32);border-radius:10px;padding:8px;color:#FF7A45;font-size:10.5px;font-weight:600;">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M4 12.5 9.5 18 20 6.5" stroke="#FF7A45" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <div id="f-copied" class="stg" style="margin-top:auto;padding-top:8px;flex-shrink:0;">
+                  <div style="display:flex;align-items:center;justify-content:center;gap:5px;background:rgba(255,90,31,.16);border:1px solid rgba(255,90,31,.32);border-radius:9px;padding:7px;color:#FF7A45;font-size:9.5px;font-weight:600;">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M4 12.5 9.5 18 20 6.5" stroke="#FF7A45" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     Copié — plus qu'à envoyer
                   </div>
                 </div>
@@ -318,25 +334,16 @@
         </div>
       </div>
 
-      <!-- formulaire hero -->
-      <div data-wl="hero" data-reveal style="position:relative;z-index:2;max-width:320px;margin:30px auto 0;">
-        <form novalidate style="display:flex;flex-direction:column;gap:10px;">
-          <input id="hero-email" type="email" required placeholder="ton@email.fr" autocomplete="email" aria-label="Ton email"
-            style="width:100%;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.16);color:#F4EEE2;border-radius:13px;padding:15px 18px;font:500 15px 'General Sans',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s;">
-          <button type="submit" class="btn-orange"
-            style="width:100%;padding:15px 24px;background:#FF5A1F;color:#fff;font-family:'General Sans',sans-serif;font-weight:600;font-size:16px;border:none;border-radius:13px;cursor:pointer;box-shadow:0 8px 24px rgba(216,67,14,0.42);">
-            Rejoindre la liste
-          </button>
-        </form>
-        <p data-err style="display:none;color:#FF9A78;font-size:13px;margin:10px 0 0;"></p>
-        <div data-success style="display:none;margin-top:12px;background:rgba(255,90,31,0.12);border:1px solid rgba(255,90,31,0.3);border-radius:14px;padding:16px;">
-          <p style="margin:0;color:#fff;font-weight:600;font-size:14px;">C'est bon, tu es sur la liste.</p>
-          <p style="margin:5px 0 0;color:#B5ABA0;font-size:12.5px;">On te prévient en premier dès l'ouverture.</p>
-        </div>
+      <!-- CTA hero -->
+      <div data-reveal style="position:relative;z-index:2;max-width:320px;margin:30px auto 0;">
+        <a href="/app" class="btn-orange js-cta"
+          style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px 24px;background:#FF5A1F;color:#fff;font-family:'General Sans',sans-serif;font-weight:600;font-size:17px;border-radius:13px;text-decoration:none;box-shadow:0 8px 24px rgba(216,67,14,0.42);">
+          Essayer gratuitement ⚡
+        </a>
         <div style="margin:14px 0 0;color:#9C9082;font-size:11.5px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-          <span><span style="color:#FF7A45;">✓</span> 2 analyses offertes</span>
-          <span><span style="color:#FF7A45;">✓</span> Sans carte</span>
-          <span><span style="color:#FF7A45;">✓</span> Zéro spam</span>
+          <span><span style="color:#FF7A45;">✓</span> 3 analyses/jour offertes</span>
+          <span><span style="color:#FF7A45;">✓</span> Sans inscription</span>
+          <span><span style="color:#FF7A45;">✓</span> Résultat en 3 sec</span>
         </div>
       </div>
 
@@ -350,7 +357,7 @@
         </div>
         <div style="text-align:left;">
           <div style="color:#FF5A1F;font-size:12px;letter-spacing:1.5px;">★★★★★</div>
-          <p style="margin:2px 0 0;color:#9C9082;font-size:11.5px;">+1 200 déjà inscrits</p>
+          <p style="margin:2px 0 0;color:#9C9082;font-size:11.5px;">+1 200 dragueurs assistés</p>
         </div>
       </div>
 
@@ -368,12 +375,12 @@
       <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:300px;height:130px;background:radial-gradient(ellipse,rgba(255,90,31,.16),transparent 70%);pointer-events:none;"></div>
       <div data-reveal style="position:relative;display:grid;grid-template-columns:repeat(3,1fr);text-align:center;">
         <div style="padding:0 6px;">
-          <p data-count="3" data-prefix="×" style="font-family:'Clash Display',sans-serif;font-weight:700;font-size:32px;letter-spacing:-0.02em;color:#FF5A1F;margin:0;">×3</p>
-          <p style="margin:5px 0 0;color:#9C9082;font-size:11.5px;line-height:1.3;">options par message</p>
+          <p data-count="6" style="font-family:'Clash Display',sans-serif;font-weight:700;font-size:32px;letter-spacing:-0.02em;color:#FF5A1F;margin:0;">6</p>
+          <p style="margin:5px 0 0;color:#9C9082;font-size:11.5px;line-height:1.3;">tons au choix</p>
         </div>
         <div style="padding:0 6px;border-left:1px solid rgba(255,255,255,0.08);border-right:1px solid rgba(255,255,255,0.08);">
           <p data-count="3" data-suffix="s" style="font-family:'Clash Display',sans-serif;font-weight:700;font-size:32px;letter-spacing:-0.02em;color:#FF5A1F;margin:0;">3s</p>
-          <p style="margin:5px 0 0;color:#9C9082;font-size:11.5px;line-height:1.3;">par réponse</p>
+          <p style="margin:5px 0 0;color:#9C9082;font-size:11.5px;line-height:1.3;">par analyse</p>
         </div>
         <div style="padding:0 6px;">
           <p data-count="100" data-suffix="%" style="font-family:'Clash Display',sans-serif;font-weight:700;font-size:32px;letter-spacing:-0.02em;color:#FF5A1F;margin:0;">100%</p>
@@ -382,21 +389,25 @@
       </div>
     </section>
 
-    <!-- ════════ DÉMO INTERACTIVE ════════ -->
+    <!-- ════════ DÉMO INTERACTIVE · 6 TONS ════════ -->
     <section style="position:relative;background:#F4EEE2;padding:56px 22px;overflow:hidden;">
       <p data-reveal style="text-align:center;font-size:11px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:#C4400F;margin:0 0 10px;">À toi de jouer</p>
-      <h2 data-reveal style="font-family:'Clash Display',sans-serif;font-weight:600;font-size:clamp(28px,7.5vw,34px);line-height:1.04;letter-spacing:-0.02em;color:#17120E;text-align:center;margin:0 0 8px;">Change le ton,<br>regarde le renard suivre</h2>
-      <p data-reveal style="text-align:center;color:#8A7F70;font-size:14px;margin:0 0 28px;">La même conv, trois personnalités.</p>
+      <h2 data-reveal style="font-family:'Clash Display',sans-serif;font-weight:600;font-size:clamp(28px,7.5vw,34px);line-height:1.04;letter-spacing:-0.02em;color:#17120E;text-align:center;margin:0 0 8px;">Une conv,<br>six personnalités</h2>
+      <p data-reveal style="text-align:center;color:#8A7F70;font-size:14px;margin:0 0 24px;">« Tu fais quoi ce week-end ? » — choisis le ton, le renard suit.</p>
 
       <div data-reveal style="position:relative;">
-        <div style="position:absolute;top:38%;left:50%;transform:translate(-50%,-50%);width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(255,90,31,.2),transparent 70%);filter:blur(24px);pointer-events:none;"></div>
+        <div style="position:absolute;top:44%;left:50%;transform:translate(-50%,-50%);width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(255,90,31,.2),transparent 70%);filter:blur(24px);pointer-events:none;"></div>
 
-        <div class="tt-seg" style="position:relative;max-width:330px;margin:0 auto 20px;">
-          <span id="tt-glider" class="tt-seg-glider"></span>
-          <button class="tt-tone" data-index="0" data-fox="assets/fox_classe.png" data-reply="J'avais rien de prévu, mais là ça donne des idées. T'as un endroit en tête ?" style="color:#8A7F70;">🎩 Classe</button>
-          <button class="tt-tone" data-index="1" data-fox="assets/fox_chill.png" data-reply="J'avais prévu rien d'intéressant, mais là ça change. T'as une idée ?" style="color:#fff;">😏 Drôle</button>
-          <button class="tt-tone" data-index="2" data-fox="assets/fox_spicy.png" data-reply="Soirée libre… mais ça dépend de ce qu'on me propose. T'as quoi en tête ?" style="color:#8A7F70;">🌶 Spicy</button>
+        <!-- 6 tons : 3 libres + 3 premium -->
+        <div style="position:relative;max-width:340px;margin:0 auto 8px;display:grid;grid-template-columns:repeat(3,1fr);gap:7px;">
+          <button class="tt-tone" data-tone="classe">🎩 Classe</button>
+          <button class="tt-tone active" data-tone="drole">😂 Drôle</button>
+          <button class="tt-tone" data-tone="spicy">🌶️ Spicy</button>
+          <button class="tt-tone prem" data-tone="romantique">🌹 <span class="lk">🔒</span></button>
+          <button class="tt-tone prem" data-tone="sexto">😈 <span class="lk">🔒</span></button>
+          <button class="tt-tone prem" data-tone="mystere">🎭 <span class="lk">🔒</span></button>
         </div>
+        <p style="position:relative;text-align:center;color:#8A7F70;font-size:11.5px;margin:0 0 18px;">Les 3 tons du bas sont <a href="#tt-pricing" style="color:#C4400F;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(196,64,15,.35);">réservés au Premium</a> — clique pour goûter.</p>
 
         <div style="position:relative;display:flex;justify-content:center;margin-bottom:2px;">
           <img id="tt-fox" src="assets/fox_chill.png" alt="Le renard Tacotac" style="height:168px;width:auto;filter:drop-shadow(0 18px 26px rgba(23,18,14,.24));transition:opacity .25s,transform .32s cubic-bezier(.34,1.3,.4,1);animation:ttFloatSmall 6.5s ease-in-out infinite;">
@@ -412,33 +423,77 @@
               </div>
               <span style="color:#F4EEE2;font-size:14px;font-weight:600;">Tacotac suggère</span>
             </div>
-            <span style="color:#5C5348;font-size:18px;letter-spacing:2px;">···</span>
+            <span id="tt-tonebadge" style="background:rgba(255,90,31,.16);border:1px solid rgba(255,90,31,.3);color:#FF9A70;font-size:11px;font-weight:700;border-radius:99px;padding:4px 10px;">😂 Drôle</span>
           </div>
-          <p id="tt-reply" style="position:relative;font-style:italic;color:#F4EEE2;line-height:1.6;font-size:16px;margin:0 0 16px;transition:opacity .2s;">« J'avais prévu rien d'intéressant, mais là ça change. T'as une idée ? »</p>
+          <p id="tt-reply" style="position:relative;font-style:italic;color:#F4EEE2;line-height:1.6;font-size:16px;margin:0 0 16px;transition:opacity .2s;">« rien, et jcompte bien défendre ce titre tout le week-end »</p>
+
+          <!-- bouton copier (tons libres) -->
           <button id="tt-copy" style="position:relative;width:100%;padding:12px;background:rgba(255,90,31,0.14);color:#FF7A45;font-weight:600;font-size:14px;border-radius:11px;border:1px solid rgba(255,90,31,0.28);cursor:pointer;font-family:'General Sans',sans-serif;transition:background .2s;">Copier la réponse</button>
+
+          <!-- CTA premium (tons verrouillés) -->
+          <a id="tt-unlock" href="#tt-pricing" style="display:none;position:relative;align-items:center;justify-content:center;gap:7px;width:100%;padding:13px;background:#FF5A1F;color:#fff;font-weight:600;font-size:14.5px;border-radius:11px;text-decoration:none;font-family:'General Sans',sans-serif;box-shadow:0 6px 18px rgba(216,67,14,.4);">
+            Débloquer les 3 tons secrets →
+          </a>
         </div>
       </div>
     </section>
 
-    <!-- ════════ CAPTURE POST-DÉMO ════════ -->
-    <section style="position:relative;background:#17120E;padding:48px 24px;overflow:hidden;">
+    <!-- ════════ LES 5 OUTILS ════════ -->
+    <section style="position:relative;background:#17120E;padding:56px 24px;overflow:hidden;">
       <div class="tt-grain"></div>
-      <div data-reveal style="position:relative;text-align:center;">
-        <h2 style="font-family:'Clash Display',sans-serif;font-weight:600;font-size:28px;letter-spacing:-0.02em;color:#F4EEE2;margin:0 0 8px;">Ça te parle ?</h2>
-        <p style="color:#9C9082;font-size:14px;margin:0 auto 22px;max-width:300px;">Rejoins la liste et sois parmi les premiers à ne plus jamais sécher.</p>
-        <div data-wl="post-demo" style="max-width:332px;margin:0 auto;">
-          <form novalidate style="display:flex;flex-direction:column;gap:10px;">
-            <input type="email" required placeholder="ton@email.fr" autocomplete="email" aria-label="Ton email"
-              style="width:100%;background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.14);color:#fff;border-radius:13px;padding:15px 18px;font:500 15px 'General Sans',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s;">
-            <button type="submit" class="btn-orange"
-              style="width:100%;padding:15px 24px;background:#FF5A1F;color:#fff;font-family:'General Sans',sans-serif;font-weight:600;font-size:16px;border:none;border-radius:13px;cursor:pointer;box-shadow:0 8px 22px rgba(216,67,14,0.36);">
-              Je veux l'accès en avant-première
-            </button>
-          </form>
-          <p data-err style="display:none;color:#FF9A78;font-size:13px;margin:10px 0 0;"></p>
-          <div data-success style="display:none;margin-top:12px;background:rgba(255,90,31,0.12);border:1px solid rgba(255,90,31,0.3);border-radius:14px;padding:16px;">
-            <p style="margin:0;color:#fff;font-weight:600;font-size:14px;">Inscrit — on te tient au courant.</p>
+      <p data-reveal style="position:relative;text-align:center;font-size:11px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:#FF7A45;margin:0 0 10px;">La boîte à outils complète</p>
+      <h2 data-reveal style="position:relative;font-family:'Clash Display',sans-serif;font-weight:600;font-size:clamp(30px,8vw,36px);letter-spacing:-0.02em;color:#F4EEE2;text-align:center;margin:0 0 8px;">5 outils.<br>Un seul renard.</h2>
+      <p data-reveal style="position:relative;text-align:center;color:#9C9082;font-size:14px;margin:0 0 30px;">De la première approche jusqu'au rendez-vous.</p>
+
+      <div style="position:relative;max-width:400px;margin:0 auto;display:flex;flex-direction:column;gap:12px;">
+        <div data-reveal style="background:rgba(255,90,31,0.09);border:1.5px solid rgba(255,90,31,0.45);border-radius:18px;padding:20px;position:relative;">
+          <span style="position:absolute;top:-10px;right:16px;background:#FF5A1F;color:#fff;font-size:10px;font-weight:700;letter-spacing:0.06em;padding:4px 10px;border-radius:99px;">L'OUTIL STAR</span>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="font-size:24px;">💬</span>
+            <h3 style="font-weight:600;font-size:17px;color:#F4EEE2;margin:0;">Réplique</h3>
           </div>
+          <p style="color:#B5ABA0;font-size:13.5px;line-height:1.6;margin:0;">Ta conv te bloque ? Screenshot → 3 répliques prêtes à envoyer, en <span style="color:#F4EEE2;font-weight:600;">6 tons</span> : 🎩 classe, 😂 drôle, 🌶️ spicy — et les tons secrets 🌹 romantique, 😈 sexto, 🎭 mystère en Premium.</p>
+        </div>
+
+        <div data-reveal style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:16px;">
+            <div style="font-size:20px;margin-bottom:6px;">✨</div>
+            <h3 style="font-weight:600;font-size:14px;color:#F4EEE2;margin:0 0 4px;">DM</h3>
+            <p style="color:#9C9082;font-size:12px;line-height:1.5;margin:0;">Son profil → le premier message qui accroche direct.</p>
+          </div>
+          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:16px;">
+            <div style="font-size:20px;margin-bottom:6px;">🔍</div>
+            <h3 style="font-weight:600;font-size:14px;color:#F4EEE2;margin:0 0 4px;">Coach</h3>
+            <p style="color:#9C9082;font-size:12px;line-height:1.5;margin:0;">Son intérêt noté sur 100, ses signaux, ton meilleur move.</p>
+          </div>
+          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:16px;">
+            <div style="font-size:20px;margin-bottom:6px;">📝</div>
+            <h3 style="font-weight:600;font-size:14px;color:#F4EEE2;margin:0 0 4px;">Bio</h3>
+            <p style="color:#9C9082;font-size:12px;line-height:1.5;margin:0;">Ta bio réécrite en 3 versions qui donnent envie de te répondre.</p>
+          </div>
+          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,122,69,0.35);border-radius:16px;padding:16px;">
+            <div style="display:flex;margin-bottom:7px;">
+              <img src="assets/persona-lea.jpg" alt="" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:1.5px solid #17120E;">
+              <img src="assets/persona-chloe.jpg" alt="" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:1.5px solid #17120E;margin-left:-8px;">
+              <img src="assets/persona-maeva.jpg" alt="" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:1.5px solid #17120E;margin-left:-8px;">
+            </div>
+            <h3 style="font-weight:600;font-size:14px;color:#F4EEE2;margin:0 0 4px;">Entraînement 🎯</h3>
+            <p style="color:#9C9082;font-size:12px;line-height:1.5;margin:0;">Drague 3 filles IA, 3 niveaux. Objectif : le date. <span style="color:#FF7A45;font-weight:600;">Essai gratuit.</span></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ RELANCE APRÈS DÉMO ════════ -->
+    <section style="background:#17120E;padding:48px 24px;border-top:1px solid rgba(255,255,255,0.06);">
+      <div data-reveal style="text-align:center;">
+        <h2 style="font-family:'Clash Display',sans-serif;font-weight:600;font-size:28px;letter-spacing:-0.02em;color:#F4EEE2;margin:0 0 8px;">Ça te parle ?</h2>
+        <p style="color:#9C9082;font-size:14px;margin:0 auto 22px;max-width:300px;">Envoie ton premier screenshot maintenant — 3 analyses offertes chaque jour.</p>
+        <div style="max-width:332px;margin:0 auto;">
+          <a href="/app" class="btn-orange js-cta"
+            style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:15px 24px;background:#FF5A1F;color:#fff;font-family:'General Sans',sans-serif;font-weight:600;font-size:16px;border-radius:13px;text-decoration:none;box-shadow:0 8px 22px rgba(216,67,14,0.36);">
+            Essayer gratuitement ⚡
+          </a>
         </div>
       </div>
     </section>
@@ -453,14 +508,14 @@
           <span class="step-num" style="background:#F4EEE2;">01</span>
           <div>
             <h3 style="font-weight:600;font-size:16px;color:#17120E;margin:2px 0 3px;">Envoie ton screenshot</h3>
-            <p style="color:#8A7F70;font-size:13.5px;line-height:1.5;margin:0;">La conv qui te bloque, capturée en 1 clic.</p>
+            <p style="color:#8A7F70;font-size:13.5px;line-height:1.5;margin:0;">La conv qui te bloque, capturée en 1 clic. Sans inscription.</p>
           </div>
         </div>
         <div style="position:relative;display:flex;gap:18px;align-items:flex-start;">
           <span class="step-num" style="background:#F4EEE2;">02</span>
           <div>
             <h3 style="font-weight:600;font-size:16px;color:#17120E;margin:2px 0 3px;">Choisis ton ton</h3>
-            <p style="color:#8A7F70;font-size:13.5px;line-height:1.5;margin:0;">Classe, drôle ou spicy — selon ton match.</p>
+            <p style="color:#8A7F70;font-size:13.5px;line-height:1.5;margin:0;">6 tons : classe, drôle, spicy — et romantique, sexto, mystère en Premium.</p>
           </div>
         </div>
         <div style="position:relative;display:flex;gap:18px;align-items:flex-start;">
@@ -548,16 +603,103 @@
       </div>
     </section>
 
+    <!-- ════════ CADEAU EMAIL -10% ════════ -->
+    <section style="position:relative;background:#17120E;padding:52px 24px;border-top:1px solid rgba(255,255,255,0.06);overflow:hidden;">
+      <div class="tt-grain"></div>
+      <div data-reveal style="position:relative;max-width:360px;margin:0 auto;text-align:center;background:linear-gradient(180deg,rgba(255,90,31,0.14),rgba(255,90,31,0.04));border:1px solid rgba(255,90,31,0.3);border-radius:24px;padding:30px 22px;">
+        <div style="font-size:34px;margin-bottom:8px;">🎁</div>
+        <h2 style="font-family:'Clash Display',sans-serif;font-weight:600;font-size:26px;letter-spacing:-0.02em;color:#F4EEE2;margin:0 0 8px;line-height:1.05;">-10% sur ton 1er mois</h2>
+        <p style="color:#9C9082;font-size:14px;line-height:1.5;margin:0 0 20px;">Laisse ton email : tu reçois direct un <span style="color:#FF7A45;font-weight:600;">code -10%</span> sur le forfait Mensuel. Valable 24h.</p>
+        <div data-gift style="text-align:left;">
+          <form novalidate style="display:flex;flex-direction:column;gap:10px;">
+            <input type="email" required placeholder="ton@email.fr" autocomplete="email" aria-label="Ton email"
+              style="width:100%;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.16);color:#fff;border-radius:13px;padding:15px 18px;font:500 15px 'General Sans',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s;">
+            <button type="submit" class="btn-orange"
+              style="width:100%;padding:15px 24px;background:#FF5A1F;color:#fff;font-family:'General Sans',sans-serif;font-weight:600;font-size:16px;border:none;border-radius:13px;cursor:pointer;box-shadow:0 6px 18px rgba(216,67,14,0.3);">
+              Recevoir mon code -10% 🎁
+            </button>
+          </form>
+          <p data-gift-err style="display:none;color:#FF9A78;font-size:13px;margin:10px 0 0;text-align:center;"></p>
+          <div data-gift-ok style="display:none;margin-top:12px;background:rgba(58,163,90,.12);border:1px solid rgba(58,163,90,.35);border-radius:14px;padding:14px;color:#fff;font-size:13.5px;line-height:1.5;text-align:center;"></div>
+        </div>
+        <p style="color:#7A7062;font-size:11.5px;margin:14px 0 0;">Un seul code par personne · Zéro spam</p>
+      </div>
+    </section>
+
+    <!-- ════════ PRICING ════════ -->
+    <section id="tt-pricing" style="background:#F4EEE2;padding:56px 24px;">
+      <p data-reveal style="text-align:center;font-size:11px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:#C4400F;margin:0 0 10px;">Tarifs</p>
+      <h2 data-reveal style="font-family:'Clash Display',sans-serif;font-weight:600;font-size:clamp(30px,8vw,36px);letter-spacing:-0.02em;color:#17120E;text-align:center;margin:0 0 8px;">Le prix d'un verre.<br>Des dates en plus.</h2>
+      <p data-reveal style="text-align:center;color:#8A7F70;font-size:14px;margin:0 0 30px;">Commence gratuit. Passe Premium quand t'es accro.</p>
+
+      <div style="display:flex;flex-direction:column;gap:14px;max-width:360px;margin:0 auto;">
+
+        <!-- Gratuit -->
+        <div data-reveal style="background:#FBF7EF;border:1px solid rgba(23,18,14,0.10);border-radius:20px;padding:20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div>
+            <p style="margin:0;font-weight:600;font-size:15px;color:#17120E;">Découverte</p>
+            <p style="margin:3px 0 0;color:#8A7F70;font-size:12.5px;">3 analyses/jour · 3 tons · sans inscription</p>
+          </div>
+          <a href="/app" class="js-cta" style="flex-shrink:0;background:rgba(23,18,14,0.08);color:#17120E;font-weight:600;font-size:13.5px;padding:10px 16px;border-radius:11px;text-decoration:none;">0€ · Essayer</a>
+        </div>
+
+        <!-- Mensuel (mis en avant) -->
+        <div data-reveal style="position:relative;background:#17120E;border-radius:22px;padding:24px 20px;box-shadow:0 18px 44px rgba(23,18,14,0.28);overflow:hidden;">
+          <div class="tt-grain" style="border-radius:22px;"></div>
+          <span style="position:absolute;top:-11px;left:20px;background:#FF5A1F;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:0.08em;padding:5px 11px;border-radius:20px;z-index:2;">LE PLUS CHOISI</span>
+          <div style="position:relative;display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;">
+            <p style="margin:0;font-weight:600;font-size:16px;color:#F4EEE2;">Premium Mensuel</p>
+            <p style="margin:0;color:#F4EEE2;"><span style="font-family:'Clash Display',sans-serif;font-weight:700;font-size:28px;">9,99€</span><span style="color:#9C9082;font-size:12.5px;"> /mois</span></p>
+          </div>
+          <ul style="position:relative;list-style:none;margin:0 0 16px;padding:0;color:#B5ABA0;font-size:13px;line-height:2;">
+            <li><span style="color:#FF7A45;">✓</span> Analyses <span style="color:#F4EEE2;font-weight:600;">illimitées</span>, tous les jours</li>
+            <li><span style="color:#FF7A45;">✓</span> Les <span style="color:#F4EEE2;font-weight:600;">6 tons</span>, dont les secrets 🌹 😈 🎭</li>
+            <li><span style="color:#FF7A45;">✓</span> Les 5 outils : DM, Coach, Bio, Entraînement</li>
+            <li><span style="color:#FF7A45;">✓</span> Renard personnalisé (âge, objectif…)</li>
+          </ul>
+          <button class="lp-plan" data-plan="monthly" style="position:relative;width:100%;padding:14px;background:#FF5A1F;color:#fff;font-family:'General Sans',sans-serif;font-weight:600;font-size:15px;border:none;border-radius:12px;cursor:pointer;box-shadow:0 6px 18px rgba(216,67,14,0.4);">Essayer 3 jours gratuits →</button>
+          <p style="position:relative;margin:8px 0 0;color:#9C9082;font-size:11.5px;text-align:center;">puis 9,99€/mois · annule quand tu veux</p>
+        </div>
+
+        <!-- Annuel (ancrage) -->
+        <div data-reveal style="background:#FBF7EF;border:1px solid rgba(23,18,14,0.10);border-radius:20px;padding:20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div>
+            <p style="margin:0;font-weight:600;font-size:15px;color:#17120E;">Premium Annuel <span style="background:rgba(58,163,90,.12);color:#2e8b57;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:4px;">-42%</span></p>
+            <p style="margin:3px 0 0;color:#8A7F70;font-size:12.5px;">≈5,83€/mois · pour les sérieux</p>
+          </div>
+          <button class="lp-plan" data-plan="annual" style="flex-shrink:0;background:rgba(216,67,14,0.10);border:1.5px solid rgba(216,67,14,0.35);color:#C4400F;font-weight:700;font-size:13.5px;padding:10px 16px;border-radius:11px;cursor:pointer;font-family:'General Sans',sans-serif;">69,99€ /an</button>
+        </div>
+
+        <!-- Hebdo -->
+        <div data-reveal style="background:#FBF7EF;border:1px solid rgba(23,18,14,0.10);border-radius:20px;padding:20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div>
+            <p style="margin:0;font-weight:600;font-size:15px;color:#17120E;">Premium Hebdo</p>
+            <p style="margin:3px 0 0;color:#8A7F70;font-size:12.5px;">illimité · parfait pour un rush</p>
+          </div>
+          <button class="lp-plan" data-plan="weekly" style="flex-shrink:0;background:rgba(216,67,14,0.10);border:1.5px solid rgba(216,67,14,0.35);color:#C4400F;font-weight:700;font-size:13.5px;padding:10px 16px;border-radius:11px;cursor:pointer;font-family:'General Sans',sans-serif;">3,99€ /sem</button>
+        </div>
+
+      </div>
+      <p data-reveal style="text-align:center;color:#8A7F70;font-size:12px;margin:18px 0 0;">🛡️ Satisfait ou remboursé 7 jours · 🔒 Stripe · Annulable en 2 clics</p>
+    </section>
+
     <!-- ════════ FAQ ════════ -->
-    <section style="background:#F4EEE2;padding:56px 24px;">
+    <section style="background:#F4EEE2;padding:56px 24px;border-top:1px solid rgba(23,18,14,0.07);">
       <h2 data-reveal style="font-family:'Clash Display',sans-serif;font-weight:600;font-size:clamp(28px,7vw,34px);letter-spacing:-0.02em;color:#17120E;text-align:center;margin:0;">Questions fréquentes</h2>
       <div style="display:flex;flex-direction:column;gap:10px;max-width:400px;margin:30px auto 0;">
+        <div class="tt-faq" style="background:#FBF7EF;border:1px solid rgba(23,18,14,0.10);border-radius:14px;overflow:hidden;transition:border-color .25s;">
+          <button class="tt-faq-q" style="width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;background:none;border:none;cursor:pointer;color:#17120E;font-family:'General Sans',sans-serif;font-weight:600;font-size:15px;text-align:left;">
+            C'est quoi, les 6 tons ?
+            <span class="tt-faq-sign" style="color:#FF5A1F;font-size:20px;transition:transform .3s;flex-shrink:0;line-height:1;">+</span>
+          </button>
+          <div class="tt-faq-a"><div style="padding:0 18px 16px;color:#8A7F70;font-size:13.5px;line-height:1.6;">Six personnalités pour la même conv. <span style="color:#17120E;font-weight:600;">Gratuits :</span> 🎩 classe (posé, il décide et propose du concret), 😂 drôle (la vanne qui détend), 🌶️ spicy (la tension assumée, jamais vulgaire). <span style="color:#17120E;font-weight:600;">Premium :</span> 🌹 romantique (sincère et imagé), 😈 sexto (le sous-entendu qui monte), 🎭 mystère (détaché, il en dit peu et donne envie). Chaque ton te sort 3 répliques différentes.</div></div>
+        </div>
         <div class="tt-faq" style="background:#FBF7EF;border:1px solid rgba(23,18,14,0.10);border-radius:14px;overflow:hidden;transition:border-color .25s;">
           <button class="tt-faq-q" style="width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;background:none;border:none;cursor:pointer;color:#17120E;font-family:'General Sans',sans-serif;font-weight:600;font-size:15px;text-align:left;">
             Et si les réponses ne me plaisent pas ?
             <span class="tt-faq-sign" style="color:#FF5A1F;font-size:20px;transition:transform .3s;flex-shrink:0;line-height:1;">+</span>
           </button>
-          <div class="tt-faq-a"><div style="padding:0 18px 16px;color:#8A7F70;font-size:13.5px;line-height:1.6;">Tu as 3 tons à chaque fois, et tu peux régénérer autant que tu veux jusqu'à trouver celle qui te ressemble. C'est toi qui choisis, toujours.</div></div>
+          <div class="tt-faq-a"><div style="padding:0 18px 16px;color:#8A7F70;font-size:13.5px;line-height:1.6;">Tu as 3 tons à chaque fois (6 en Premium, avec les tons secrets), et tu peux régénérer autant que tu veux jusqu'à trouver celle qui te ressemble. C'est toi qui choisis, toujours.</div></div>
         </div>
         <div class="tt-faq" style="background:#FBF7EF;border:1px solid rgba(23,18,14,0.10);border-radius:14px;overflow:hidden;transition:border-color .25s;">
           <button class="tt-faq-q" style="width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;background:none;border:none;cursor:pointer;color:#17120E;font-family:'General Sans',sans-serif;font-weight:600;font-size:15px;text-align:left;">
@@ -575,10 +717,17 @@
         </div>
         <div class="tt-faq" style="background:#FBF7EF;border:1px solid rgba(23,18,14,0.10);border-radius:14px;overflow:hidden;transition:border-color .25s;">
           <button class="tt-faq-q" style="width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;background:none;border:none;cursor:pointer;color:#17120E;font-family:'General Sans',sans-serif;font-weight:600;font-size:15px;text-align:left;">
-            C'est dispo quand ?
+            C'est dispo maintenant ?
             <span class="tt-faq-sign" style="color:#FF5A1F;font-size:20px;transition:transform .3s;flex-shrink:0;line-height:1;">+</span>
           </button>
-          <div class="tt-faq-a"><div style="padding:0 18px 16px;color:#8A7F70;font-size:13.5px;line-height:1.6;">Très bientôt. Laisse ton email : les inscrits de la liste d'attente y ont accès en premier, avec 2 analyses offertes.</div></div>
+          <div class="tt-faq-a"><div style="padding:0 18px 16px;color:#8A7F70;font-size:13.5px;line-height:1.6;">Oui, c'est en ligne. Tu peux envoyer ton premier screenshot tout de suite, sans inscription — 3 analyses gratuites chaque jour.</div></div>
+        </div>
+        <div class="tt-faq" style="background:#FBF7EF;border:1px solid rgba(23,18,14,0.10);border-radius:14px;overflow:hidden;transition:border-color .25s;">
+          <button class="tt-faq-q" style="width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;background:none;border:none;cursor:pointer;color:#17120E;font-family:'General Sans',sans-serif;font-weight:600;font-size:15px;text-align:left;">
+            C'est payant ?
+            <span class="tt-faq-sign" style="color:#FF5A1F;font-size:20px;transition:transform .3s;flex-shrink:0;line-height:1;">+</span>
+          </button>
+          <div class="tt-faq-a"><div style="padding:0 18px 16px;color:#8A7F70;font-size:13.5px;line-height:1.6;">Tu as <span style="color:#17120E;font-weight:600;">3 analyses gratuites par jour</span>, pour toujours, avec les 3 tons de base. Pour les analyses illimitées, les 3 tons secrets et les 5 outils, passe en Premium : <span style="color:#17120E;font-weight:600;">3,99€/semaine</span>, <span style="color:#17120E;font-weight:600;">9,99€/mois</span> (3 jours offerts) ou <span style="color:#17120E;font-weight:600;">69,99€/an</span>. Sans engagement, annulable en 2 clics.</div></div>
         </div>
       </div>
     </section>
@@ -590,58 +739,31 @@
       <div style="position:relative;margin-bottom:18px;">
         <img src="assets/fox_full.png" alt="Le renard Tacotac" style="width:96px;margin:0 auto;display:block;animation:ttFloat 5s ease-in-out infinite;filter:drop-shadow(0 12px 22px rgba(0,0,0,0.3));">
       </div>
-      <h2 style="position:relative;font-family:'Clash Display',sans-serif;font-weight:700;font-size:clamp(38px,11vw,48px);line-height:0.96;letter-spacing:-0.03em;color:#fff;margin:0 0 14px;">Prêt pour<br>le lancement ?</h2>
-      <p style="position:relative;color:rgba(255,255,255,0.92);font-size:15px;line-height:1.5;max-width:300px;margin:0 auto 24px;">Laisse ton email, on te prévient en premier dès l'ouverture — avec tes 2 analyses offertes.</p>
+      <h2 style="position:relative;font-family:'Clash Display',sans-serif;font-weight:700;font-size:clamp(38px,11vw,48px);line-height:0.96;letter-spacing:-0.03em;color:#fff;margin:0 0 14px;">Prêt à assurer<br>en DM ?</h2>
+      <p style="position:relative;color:rgba(255,255,255,0.92);font-size:15px;line-height:1.5;max-width:300px;margin:0 auto 24px;">Ta prochaine conv mérite mieux qu'un « ça va et toi ? ». Envoie ton premier screenshot maintenant.</p>
 
-      <!-- Rareté -->
-      <div style="position:relative;max-width:300px;margin:0 auto 24px;">
-        <div style="display:flex;justify-content:space-between;color:#fff;font-size:12px;font-weight:600;margin-bottom:7px;opacity:.92;">
-          <span>Places en accès anticipé</span><span>83%</span>
-        </div>
-        <div style="height:7px;background:rgba(255,255,255,0.28);border-radius:999px;overflow:hidden;">
-          <i style="display:block;height:100%;width:83%;background:#fff;border-radius:999px;"></i>
-        </div>
-        <p style="color:rgba(255,255,255,0.78);font-size:11.5px;margin:8px 0 0;">Il ne reste que quelques places prioritaires.</p>
+      <div style="position:relative;max-width:332px;margin:0 auto;">
+        <a href="/app" class="js-cta"
+          style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px 24px;background:#17120E;color:#fff;font-family:'General Sans',sans-serif;font-weight:600;font-size:17px;border-radius:13px;text-decoration:none;box-shadow:0 10px 26px rgba(0,0,0,0.28);">
+          Essayer gratuitement ⚡
+        </a>
       </div>
-
-      <div data-wl="cta-final" style="position:relative;max-width:332px;margin:0 auto;">
-        <form novalidate style="display:flex;flex-direction:column;gap:10px;">
-          <input type="email" required placeholder="ton@email.fr" autocomplete="email" aria-label="Ton email"
-            style="width:100%;background:rgba(255,255,255,0.94);border:none;color:#17120E;border-radius:13px;padding:15px 18px;font:500 15px 'General Sans',sans-serif;outline:none;">
-          <button type="submit"
-            style="width:100%;padding:15px 24px;background:#17120E;color:#fff;font-family:'General Sans',sans-serif;font-weight:600;font-size:16px;border:none;border-radius:13px;cursor:pointer;box-shadow:0 10px 26px rgba(0,0,0,0.28);transition:transform .15s,box-shadow .2s;">
-            Rejoindre la liste d'attente
-          </button>
-        </form>
-        <p data-err style="display:none;color:#fff;background:rgba(0,0,0,0.22);border-radius:11px;padding:8px 14px;font-size:13px;margin:10px 0 0;"></p>
-        <div data-success style="display:none;margin-top:14px;background:rgba(255,255,255,0.16);border:1px solid rgba(255,255,255,0.4);border-radius:14px;padding:18px;">
-          <p style="margin:0;color:#fff;font-weight:600;font-size:15px;">Tu es sur la liste.</p>
-          <p style="margin:5px 0 0;color:rgba(255,255,255,0.9);font-size:13px;">On te prévient dès le lancement.</p>
-        </div>
-      </div>
-      <p style="position:relative;color:rgba(255,255,255,0.72);font-size:12px;margin:16px 0 0;">Tu seras prévenu en premier. Pas de spam, promis.</p>
+      <p style="position:relative;color:rgba(255,255,255,0.82);font-size:12.5px;margin:16px 0 0;">3 analyses offertes chaque jour · Sans inscription · Premium dès 3,99€</p>
     </section>
 
     <!-- ════════ FOOTER ════════ -->
     <footer style="background:#17120E;text-align:center;padding:34px 24px;">
       <img src="assets/fox_full.png" alt="" style="width:44px;margin:0 auto;display:block;opacity:0.85;">
-      <p style="color:#5C5348;font-size:12px;margin:12px 0 0;">© 2026 Tacotac · Fait avec soin en France</p>
+      <p style="color:#5C5348;font-size:12px;margin:12px 0 0;">© 2026 Tacotac · Fait avec soin en France · <span style="opacity:0.5">v1.4</span></p>
     </footer>
 
   </div>
 
   <!-- ════════ STICKY CTA BAS ════════ -->
   <div id="tt-sticky" style="position:fixed;left:0;right:0;bottom:0;z-index:50;max-width:460px;margin:0 auto;padding:12px 16px;background:rgba(13,10,8,0.94);backdrop-filter:blur(14px);border-top:1px solid rgba(255,255,255,0.08);transform:translateY(130%);transition:transform .4s cubic-bezier(.22,.68,0,1.1);">
-    <div data-wl="sticky">
-      <form novalidate style="display:flex;gap:8px;">
-        <input type="email" required placeholder="Ton email pour l'accès prioritaire" autocomplete="email" aria-label="Ton email"
-          style="flex:1;min-width:0;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.16);color:#fff;border-radius:12px;padding:12px 16px;font:500 14px 'General Sans',sans-serif;outline:none;">
-        <button type="submit" aria-label="Rejoindre"
-          style="width:46px;height:46px;flex-shrink:0;background:#FF5A1F;border:none;border-radius:12px;color:#fff;font-size:18px;cursor:pointer;transition:transform .15s;box-shadow:0 4px 14px rgba(216,67,14,.4);">→</button>
-      </form>
-      <p data-err style="display:none;color:#FF9A78;font-size:12.5px;text-align:center;padding-top:6px;margin:0;"></p>
-      <div data-success style="display:none;color:#fff;text-align:center;font-size:13px;font-weight:600;padding:6px 0;">Tu es sur la liste.</div>
-    </div>
+    <a href="/app" class="js-cta" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px 24px;background:#FF5A1F;color:#fff;font-family:'General Sans',sans-serif;font-weight:600;font-size:16px;border-radius:12px;text-decoration:none;box-shadow:0 4px 14px rgba(216,67,14,.4);">
+      Essayer gratuitement ⚡
+    </a>
   </div>
 
   <!-- ════════ MODAL EXIT-INTENT ════════ -->
@@ -650,35 +772,38 @@
       <button id="tt-modal-close" aria-label="Fermer"
         style="position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;background:rgba(23,18,14,0.07);border:none;color:#8A7F70;font-size:14px;cursor:pointer;">✕</button>
       <img src="assets/fox_spicy.png" alt="" style="height:112px;margin:0 auto 10px;display:block;filter:drop-shadow(0 12px 22px rgba(23,18,14,0.2));">
-      <h3 style="font-family:'Clash Display',sans-serif;font-weight:600;font-size:24px;color:#17120E;margin:0 0 8px;">Attends…</h3>
-      <p style="color:#8A7F70;font-size:14px;line-height:1.5;margin:0 0 18px;">Pars pas les mains vides. Rejoins la liste et débloque <span style="color:#17120E;font-weight:600;">2 analyses offertes</span> au lancement.</p>
-      <div data-wl="modal" style="max-width:320px;margin:0 auto;">
+      <h3 style="font-family:'Clash Display',sans-serif;font-weight:600;font-size:24px;color:#17120E;margin:0 0 8px;">Attends… 🎁</h3>
+      <p style="color:#8A7F70;font-size:14px;line-height:1.5;margin:0 0 18px;">Cadeau avant de partir : <span style="color:#17120E;font-weight:600;">-10% sur ton 1er mois Premium</span>. Laisse ton email, ton code arrive direct.</p>
+      <div data-gift style="max-width:320px;margin:0 auto;">
         <form novalidate style="display:flex;flex-direction:column;gap:10px;">
           <input type="email" required placeholder="ton@email.fr" autocomplete="email" aria-label="Ton email"
             style="width:100%;background:#fff;border:1.5px solid rgba(23,18,14,0.14);color:#17120E;border-radius:13px;padding:14px 18px;font:500 15px 'General Sans',sans-serif;outline:none;">
           <button type="submit" class="btn-orange"
-            style="width:100%;padding:14px 24px;background:#FF5A1F;color:#fff;font-family:'General Sans',sans-serif;font-weight:600;font-size:15px;border:none;border-radius:13px;cursor:pointer;box-shadow:0 6px 18px rgba(216,67,14,0.34);">
-            Je réserve ma place
+            style="width:100%;padding:14px 24px;background:#FF5A1F;color:#fff;font-family:'General Sans',sans-serif;font-weight:600;font-size:15px;border:none;border-radius:13px;cursor:pointer;box-shadow:0 6px 18px rgba(216,67,14,0.3);">
+            Recevoir mon code -10% 🎁
           </button>
         </form>
-        <p data-err style="display:none;color:#C4400F;font-size:13px;margin:10px 0 0;"></p>
-        <div data-success style="display:none;margin-top:12px;background:rgba(255,90,31,0.09);border:1px solid rgba(216,67,14,0.25);border-radius:14px;padding:14px;">
-          <p style="margin:0;color:#17120E;font-weight:600;font-size:14px;">Parfait, tu es sur la liste.</p>
-        </div>
+        <p data-gift-err style="display:none;color:#C4400F;font-size:13px;margin:10px 0 0;"></p>
+        <div data-gift-ok style="display:none;margin-top:12px;background:rgba(58,163,90,.10);border:1px solid rgba(58,163,90,.35);border-radius:14px;padding:14px;color:#17120E;font-size:13.5px;line-height:1.5;"></div>
       </div>
-      <p style="color:#8A7F70;font-size:11.5px;margin:14px 0 0;">Sans carte bancaire · Zéro spam</p>
+      <p style="color:#8A7F70;font-size:11.5px;margin:14px 0 0;">Valable 24h · Zéro spam</p>
     </div>
   </div>
 
   <script>
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const $ = (id) => document.getElementById(id);
+    const RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    const store = {
+      get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+      set(k,v){ try { localStorage.setItem(k,v); } catch(e){} },
+    };
 
     /* ══════════════════════════════════════════
        LE FILM — séquence en boucle dans le hero
        Acte 1 : le DM qui coince
        Acte 2 : le screenshot
-       Acte 3 : Tacotac sort 3 réponses
+       Acte 3 : Tacotac sort 3 réponses (6 tons visibles)
        Acte 4 : la réponse part, Sophie mord
     ══════════════════════════════════════════ */
     const film = {
@@ -688,15 +813,16 @@
 
       reset() {
         ['f-m1','f-typing','f-m2','f-sent','f-typing2','f-m3',
-         'f-count','f-c1','f-c2','f-c3','f-copied',
+         'f-tonelabel','f-pills','f-c1','f-c2','f-c3','f-copied',
          'f-app','f-freeze','f-flash','f-scan','f-bubble',
          'f-ch1','f-ch2','f-ch3'].forEach(id => this.off(id));
         ['f-c1','f-c2','f-c3'].forEach(id => { const e = $(id); if (e) e.classList.remove('picked'); });
+        const pd = $('f-pill-spicy'); if (pd) pd.classList.remove('sel');
         const ph = $('f-placeholder'), car = $('f-caret'), fox = $('f-fox'), st = $('f-status');
         if (ph)  { ph.textContent = 'Message…'; ph.style.color = ''; }
         if (car) car.style.display = 'none';
         if (fox) { fox.src = 'assets/fox_full.png'; fox.style.animation = 'ttFloat 5s ease-in-out infinite'; }
-        if (st)  st.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" style="animation:ttSpin 1.6s linear infinite;"><path d="M12 3a9 9 0 1 0 9 9" stroke="#FF9A70" stroke-width="3" stroke-linecap="round"/></svg> Analyse…';
+        if (st)  st.innerHTML = '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" style="animation:ttSpin 1.6s linear infinite;"><path d="M12 3a9 9 0 1 0 9 9" stroke="#FF9A70" stroke-width="3" stroke-linecap="round"/></svg> Analyse…';
       },
 
       at(ms, fn) { this.timers.push(setTimeout(fn, ms)); },
@@ -722,10 +848,7 @@
           const ph = $('f-placeholder');
           if (ph) { ph.textContent = 'Hm…'; ph.style.color = '#6b6b6b'; }
         });
-        this.at(4300, () => {
-          const ph = $('f-placeholder');
-          if (ph) ph.textContent = '';
-        });
+        this.at(4300, () => { const ph = $('f-placeholder'); if (ph) ph.textContent = ''; });
         this.at(4700, () => {
           const fox = $('f-fox');
           if (fox && !reduced) fox.style.animation = 'ttShake .55s ease-in-out 1, ttFloat 5s ease-in-out .55s infinite';
@@ -752,38 +875,38 @@
         this.at(9700, () => {
           this.off('f-scan');
           const st = $('f-status');
-          if (st) st.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M4 12.5 9.5 18 20 6.5" stroke="#FF9A70" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg> Prêt';
-          this.on('f-count');
+          if (st) st.innerHTML = '<svg width="9" height="9" viewBox="0 0 24 24" fill="none"><path d="M4 12.5 9.5 18 20 6.5" stroke="#FF9A70" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg> Prêt';
+          this.on('f-tonelabel');
+          this.on('f-pills');
         });
-        this.at(10000, () => this.on('f-c1'));
-        this.at(10180, () => this.on('f-c2'));
-        this.at(10360, () => this.on('f-c3'));
+        /* le ton "Spicy" se sélectionne, puis les 3 répliques tombent */
+        this.at(10300, () => { const pd = $('f-pill-drole'); if (pd) pd.classList.add('sel'); });
+        this.at(10700, () => this.on('f-c1'));
+        this.at(10880, () => this.on('f-c2'));
+        this.at(11060, () => this.on('f-c3'));
 
-        /* on choisit la drôle */
-        this.at(11400, () => { const e = $('f-c2'); if (e) e.classList.add('picked'); });
-        this.at(11900, () => this.on('f-copied'));
+        this.at(12100, () => { const e = $('f-c1'); if (e) e.classList.add('picked'); });
+        this.at(12600, () => this.on('f-copied'));
 
         /* ─── ACTE 4 : la réponse part, Sophie mord ─── */
-        this.at(13200, () => { this.off('f-app'); this.off('f-bubble'); });
-        this.at(13900, () => this.on('f-sent'));
-        this.at(14900, () => this.on('f-typing2'));
-        this.at(16100, () => { this.off('f-typing2'); this.on('f-m3'); });
-        this.at(16300, () => {
-          const fox = $('f-fox');
-          if (fox) fox.src = 'assets/fox_spicy.png';
-        });
+        this.at(13900, () => { this.off('f-app'); this.off('f-bubble'); });
+        this.at(14600, () => this.on('f-sent'));
+        this.at(15600, () => this.on('f-typing2'));
+        this.at(16800, () => { this.off('f-typing2'); this.on('f-m3'); });
+        this.at(17000, () => { const fox = $('f-fox'); if (fox) fox.src = 'assets/fox_spicy.png'; });
 
         /* ─── on rembobine ─── */
-        this.at(19500, () => this.play());
+        this.at(20200, () => this.play());
       },
 
       /* état final figé, pour prefers-reduced-motion */
       still() {
         this.reset();
-        ['f-m1','f-m2','f-app','f-count','f-c1','f-c2','f-c3','f-copied','f-ch3'].forEach(id => this.on(id));
-        const e = $('f-c2'); if (e) e.classList.add('picked');
+        ['f-m1','f-m2','f-app','f-tonelabel','f-pills','f-c1','f-c2','f-c3','f-copied','f-ch3'].forEach(id => this.on(id));
+        const pd = $('f-pill-spicy'); if (pd) pd.classList.add('sel');
+        const e = $('f-c1'); if (e) e.classList.add('picked');
         const st = $('f-status');
-        if (st) st.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M4 12.5 9.5 18 20 6.5" stroke="#FF9A70" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg> Prêt';
+        if (st) st.innerHTML = '<svg width="9" height="9" viewBox="0 0 24 24" fill="none"><path d="M4 12.5 9.5 18 20 6.5" stroke="#FF9A70" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg> Prêt';
       }
     };
 
@@ -792,7 +915,6 @@
       if (reduced) {
         film.still();
       } else if ('IntersectionObserver' in window) {
-        /* le film ne tourne que quand on le regarde */
         const filmIO = new IntersectionObserver(ents => {
           ents.forEach(en => { if (en.isIntersecting) { film.play(); } else { film.clear(); } });
         }, { threshold: 0.25 });
@@ -818,36 +940,72 @@
       }
     }
 
-    /* ════════ SÉLECTEUR DE TON ════════ */
+    /* ════════ DÉMO · LES 6 TONS ════════
+       Mêmes tons, mêmes renards et mêmes verrous que dans l'app
+       (cf. l'objet `tones` de app.html). */
+    const TONES = {
+      classe:     { emoji:'🎩', label:'Classe',     fox:'assets/fox_classe.png', premium:false,
+                    reply:"rooftop vendredi 19h, jréserve… t'auras juste à venir" },
+      drole:      { emoji:'😂', label:'Drôle',      fox:'assets/fox_chill.png',  premium:false,
+                    reply:"rien, et jcompte bien défendre ce titre tout le week-end" },
+      spicy:      { emoji:'🌶️', label:'Spicy',      fox:'assets/fox_spicy.png',  premium:false,
+                    reply:"un ciné chez moi samedi… le film aura aucune importance de toute façon" },
+      romantique: { emoji:'🌹', label:'Romantique', fox:'assets/fox_classe.png', premium:true,
+                    reply:"rien de prévu… enfin, rien qui vaille le coup tant que t'y es pas" },
+      sexto:      { emoji:'😈', label:'Sexto',      fox:'assets/fox_spicy.png',  premium:true,
+                    reply:"ça dépend… t'as prévu de m'occuper ou jdois improviser ?" },
+      mystere:    { emoji:'🎭', label:'Mystère',    fox:'assets/fox_chill.png',  premium:true,
+                    reply:"peut-être rien… peut-être un truc dont jte parlerai pas tout de suite" },
+    };
+
     const replyEl  = $('tt-reply');
     const foxEl    = $('tt-fox');
-    const glider   = $('tt-glider');
+    const badgeEl  = $('tt-tonebadge');
+    const copyBtn  = $('tt-copy');
+    const unlockEl = $('tt-unlock');
     const toneBtns = document.querySelectorAll('.tt-tone');
 
     toneBtns.forEach(btn => {
       btn.addEventListener('click', () => {
-        toneBtns.forEach(b => { b.style.color = '#8A7F70'; });
-        btn.style.color = '#fff';
-        if (glider) glider.style.transform = 'translateX(' + (btn.dataset.index * 100) + '%)';
+        const key = btn.dataset.tone;
+        const t = TONES[key];
+        if (!t) return;
+
+        toneBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        if (badgeEl) {
+          badgeEl.textContent = t.emoji + ' ' + t.label;
+          badgeEl.style.background = t.premium ? 'rgba(255,255,255,.1)' : 'rgba(255,90,31,.16)';
+          badgeEl.style.borderColor = t.premium ? 'rgba(255,255,255,.22)' : 'rgba(255,90,31,.3)';
+          badgeEl.style.color = t.premium ? '#F4EEE2' : '#FF9A70';
+        }
+
         if (replyEl) {
           replyEl.style.opacity = '0';
-          setTimeout(() => { replyEl.textContent = '« ' + btn.dataset.reply + ' »'; replyEl.style.opacity = '1'; }, 170);
+          setTimeout(() => { replyEl.textContent = '« ' + t.reply + ' »'; replyEl.style.opacity = '1'; }, 170);
         }
+
+        /* un ton premium montre bien la réplique — c'est le teaser —
+           mais remplace "Copier" par le CTA d'abonnement. */
+        if (copyBtn)  copyBtn.style.display  = t.premium ? 'none' : 'block';
+        if (unlockEl) unlockEl.style.display = t.premium ? 'flex' : 'none';
+
         if (foxEl) {
           foxEl.style.opacity = '0';
           foxEl.style.transform = 'translateY(10px) scale(.95)';
           setTimeout(() => {
-            foxEl.src = btn.dataset.fox;
+            foxEl.src = t.fox;
             foxEl.style.opacity = '1';
             foxEl.style.transform = 'none';
           }, 200);
         }
-        try { gtag('event', 'clic_ton_' + ['classe','drole','spicy'][btn.dataset.index], { event_category: 'engagement' }); } catch(e) {}
+
+        try { gtag('event', 'clic_ton_' + key, { event_category: 'engagement', premium: t.premium }); } catch(e) {}
       });
     });
 
     /* ════════ BOUTON COPIER ════════ */
-    const copyBtn = $('tt-copy');
     if (copyBtn && replyEl) {
       copyBtn.addEventListener('mouseenter', () => { copyBtn.style.background = 'rgba(255,90,31,0.22)'; });
       copyBtn.addEventListener('mouseleave', () => { copyBtn.style.background = 'rgba(255,90,31,0.14)'; });
@@ -900,65 +1058,13 @@
       });
     });
 
-    /* ════════ FORMULAIRES WAITLIST ════════ */
-    const WEBHOOK = 'https://script.google.com/macros/s/AKfycbzuCip2KWPlPw7kudrsvP2DuZ94-W6yw6aJ7c_HiSFZysXaPfsvG57uq6lhDsDpGYudtw/exec';
-    const RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-    const store = {
-      get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
-      set(k,v){ try { localStorage.setItem(k,v); } catch(e){} },
-    };
-    const isSubscribed = () => store.get('tt_subscribed') === '1';
-
-    async function send(email, source) {
-      const p = new URLSearchParams({ email, source: source || 'landing', timestamp: new Date().toISOString() });
-      try { await fetch(WEBHOOK + '?' + p.toString(), { method: 'GET', mode: 'no-cors' }); } catch(e) {}
-    }
-
-    function showAllSuccess() {
-      document.querySelectorAll('[data-wl]').forEach(w => {
-        const f = w.querySelector('form');
-        const s = w.querySelector('[data-success]');
-        if (f) f.style.display = 'none';
-        if (s) s.style.display = 'block';
-      });
-      const st = $('tt-sticky');
-      if (st) st.style.transform = 'translateY(130%)';
-    }
-
-    document.querySelectorAll('[data-wl]').forEach(w => {
-      const form   = w.querySelector('form');
-      if (!form) return;
-      const input  = form.querySelector('input[type=email]');
-      const btn    = form.querySelector('button');
-      const err    = w.querySelector('[data-err]');
-      const source = w.dataset.wl || 'landing';
-
-      form.addEventListener('submit', async e => {
-        e.preventDefault();
-        if (err) err.style.display = 'none';
-        const email = (input.value || '').trim();
-        if (!RE.test(email)) {
-          if (err) { err.textContent = 'Entre un email valide.'; err.style.display = 'block'; }
-          input.focus();
-          return;
-        }
-        btn.disabled = true; btn.style.opacity = '.7';
-        btn.innerHTML = btn.getAttribute('aria-label') === 'Rejoindre' ? '…' : 'Envoi…';
-        await send(email, source);
-        try { gtag('event', 'inscription_waitlist', { event_category: 'conversion', source }); } catch(e) {}
-        store.set('tt_subscribed', '1');
-        showAllSuccess();
-      });
-    });
-    if (isSubscribed()) showAllSuccess();
-
     /* ════════ NAV + STICKY AU SCROLL ════════ */
     const nav    = $('tt-nav');
     const sticky = $('tt-sticky');
     window.addEventListener('scroll', () => {
       const y = window.scrollY || 0;
       if (nav) nav.style.transform = y > 560 ? 'translateY(0)' : 'translateY(-100%)';
-      if (sticky && !isSubscribed()) sticky.style.transform = y > 1250 ? 'translateY(0)' : 'translateY(130%)';
+      if (sticky) sticky.style.transform = y > 1250 ? 'translateY(0)' : 'translateY(130%)';
     }, { passive: true });
 
     /* ════════ REVEAL AU SCROLL + COUNT-UP ════════ */
@@ -1002,7 +1108,7 @@
     const mClose = $('tt-modal-close');
     let shown = false;
     const openModal = () => {
-      if (shown || isSubscribed()) return;
+      if (shown) return;
       if (store.get('tt_modal') === '1') return;
       shown = true;
       modal.style.opacity = '1';
@@ -1022,6 +1128,61 @@
     /* ════════ GA · clics CTA ════════ */
     document.querySelectorAll('.js-cta').forEach(el => {
       el.addEventListener('click', () => { try { gtag('event', 'clic_cta', { event_category: 'engagement' }); } catch(e) {} });
+    });
+
+    /* ════════ CADEAU EMAIL -10% ════════ */
+    document.querySelectorAll('[data-gift]').forEach(w => {
+      const form = w.querySelector('form'); if (!form) return;
+      const input = form.querySelector('input[type=email]');
+      const btn   = form.querySelector('button');
+      const err   = w.querySelector('[data-gift-err]');
+      const ok    = w.querySelector('[data-gift-ok]');
+      form.addEventListener('submit', async e => {
+        e.preventDefault();
+        if (err) err.style.display = 'none';
+        const email = (input.value || '').trim();
+        if (!RE.test(email)) { if (err) { err.textContent = 'Entre un email valide.'; err.style.display = 'block'; } input.focus(); return; }
+        const o = btn.innerHTML; btn.disabled = true; btn.style.opacity = '.7'; btn.innerHTML = 'Un instant…';
+        try {
+          const r = await fetch('/api/gift-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+          const data = await r.json();
+          if (data.ok) {
+            try { gtag('event', 'gift_email', { event_category: 'conversion' }); } catch(e) {}
+            form.style.display = 'none';
+            if (ok) {
+              ok.innerHTML = data.emailSent
+                ? '🎉 Regarde tes mails ! Ton code <b>-10%</b> t\'attend (valable 24h).'
+                : ('🎉 Ton code : <b style="color:#FF7A45;letter-spacing:1px;">' + data.code + '</b><br>-10% sur le Mensuel · 24h · <a href="/app?promo=' + encodeURIComponent(data.code) + '" style="color:#FF7A45;font-weight:600;">j\'en profite →</a>');
+              ok.style.display = 'block';
+            }
+          } else {
+            if (err) { err.textContent = data.error || 'Oups, réessaie.'; err.style.display = 'block'; }
+            btn.disabled = false; btn.style.opacity = ''; btn.innerHTML = o;
+          }
+        } catch (e) {
+          if (err) { err.textContent = 'Erreur réseau, réessaie.'; err.style.display = 'block'; }
+          btn.disabled = false; btn.style.opacity = ''; btn.innerHTML = o;
+        }
+      });
+    });
+
+    /* ════════ PRICING · paiement direct depuis la LP ════════ */
+    document.querySelectorAll('.lp-plan').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const plan = btn.dataset.plan;
+        try { gtag('event', 'clic_pricing_' + plan, { event_category: 'conversion' }); } catch(e) {}
+        const label = btn.textContent;
+        btn.disabled = true; btn.style.opacity = '.6'; btn.textContent = 'Un instant…';
+        try {
+          const r = await fetch('/api/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plan }) });
+          const data = await r.json();
+          if (data.url) { window.location.href = data.url; return; }
+          throw new Error(data.error || 'checkout');
+        } catch (e) {
+          // si le paiement ne démarre pas, on envoie vers l'app (le paywall y re-proposera)
+          window.location.href = '/app';
+        }
+      });
     });
   </script>
 
