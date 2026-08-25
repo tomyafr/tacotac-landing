@@ -69,9 +69,19 @@
       *{animation:none!important;transition:none!important;}
     }
 
+    /* Sur petit écran le téléphone est haut : on resserre tout ce qui est
+       au-dessus pour que la scène et le CTA remontent dans la page. */
+    @media (max-width:430px){
+      .hero-sec{padding-top:38px!important;}
+      .hero-h1{margin:14px 0 10px!important;}
+      .hero-sub{margin-bottom:18px!important;}
+      .hero-chaps{margin-top:18px!important;}
+      .hero-cta{margin-top:20px!important;}
+    }
+
     /* ═══════════ châssis téléphone ═══════════ */
-    .tt-phone-stage{perspective:1400px;}
-    .tt-phone{position:relative;width:230px;aspect-ratio:9/19.3;margin:0 auto;border-radius:41px;
+    .tt-phone-stage{perspective:1500px;}
+    .tt-phone{position:relative;width:292px;aspect-ratio:9/19.3;margin:0 auto;border-radius:50px;
       background:linear-gradient(155deg,#5a5148 0%,#241f1a 22%,#0b0906 60%,#000 100%);
       padding:9px;
       box-shadow:0 40px 70px -18px rgba(0,0,0,.7),0 16px 30px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.06),inset 0 1px 1.5px rgba(255,255,255,.22);
@@ -79,7 +89,7 @@
     .tt-phone-notch{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:66px;height:19px;background:#000;border-radius:11px;z-index:8;}
     .tt-phone-screen{position:relative;width:100%;height:100%;border-radius:32px;overflow:hidden;background:#000;}
     .tt-phone-glare{position:absolute;top:-40%;left:0;width:55%;height:200%;background:linear-gradient(112deg,transparent 34%,rgba(255,255,255,.15) 48%,transparent 62%);pointer-events:none;z-index:9;animation:ttShimmer 6.5s ease-in-out infinite;animation-delay:1.6s;}
-    .tt-phone-side{position:absolute;background:linear-gradient(180deg,#4a423a,#1c1814);border-radius:2px;}
+    .tt-phone-side{position:absolute;background:linear-gradient(180deg,#4a423a,#1c1814);border-radius:2px;transition:transform .12s ease,background .12s ease;}
 
     .tt-hero-phone{transform:rotateY(-15deg) rotateX(7deg);transition:transform .5s cubic-bezier(.2,.8,.2,1);animation:ttFloatPhone 7s ease-in-out infinite;}
 
@@ -97,30 +107,54 @@
     .stg{opacity:0;transform:translateY(9px) scale(.96);transition:opacity .3s ease,transform .42s cubic-bezier(.34,1.3,.4,1);}
     .stg.on{opacity:1;transform:none;}
 
-    /* ═══════════ UI Instagram ═══════════ */
-    .ig-topbar{display:flex;align-items:center;gap:8px;padding:15px 11px 9px;background:#000;flex-shrink:0;}
-    .ig-avatar-ring{width:34px;height:34px;border-radius:50%;padding:2px;background:conic-gradient(from 45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5);flex-shrink:0;}
-    .ig-avatar{width:100%;height:100%;border-radius:50%;border:2px solid #000;background:linear-gradient(135deg,#f472b6,#e11d48);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:12px;}
-    .ig-body{flex:1;background:#000;padding:10px 11px 6px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;overflow:hidden;}
-    .ig-in{align-self:flex-start;background:#262626;color:#fff;border-radius:17px;padding:7px 12px;font-size:11.5px;line-height:1.38;max-width:78%;}
-    .ig-out{align-self:flex-end;background:linear-gradient(135deg,#4f5bd5,#962fbf 55%,#d62976);color:#fff;border-radius:17px;padding:7px 12px;font-size:11.5px;line-height:1.38;max-width:80%;}
-    .ig-typing{align-self:flex-start;background:#262626;border-radius:17px;padding:9px 13px;display:flex;gap:3px;}
-    .ig-typing-dot{width:5px;height:5px;border-radius:50%;background:#8e8e8e;animation:ttTypeBounce 1.3s ease-in-out infinite;}
-    .ig-inputbar{display:flex;align-items:center;gap:7px;padding:8px 11px 12px;background:#000;border-top:1px solid rgba(255,255,255,.06);flex-shrink:0;}
-    .ig-input-pill{flex:1;height:29px;border-radius:15px;border:1.3px solid #363636;display:flex;align-items:center;padding:0 11px;color:#8e8e8e;font-size:10.5px;}
-    .ig-caret{display:inline-block;width:1.3px;height:12px;background:#FF5A1F;animation:ttCaret 1s step-end infinite;}
+    /* ═══════════ UI Instagram ═══════════
+       Bulles calquées sur les vraies vidéos (tacotac-video-pipeline : dm.* du theme.ts
+       + MessageBubble.tsx) : fond noir pur, bulles pill SANS queue, violet côté toi,
+       gris côté elle, avatar rond uniquement sur le dernier message d'une série. */
+    .ig-topbar{display:flex;align-items:center;gap:9px;padding:17px 12px 10px;background:#000;flex-shrink:0;}
+    .ig-avatar-ring{width:38px;height:38px;border-radius:50%;padding:2px;background:conic-gradient(from 45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5);flex-shrink:0;}
+    .ig-avatar{width:100%;height:100%;border-radius:50%;border:2px solid #000;background:linear-gradient(135deg,#f472b6,#e11d48);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:13.5px;}
+    .ig-body{flex:1;background:#000;padding:12px 12px 8px;display:flex;flex-direction:column;justify-content:flex-end;gap:9px;overflow:hidden;}
+    .ig-row{display:flex;align-items:flex-end;gap:7px;}
+    .ig-row.me{justify-content:flex-end;}
+    .ig-mini{width:22px;height:22px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#f472b6,#e11d48);}
+    .ig-in{background:#2B2E33;color:#fff;border-radius:19px;padding:9px 14px;font-size:12.5px;font-weight:500;line-height:1.32;max-width:74%;}
+    .ig-out{background:#8B25EE;color:#fff;border-radius:19px;padding:9px 14px;font-size:12.5px;font-weight:500;line-height:1.32;max-width:76%;}
+    .ig-typing{background:#2B2E33;border-radius:19px;padding:11px 15px;display:flex;gap:4px;}
+    .ig-typing-dot{width:6px;height:6px;border-radius:50%;background:#8e8e8e;animation:ttTypeBounce 1.3s ease-in-out infinite;}
+    .ig-inputbar{display:flex;align-items:center;gap:8px;padding:9px 12px 14px;background:#000;border-top:1px solid rgba(255,255,255,.07);flex-shrink:0;}
+    .ig-input-pill{flex:1;height:34px;border-radius:18px;border:1.4px solid #363636;display:flex;align-items:center;padding:0 13px;color:#8e8e8e;font-size:12px;}
+    .ig-caret{display:inline-block;width:1.6px;height:14px;background:#FF5C00;animation:ttCaret 1s step-end infinite;}
 
-    /* ═══════════ écran app Tacotac dans le film ═══════════ */
-    .app-pad{padding:13px 11px 11px;display:flex;flex-direction:column;height:100%;}
-    .app-thumb{position:relative;border-radius:10px;overflow:hidden;background:#000;border:1px solid rgba(255,255,255,.1);flex-shrink:0;}
-    .app-scan{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#FF5A1F 45%,#FFB08A 50%,#FF5A1F 55%,transparent);box-shadow:0 0 14px 2px rgba(255,90,31,.75);top:-2px;opacity:0;z-index:3;}
+    /* ═══════════ écran app Tacotac ═══════════
+       Recréation fidèle de l'écran « Tes répliques » — tokens repris de
+       tacotac-video-pipeline/src/theme.ts (app.*), eux-mêmes copiés de app.html. */
+    .app-pad{padding:15px 13px 13px;display:flex;flex-direction:column;height:100%;background:#0A0A0A;}
+    .app-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:11px;border-bottom:1px solid #1a1a1a;flex-shrink:0;}
+    .app-ava{width:27px;height:27px;border-radius:50%;overflow:hidden;background:#1a1a1a;border:1.5px solid rgba(255,92,0,.8);flex-shrink:0;}
+    .app-badge{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:600;color:#FF7A33;border:1px solid rgba(255,92,0,.35);background:rgba(255,92,0,.07);border-radius:100px;padding:5px 9px;white-space:nowrap;}
+    .app-lbl{font-size:8.5px;letter-spacing:1px;text-transform:uppercase;font-weight:500;color:#6e6a66;}
+    .app-thumb{position:relative;border-radius:11px;overflow:hidden;background:#000;border:1px solid #242424;flex-shrink:0;}
+    .app-scan{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#FF5C00 45%,#FFB08A 50%,#FF5C00 55%,transparent);box-shadow:0 0 14px 2px rgba(255,92,0,.75);top:-2px;opacity:0;z-index:3;}
     .app-scan.on{animation:ttScanSweep 1.15s cubic-bezier(.5,0,.5,1) 2;}
-    /* les 6 pastilles de ton, façon app */
-    .app-pill{display:flex;align-items:center;justify-content:center;gap:2px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:99px;padding:4px 2px;font-size:6.5px;font-weight:600;color:#9C9082;transition:background .3s ease,border-color .3s ease,color .3s ease;}
-    .app-pill.sel{background:#FF5A1F;border-color:#FF5A1F;color:#fff;}
-    .app-pill.lock{color:#6b6257;}
-    .app-card{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:7px 9px;transition:border-color .3s ease,background .3s ease,transform .3s cubic-bezier(.34,1.3,.4,1);}
-    .app-card.picked{border-color:rgba(255,90,31,.75);background:rgba(255,90,31,.12);transform:scale(1.025);}
+    /* les 6 tons : emoji au-dessus du label, verrouillés en opacity .55 comme dans l'app */
+    .app-pill{display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 2px;border-radius:13px;border:1.5px solid #242424;background:#141414;transition:border-color .35s ease,background .35s ease;}
+    .app-pill .pe{font-size:15px;line-height:1;}
+    .app-pill .pl{font-size:8.5px;font-weight:600;color:#7a756f;transition:color .35s ease;}
+    .app-pill.lock{opacity:.55;}
+    .app-pill.sel{border-color:rgba(255,92,0,.7);background:rgba(255,92,0,.1);}
+    .app-pill.sel .pl{color:#fff;}
+    .app-res{margin-top:10px;background:#141414;border:1px solid #222;border-radius:17px;padding:12px;flex-shrink:0;}
+    .app-refaire{display:inline-flex;align-items:center;gap:4px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:100px;padding:5px 10px;color:#8a8580;font-size:9px;font-weight:500;}
+    .app-bub{margin-top:10px;background:#1c1c1c;border:1px solid #2b2b2b;border-radius:14px;padding:11px 13px;}
+    .app-cta{margin-top:auto;background:#FF5C00;border-radius:14px;padding:12px;text-align:center;font-weight:700;font-size:12px;color:#fff;flex-shrink:0;}
+
+    /* ═══════════ capture d'écran : boutons physiques + vignette iOS ═══════════ */
+    .tt-phone-side.pressed{background:linear-gradient(180deg,#8a7d6d,#3a332c);}
+    #f-btn-volup.pressed{transform:translateX(2px);}
+    #f-btn-power.pressed{transform:translateX(-2px);}
+    .film-shot{position:absolute;left:10px;bottom:10px;width:58px;border-radius:8px;overflow:hidden;background:#000;border:1px solid rgba(255,255,255,.4);box-shadow:0 10px 22px rgba(0,0,0,.7);opacity:0;transform:translateY(34px) scale(.7);transition:opacity .3s ease,transform .5s cubic-bezier(.2,.9,.3,1.25);z-index:8;}
+    .film-shot.on{opacity:1;transform:none;}
 
     /* ═══════════ chapitres du film ═══════════ */
     .ch{flex:1;text-align:left;transition:opacity .4s ease;opacity:.32;}
@@ -178,7 +212,7 @@
     <!-- ═══════════════════════════════════════════
          HERO — le film qui se joue tout seul
     ═══════════════════════════════════════════ -->
-    <section style="position:relative;background:#17120E;padding:58px 22px 34px;text-align:center;overflow:hidden;">
+    <section class="hero-sec" style="position:relative;background:#17120E;padding:58px 22px 34px;text-align:center;overflow:hidden;">
       <div style="position:absolute;top:-70px;right:-90px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(255,90,31,.42),transparent 68%);filter:blur(38px);animation:ttGlowA 11s ease-in-out infinite;"></div>
       <div style="position:absolute;bottom:-40px;left:-90px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(255,90,31,.24),transparent 68%);filter:blur(34px);animation:ttGlowB 14s ease-in-out infinite;"></div>
       <div class="tt-grain"></div>
@@ -190,11 +224,11 @@
         Coach dating IA · En ligne
       </div>
 
-      <h1 data-reveal style="position:relative;z-index:2;font-family:'Clash Display',sans-serif;font-weight:700;font-size:clamp(42px,13vw,54px);line-height:0.94;letter-spacing:-0.03em;color:#F4EEE2;margin:20px 0 14px;">
+      <h1 data-reveal class="hero-h1" style="position:relative;z-index:2;font-family:'Clash Display',sans-serif;font-weight:700;font-size:clamp(42px,13vw,54px);line-height:0.94;letter-spacing:-0.03em;color:#F4EEE2;margin:20px 0 14px;">
         Fini de sécher<br><span style="color:#FF5A1F;">en DM.</span>
       </h1>
 
-      <p data-reveal style="position:relative;z-index:2;font-size:15.5px;line-height:1.5;color:#9C9082;max-width:300px;margin:0 auto 26px;">
+      <p data-reveal class="hero-sub" style="position:relative;z-index:2;font-size:15.5px;line-height:1.5;color:#9C9082;max-width:300px;margin:0 auto 26px;">
         Envoie 1 screenshot, reçois <span style="color:#F4EEE2;font-weight:600;">3 réponses qui claquent</span>. En 6 tons, en 3 secondes.
       </p>
 
@@ -202,108 +236,116 @@
       <div id="tt-film" class="tt-phone-stage" data-reveal style="position:relative;z-index:2;padding:4px 0 0;">
         <div class="tt-hero-phone tt-phone">
           <div class="tt-phone-notch"></div>
-          <div class="tt-phone-side" style="left:-2px;top:104px;width:2.5px;height:26px;"></div>
-          <div class="tt-phone-side" style="left:-2px;top:142px;width:2.5px;height:44px;"></div>
-          <div class="tt-phone-side" style="right:-2px;top:130px;width:2.5px;height:64px;"></div>
+          <!-- boutons physiques : ils s'enfoncent au moment de la capture -->
+          <div id="f-btn-volup" class="tt-phone-side" style="left:-2.5px;top:132px;width:3px;height:34px;"></div>
+          <div class="tt-phone-side" style="left:-2.5px;top:176px;width:3px;height:34px;"></div>
+          <div id="f-btn-power" class="tt-phone-side" style="right:-2.5px;top:158px;width:3px;height:62px;"></div>
 
           <div class="tt-phone-screen">
 
-            <!-- ── couche 1 : Instagram ── -->
+            <!-- ── couche 1 : la conv Instagram ── -->
             <div class="film-layer film-ig">
               <div class="ig-topbar">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M15 5 8 12l7 7" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M15 5 8 12l7 7" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 <div class="ig-avatar-ring"><div class="ig-avatar">S</div></div>
                 <div style="text-align:left;">
-                  <p style="margin:0;color:#fff;font-weight:600;font-size:12px;">sophie.m</p>
-                  <p style="margin:1px 0 0;color:#8e8e8e;font-size:9.5px;display:flex;align-items:center;gap:4px;"><span style="width:5px;height:5px;border-radius:50%;background:#3fdd6c;display:inline-block;"></span>Active à l'instant</p>
+                  <p style="margin:0;color:#fff;font-weight:600;font-size:13.5px;">sophie.m</p>
+                  <p style="margin:2px 0 0;color:#8e8e8e;font-size:10.5px;display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;border-radius:50%;background:#3fdd6c;display:inline-block;"></span>Active à l'instant</p>
                 </div>
-                <span style="margin-left:auto;display:flex;flex-direction:column;gap:2.5px;">
-                  <span style="width:3px;height:3px;border-radius:50%;background:#fff;display:block;"></span>
-                  <span style="width:3px;height:3px;border-radius:50%;background:#fff;display:block;"></span>
-                  <span style="width:3px;height:3px;border-radius:50%;background:#fff;display:block;"></span>
+                <span style="margin-left:auto;display:flex;flex-direction:column;gap:3px;">
+                  <span style="width:3.5px;height:3.5px;border-radius:50%;background:#fff;display:block;"></span>
+                  <span style="width:3.5px;height:3.5px;border-radius:50%;background:#fff;display:block;"></span>
+                  <span style="width:3.5px;height:3.5px;border-radius:50%;background:#fff;display:block;"></span>
                 </span>
               </div>
 
               <div class="ig-body">
-                <div id="f-m1" class="ig-in stg">Haha t'es vraiment trop 😭</div>
-                <div id="f-typing" class="ig-typing stg">
+                <!-- elle : avatar seulement sur le dernier d'une série (règle IG) -->
+                <div id="f-m1" class="ig-row stg"><div class="ig-mini" style="visibility:hidden;"></div><div class="ig-in">Haha t'es vraiment trop 😭</div></div>
+                <div id="f-typing" class="ig-row stg"><div class="ig-mini"></div><div class="ig-typing">
                   <span class="ig-typing-dot" style="animation-delay:0s;"></span>
                   <span class="ig-typing-dot" style="animation-delay:.15s;"></span>
                   <span class="ig-typing-dot" style="animation-delay:.3s;"></span>
-                </div>
-                <div id="f-m2" class="ig-in stg">Tu fais quoi ce week-end ?</div>
-                <div id="f-sent" class="ig-out stg">un ciné chez moi samedi… le film aura aucune importance de toute façon</div>
-                <div id="f-typing2" class="ig-typing stg">
+                </div></div>
+                <div id="f-m2" class="ig-row stg"><div class="ig-mini"></div><div class="ig-in">Tu fais quoi ce week-end ?</div></div>
+                <div id="f-sent" class="ig-row me stg"><div class="ig-out">un ciné chez moi samedi… le film aura aucune importance de toute façon</div></div>
+                <div id="f-typing2" class="ig-row stg"><div class="ig-mini"></div><div class="ig-typing">
                   <span class="ig-typing-dot" style="animation-delay:0s;"></span>
                   <span class="ig-typing-dot" style="animation-delay:.15s;"></span>
                   <span class="ig-typing-dot" style="animation-delay:.3s;"></span>
-                </div>
-                <div id="f-m3" class="ig-in stg">😳 ok là t'as osé… samedi alors</div>
+                </div></div>
+                <div id="f-m3" class="ig-row stg"><div class="ig-mini"></div><div class="ig-in">😳 ok là t'as osé… samedi alors</div></div>
               </div>
 
               <div class="ig-inputbar">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;"><rect x="3" y="6" width="18" height="14" rx="3" stroke="#8e8e8e" stroke-width="1.6"/><circle cx="12" cy="13" r="3.2" stroke="#8e8e8e" stroke-width="1.6"/></svg>
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;"><rect x="3" y="6" width="18" height="14" rx="3" stroke="#8e8e8e" stroke-width="1.6"/><circle cx="12" cy="13" r="3.2" stroke="#8e8e8e" stroke-width="1.6"/></svg>
                 <div class="ig-input-pill"><span id="f-placeholder">Message…</span><span id="f-caret" class="ig-caret" style="display:none;"></span></div>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;"><path d="M12 15a3.5 3.5 0 0 0 3.5-3.5V7a3.5 3.5 0 0 0-7 0v4.5A3.5 3.5 0 0 0 12 15Z" stroke="#8e8e8e" stroke-width="1.6"/><path d="M6 11.5a6 6 0 0 0 12 0M12 19v2" stroke="#8e8e8e" stroke-width="1.6" stroke-linecap="round"/></svg>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;"><path d="M12 15a3.5 3.5 0 0 0 3.5-3.5V7a3.5 3.5 0 0 0-7 0v4.5A3.5 3.5 0 0 0 12 15Z" stroke="#8e8e8e" stroke-width="1.6"/><path d="M6 11.5a6 6 0 0 0 12 0M12 19v2" stroke="#8e8e8e" stroke-width="1.6" stroke-linecap="round"/></svg>
               </div>
             </div>
 
-            <!-- ── couche 2 : l'app Tacotac ── -->
+            <!-- ── couche 2 : l'écran « Tes répliques » de l'app ── -->
             <div id="f-app" class="film-layer film-app">
               <div class="app-pad">
-                <div style="display:flex;align-items:center;gap:7px;margin-bottom:9px;flex-shrink:0;">
-                  <div style="width:23px;height:23px;border-radius:7px;background:#FF5A1F;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
-                    <img src="assets/fox_full.png" alt="" style="width:100%;height:100%;object-fit:contain;">
+
+                <div class="app-head">
+                  <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+                    <div class="app-ava"><img src="assets/fox_chill.png" alt="" style="width:100%;height:100%;object-fit:cover;object-position:50% 3%;"></div>
+                    <span style="color:#fff;font-weight:700;font-size:13.5px;letter-spacing:-.2px;">Tes répliques</span>
                   </div>
-                  <span style="color:#F4EEE2;font-size:11.5px;font-weight:600;">Tacotac</span>
-                  <span id="f-status" style="margin-left:auto;display:flex;align-items:center;gap:4px;color:#FF9A70;font-size:9px;font-weight:600;">
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" style="animation:ttSpin 1.6s linear infinite;"><path d="M12 3a9 9 0 1 0 9 9" stroke="#FF9A70" stroke-width="3" stroke-linecap="round"/></svg>
+                  <span id="f-status" class="app-badge">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" style="animation:ttSpin 1.6s linear infinite;"><path d="M12 3a9 9 0 1 0 9 9" stroke="#FF7A33" stroke-width="3" stroke-linecap="round"/></svg>
                     Analyse…
                   </span>
                 </div>
 
-                <!-- vignette du screenshot analysé -->
-                <div class="app-thumb">
+                <!-- le screenshot qu'on vient de prendre, en cours de lecture -->
+                <div class="app-thumb" style="margin-top:11px;">
                   <div id="f-scan" class="app-scan"></div>
-                  <div style="padding:6px 7px;display:flex;flex-direction:column;gap:3px;">
-                    <div style="display:flex;align-items:center;gap:4px;">
-                      <div style="width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,#f472b6,#e11d48);"></div>
-                      <span style="color:#fff;font-size:6px;font-weight:600;">sophie.m</span>
+                  <div style="padding:8px 9px;display:flex;flex-direction:column;gap:5px;">
+                    <div style="display:flex;align-items:center;gap:5px;">
+                      <div style="width:13px;height:13px;border-radius:50%;background:linear-gradient(135deg,#f472b6,#e11d48);"></div>
+                      <span style="color:#fff;font-size:7.5px;font-weight:600;">sophie.m</span>
                     </div>
-                    <div style="align-self:flex-start;background:#262626;color:#d8d8d8;border-radius:6px;padding:3px 5px;font-size:6px;max-width:82%;">Haha t'es vraiment trop 😭</div>
-                    <div style="align-self:flex-start;background:#262626;color:#d8d8d8;border-radius:6px;padding:3px 5px;font-size:6px;max-width:82%;">Tu fais quoi ce week-end ?</div>
+                    <div style="align-self:flex-start;background:#2B2E33;color:#d8d8d8;border-radius:8px;padding:4px 7px;font-size:7.5px;max-width:84%;">Tu fais quoi ce week-end ?</div>
                   </div>
                 </div>
 
-                <!-- les 6 tons, comme dans l'app -->
-                <p id="f-tonelabel" class="stg" style="margin:9px 0 5px;color:#5C5348;font-size:7.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;text-align:left;flex-shrink:0;">Choisis ton ton</p>
-                <div id="f-pills" class="stg" style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;flex-shrink:0;">
-                  <span class="app-pill">🎩 Classe</span>
-                  <span class="app-pill">😂 Drôle</span>
-                  <span id="f-pill-spicy" class="app-pill">🌶️ Spicy</span>
-                  <span class="app-pill lock">🌹 <span style="font-size:5.5px;">🔒</span></span>
-                  <span class="app-pill lock">😈 <span style="font-size:5.5px;">🔒</span></span>
-                  <span class="app-pill lock">🎭 <span style="font-size:5.5px;">🔒</span></span>
+                <p id="f-tonelabel" class="app-lbl stg" style="margin:12px 0 7px;text-align:left;flex-shrink:0;">Choisis ton ton</p>
+                <div id="f-pills" class="stg" style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;flex-shrink:0;">
+                  <span class="app-pill"><span class="pe">🎩</span><span class="pl">Classe</span></span>
+                  <span class="app-pill"><span class="pe">😂</span><span class="pl">Drôle</span></span>
+                  <span id="f-pill-spicy" class="app-pill"><span class="pe">🌶️</span><span class="pl">Spicy</span></span>
+                  <span class="app-pill lock"><span class="pe">🌹</span><span class="pl">Romantique 🔒</span></span>
+                  <span class="app-pill lock"><span class="pe">😈</span><span class="pl">Sexto 🔒</span></span>
+                  <span class="app-pill lock"><span class="pe">🎭</span><span class="pl">Mystère 🔒</span></span>
                 </div>
 
-                <div style="display:flex;flex-direction:column;gap:4px;margin-top:8px;flex-shrink:0;">
-                  <div id="f-c1" class="app-card stg">
-                    <p style="margin:0;color:#CFC7BC;font-size:8.5px;line-height:1.4;text-align:left;">un ciné chez moi samedi… le film aura aucune importance de toute façon</p>
+                <div id="f-res" class="app-res stg">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                    <span style="display:flex;align-items:center;gap:6px;color:#fff;font-size:12px;font-weight:600;"><span style="font-size:14px;">🌶️</span> Ton Spicy</span>
+                    <span class="app-refaire">Refaire ↻</span>
                   </div>
-                  <div id="f-c2" class="app-card stg">
-                    <p style="margin:0;color:#CFC7BC;font-size:8.5px;line-height:1.4;text-align:left;">rien encore… mais ta question vient de remplir mon samedi soir</p>
+                  <div class="app-bub">
+                    <div style="font-size:8.5px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:#FF6F1F;margin-bottom:6px;">Tiens réponds lui ça</div>
+                    <div style="font-size:13px;font-weight:500;line-height:1.45;color:#F0EDE8;">un ciné chez moi samedi… le film aura aucune importance de toute façon</div>
                   </div>
-                  <div id="f-c3" class="app-card stg">
-                    <p style="margin:0;color:#CFC7BC;font-size:8.5px;line-height:1.4;text-align:left;">jallais dire rien, mais vu comment tu demandes jsens que t'as déjà une idée…</p>
+                  <!-- le renard du ton, comme sur l'écran réel -->
+                  <div style="display:flex;justify-content:center;margin-top:8px;">
+                    <img src="assets/fox_spicy.png" alt="" style="height:86px;object-fit:contain;">
                   </div>
                 </div>
 
-                <div id="f-copied" class="stg" style="margin-top:auto;padding-top:8px;flex-shrink:0;">
-                  <div style="display:flex;align-items:center;justify-content:center;gap:5px;background:rgba(255,90,31,.16);border:1px solid rgba(255,90,31,.32);border-radius:9px;padding:7px;color:#FF7A45;font-size:9.5px;font-weight:600;">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M4 12.5 9.5 18 20 6.5" stroke="#FF7A45" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    Copié — plus qu'à envoyer
-                  </div>
-                </div>
+                <div id="f-copied" class="app-cta stg">📋 Copié — plus qu'à envoyer</div>
+              </div>
+            </div>
+
+            <!-- vignette iOS qui glisse après la capture -->
+            <div id="f-shot" class="film-shot">
+              <div style="background:#000;padding:5px;display:flex;flex-direction:column;gap:3px;">
+                <div style="align-self:flex-start;background:#2B2E33;border-radius:5px;height:6px;width:74%;"></div>
+                <div style="align-self:flex-start;background:#2B2E33;border-radius:5px;height:6px;width:58%;"></div>
+                <div style="align-self:flex-end;background:#8B25EE;border-radius:5px;height:6px;width:46%;"></div>
               </div>
             </div>
 
@@ -312,30 +354,31 @@
             <div class="tt-phone-glare"></div>
           </div>
         </div>
+        </div>
 
         <!-- le renard, spectateur puis héros -->
-        <img id="f-fox" src="assets/fox_full.png" alt="Le renard Tacotac" style="position:absolute;left:-2px;bottom:-4px;width:96px;z-index:4;filter:drop-shadow(0 14px 20px rgba(0,0,0,.5));animation:ttFloat 5s ease-in-out infinite;animation-delay:.4s;transition:opacity .25s ease;">
-        <div id="f-bubble" class="stg" style="position:absolute;left:66px;bottom:96px;z-index:5;background:#F4EEE2;color:#17120E;font-size:10.5px;font-weight:600;border-radius:12px 12px 12px 3px;padding:6px 10px;box-shadow:0 8px 18px rgba(0,0,0,.35);white-space:nowrap;">Je gère.</div>
+        <img id="f-fox" src="assets/fox_full.png" alt="Le renard Tacotac" style="position:absolute;left:-8px;bottom:-6px;width:104px;z-index:4;filter:drop-shadow(0 14px 20px rgba(0,0,0,.5));animation:ttFloat 5s ease-in-out infinite;animation-delay:.4s;transition:opacity .25s ease;">
+        <div id="f-bubble" class="stg" style="position:absolute;left:78px;bottom:104px;z-index:5;background:#F4EEE2;color:#17120E;font-size:12px;font-weight:600;border-radius:13px 13px 13px 3px;padding:7px 12px;box-shadow:0 8px 18px rgba(0,0,0,.35);white-space:nowrap;">Je gère.</div>
       </div>
 
       <!-- chapitres -->
-      <div data-reveal style="position:relative;z-index:2;display:flex;gap:10px;max-width:330px;margin:26px auto 0;">
+      <div data-reveal class="hero-chaps" style="position:relative;z-index:2;display:flex;gap:10px;max-width:330px;margin:26px auto 0;">
         <div id="f-ch1" class="ch">
           <div class="ch-bar"><i class="ch-bar-fill"></i></div>
-          <p style="margin:0;color:#F4EEE2;font-size:10.5px;font-weight:600;">Le DM qui coince</p>
+          <p style="margin:0;color:#F4EEE2;font-size:12px;font-weight:600;">Le DM qui coince</p>
         </div>
         <div id="f-ch2" class="ch">
           <div class="ch-bar"><i class="ch-bar-fill"></i></div>
-          <p style="margin:0;color:#F4EEE2;font-size:10.5px;font-weight:600;">1 screenshot</p>
+          <p style="margin:0;color:#F4EEE2;font-size:12px;font-weight:600;">1 screenshot</p>
         </div>
         <div id="f-ch3" class="ch">
           <div class="ch-bar"><i class="ch-bar-fill"></i></div>
-          <p style="margin:0;color:#F4EEE2;font-size:10.5px;font-weight:600;">3 réponses. 1 date.</p>
+          <p style="margin:0;color:#F4EEE2;font-size:12px;font-weight:600;">3 réponses. 1 date.</p>
         </div>
       </div>
 
       <!-- CTA hero -->
-      <div data-reveal style="position:relative;z-index:2;max-width:320px;margin:30px auto 0;">
+      <div data-reveal class="hero-cta" style="position:relative;z-index:2;max-width:320px;margin:30px auto 0;">
         <a href="/app" class="btn-orange js-cta"
           style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px 24px;background:#FF5A1F;color:#fff;font-family:'General Sans',sans-serif;font-weight:600;font-size:17px;border-radius:13px;text-decoration:none;box-shadow:0 8px 24px rgba(216,67,14,0.42);">
           Essayer gratuitement ⚡
@@ -362,7 +405,7 @@
       </div>
 
       <!-- marquee compatibilité -->
-      <div data-reveal class="mq-mask" style="position:relative;z-index:2;margin:22px -22px 0;">
+      <div data-reveal class="mq-mask" style="position:relative;z-index:2;margin:22px 0 0;">
         <div class="mq-track">
           <span class="mq-chip">Tinder</span><span class="mq-chip">Hinge</span><span class="mq-chip">Bumble</span><span class="mq-chip">Instagram</span><span class="mq-chip">Snap</span><span class="mq-chip">Fruitz</span>
           <span class="mq-chip">Tinder</span><span class="mq-chip">Hinge</span><span class="mq-chip">Bumble</span><span class="mq-chip">Instagram</span><span class="mq-chip">Snap</span><span class="mq-chip">Fruitz</span>
@@ -813,16 +856,16 @@
 
       reset() {
         ['f-m1','f-typing','f-m2','f-sent','f-typing2','f-m3',
-         'f-tonelabel','f-pills','f-c1','f-c2','f-c3','f-copied',
-         'f-app','f-freeze','f-flash','f-scan','f-bubble',
+         'f-tonelabel','f-pills','f-res','f-copied',
+         'f-app','f-freeze','f-flash','f-scan','f-bubble','f-shot',
          'f-ch1','f-ch2','f-ch3'].forEach(id => this.off(id));
-        ['f-c1','f-c2','f-c3'].forEach(id => { const e = $(id); if (e) e.classList.remove('picked'); });
+        ['f-btn-volup','f-btn-power'].forEach(id => { const e = $(id); if (e) e.classList.remove('pressed'); });
         const pd = $('f-pill-spicy'); if (pd) pd.classList.remove('sel');
         const ph = $('f-placeholder'), car = $('f-caret'), fox = $('f-fox'), st = $('f-status');
         if (ph)  { ph.textContent = 'Message…'; ph.style.color = ''; }
         if (car) car.style.display = 'none';
         if (fox) { fox.src = 'assets/fox_full.png'; fox.style.animation = 'ttFloat 5s ease-in-out infinite'; }
-        if (st)  st.innerHTML = '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" style="animation:ttSpin 1.6s linear infinite;"><path d="M12 3a9 9 0 1 0 9 9" stroke="#FF9A70" stroke-width="3" stroke-linecap="round"/></svg> Analyse…';
+        if (st)  st.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" style="animation:ttSpin 1.6s linear infinite;"><path d="M12 3a9 9 0 1 0 9 9" stroke="#FF7A33" stroke-width="3" stroke-linecap="round"/></svg> Analyse…';
       },
 
       at(ms, fn) { this.timers.push(setTimeout(fn, ms)); },
@@ -854,15 +897,20 @@
           if (fox && !reduced) fox.style.animation = 'ttShake .55s ease-in-out 1, ttFloat 5s ease-in-out .55s infinite';
         });
 
-        /* ─── ACTE 2 : le screenshot ─── */
+        /* ─── ACTE 2 : le screenshot ───
+           On montre le geste : volume haut + bouton latéral s'enfoncent
+           ensemble, PUIS le flash, PUIS la vignette qui glisse en bas. */
         this.at(5400, () => { this.off('f-ch1'); this.on('f-ch2'); });
-        this.at(5600, () => {
-          this.on('f-flash');
-          this.on('f-freeze');
+        this.at(5500, () => {
+          this.on('f-btn-volup');
+          this.on('f-btn-power');
           const car = $('f-caret'); if (car) car.style.display = 'none';
         });
-        this.at(5740, () => this.off('f-flash'));
+        this.at(5680, () => { this.on('f-flash'); this.on('f-freeze'); });
+        this.at(5820, () => { this.off('f-flash'); this.off('f-btn-volup'); this.off('f-btn-power'); });
+        this.at(6050, () => this.on('f-shot'));
         this.at(6500, () => this.off('f-freeze'));
+        this.at(7400, () => this.off('f-shot'));
 
         /* ─── ACTE 3 : Tacotac travaille ─── */
         this.at(6600, () => { this.off('f-ch2'); this.on('f-ch3'); this.on('f-app'); });
@@ -875,18 +923,14 @@
         this.at(9700, () => {
           this.off('f-scan');
           const st = $('f-status');
-          if (st) st.innerHTML = '<svg width="9" height="9" viewBox="0 0 24 24" fill="none"><path d="M4 12.5 9.5 18 20 6.5" stroke="#FF9A70" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg> Prêt';
+          if (st) st.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M4 12.5 9.5 18 20 6.5" stroke="#FF7A33" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg> Prêt';
           this.on('f-tonelabel');
           this.on('f-pills');
         });
-        /* le ton "Spicy" se sélectionne, puis les 3 répliques tombent */
-        this.at(10300, () => { const pd = $('f-pill-drole'); if (pd) pd.classList.add('sel'); });
-        this.at(10700, () => this.on('f-c1'));
-        this.at(10880, () => this.on('f-c2'));
-        this.at(11060, () => this.on('f-c3'));
-
-        this.at(12100, () => { const e = $('f-c1'); if (e) e.classList.add('picked'); });
-        this.at(12600, () => this.on('f-copied'));
+        /* le ton "Spicy" se sélectionne, puis la réplique tombe */
+        this.at(10400, () => { const pd = $('f-pill-spicy'); if (pd) pd.classList.add('sel'); });
+        this.at(10900, () => this.on('f-res'));
+        this.at(12300, () => this.on('f-copied'));
 
         /* ─── ACTE 4 : la réponse part, Sophie mord ─── */
         this.at(13900, () => { this.off('f-app'); this.off('f-bubble'); });
@@ -902,11 +946,10 @@
       /* état final figé, pour prefers-reduced-motion */
       still() {
         this.reset();
-        ['f-m1','f-m2','f-app','f-tonelabel','f-pills','f-c1','f-c2','f-c3','f-copied','f-ch3'].forEach(id => this.on(id));
+        ['f-m1','f-m2','f-app','f-tonelabel','f-pills','f-res','f-copied','f-ch3'].forEach(id => this.on(id));
         const pd = $('f-pill-spicy'); if (pd) pd.classList.add('sel');
-        const e = $('f-c1'); if (e) e.classList.add('picked');
         const st = $('f-status');
-        if (st) st.innerHTML = '<svg width="9" height="9" viewBox="0 0 24 24" fill="none"><path d="M4 12.5 9.5 18 20 6.5" stroke="#FF9A70" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg> Prêt';
+        if (st) st.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M4 12.5 9.5 18 20 6.5" stroke="#FF7A33" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg> Prêt';
       }
     };
 
@@ -923,9 +966,14 @@
         film.play();
       }
 
-      /* parallaxe 3D : le téléphone suit la souris */
+      /* ── parallaxe 3D ──
+         Souris sur desktop ; au doigt il n'y a pas de mousemove, donc sur
+         mobile c'est le SCROLL qui fait tourner le téléphone : il se redresse
+         en arrivant au centre de l'écran puis repart. */
       const phone = filmRoot.querySelector('.tt-hero-phone');
-      if (phone && !reduced && window.matchMedia('(pointer: fine)').matches) {
+      const finePointer = window.matchMedia('(pointer: fine)').matches;
+
+      if (phone && !reduced && finePointer) {
         filmRoot.addEventListener('mousemove', (e) => {
           const r = filmRoot.getBoundingClientRect();
           const px = (e.clientX - r.left) / r.width - 0.5;
@@ -937,6 +985,24 @@
           phone.style.transform = '';
           phone.style.animation = 'ttFloatPhone 7s ease-in-out infinite';
         });
+      } else if (phone && !reduced) {
+        phone.style.animation = 'none';
+        phone.style.transition = 'transform .12s linear';
+        let ticking = false;
+        const tilt = () => {
+          ticking = false;
+          const r = filmRoot.getBoundingClientRect();
+          const vh = window.innerHeight || 1;
+          /* -1 = le téléphone est encore bas, 0 = pile au centre, 1 = déjà remonté */
+          const p = Math.max(-1, Math.min(1, ((r.top + r.height / 2) - vh / 2) / (vh * 0.75)));
+          phone.style.transform =
+            'rotateY(' + (p * -13).toFixed(2) + 'deg) rotateX(' + (p * 11).toFixed(2) + 'deg) translateY(' + (p * -6).toFixed(1) + 'px)';
+        };
+        window.addEventListener('scroll', () => {
+          if (!ticking) { ticking = true; requestAnimationFrame(tilt); }
+        }, { passive: true });
+        window.addEventListener('resize', tilt, { passive: true });
+        tilt();
       }
     }
 
@@ -1064,7 +1130,7 @@
     window.addEventListener('scroll', () => {
       const y = window.scrollY || 0;
       if (nav) nav.style.transform = y > 560 ? 'translateY(0)' : 'translateY(-100%)';
-      if (sticky) sticky.style.transform = y > 1250 ? 'translateY(0)' : 'translateY(130%)';
+      if (sticky) sticky.style.transform = y > 780 ? 'translateY(0)' : 'translateY(130%)';
     }, { passive: true });
 
     /* ════════ REVEAL AU SCROLL + COUNT-UP ════════ */
