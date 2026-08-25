@@ -412,6 +412,96 @@
       box-shadow:0 14px 32px -14px rgba(216,67,14,.95),inset 0 1px 0 rgba(255,255,255,.4);
     }
 
+    /* ══════════════════════════════════════════════════════════════
+       ÉCRAN D'ACCUEIL — la zone de dépôt s'étirait sans limite : sur un
+       grand téléphone ça donnait un immense vide avec une flèche au
+       milieu. Elle est bornée et montre maintenant ce qu'on attend.
+       ══════════════════════════════════════════════════════════════ */
+    .dropzone{min-height:238px;max-height:300px;border-radius:24px;gap:14px}
+    .dropzone.has-img{min-height:238px}
+    /* maquette de conv : dit en un regard quoi déposer */
+    .dz-mock{position:relative;width:172px;background:#0B0908;border:1px solid #2A2320;
+      border-radius:14px;padding:11px 10px;display:flex;flex-direction:column;gap:6px;
+      box-shadow:0 16px 34px -22px rgba(0,0,0,.95);transform:rotate(-2.2deg);transition:transform .3s cubic-bezier(.34,1.3,.4,1)}
+    .dropzone:hover .dz-mock,.dropzone.drag .dz-mock{transform:rotate(0deg) scale(1.03)}
+    .dz-mock-row{display:flex;align-items:flex-end;gap:5px}
+    .dz-mock-row.me{justify-content:flex-end}
+    .dz-mock-av{width:14px;height:14px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#f472b6,#e11d48)}
+    .dz-mock-b{border-radius:10px;padding:5px 8px;font-size:8.5px;line-height:1.3;max-width:82%}
+    .dz-mock-b.her{background:#2B2E33;color:#CFC7BC}
+    .dz-mock-b.none{border:1px dashed #3A312A;color:#5C5348;letter-spacing:2px}
+    .dz-mock-badge{position:absolute;right:-11px;bottom:-11px;width:34px;height:34px;border-radius:12px;
+      background:linear-gradient(180deg,#FF7A45,#FF5A1F);display:flex;align-items:center;justify-content:center;
+      box-shadow:0 10px 22px -10px rgba(216,67,14,.95),inset 0 1px 0 rgba(255,255,255,.3)}
+
+    /* « Voir un exemple » : un lien assumé, plus une 2e zone de dépôt en pointillés */
+    #demoBtn{border:1px solid #2A2320!important;border-radius:99px!important;background:#15110F!important;padding:11px!important}
+    #demoBtn:hover{border-color:rgba(255,90,31,.45)!important;color:#CFC7BC!important}
+
+    /* Bouton d'analyse en attente : sobre et net, au lieu d'un orange delave
+       qui donnait l'impression d'un bouton cassé. */
+    .cta:disabled{opacity:1;background-image:none;background:#1B1714;color:#6B6153;
+      border:1px solid #2A2320;box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}
+    .cta-big:disabled{animation:none}
+
+    /* ── Actions secondaires sur une ligne ── */
+    .act-row{display:flex;gap:10px;margin-top:10px;position:relative;z-index:2}
+    .act-row .btn-secondary{flex:1;min-width:0;margin-top:0;font-size:13.5px;padding:0 8px;white-space:nowrap}
+
+    /* ══════════════════════════════════════════════════════════════
+       COACH — un diagnostic doit se lire comme un tableau de bord :
+       le score domine, les signaux se scannent, le move se détache.
+       ══════════════════════════════════════════════════════════════ */
+    .coach-card{border-radius:20px;padding:17px}
+    #coachScore{font-size:42px;letter-spacing:-.03em;
+      background:linear-gradient(180deg,#FFB98F,#FF5A1F);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .coach-lbl{letter-spacing:.1em;font-size:10.5px;color:#8A7F70}
+    #coachBar{box-shadow:0 0 14px rgba(255,90,31,.6)}
+    .bar-track{box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+    /* chaque signal détecté est une ligne qu'on scanne, pas un paragraphe */
+    .signal-row{padding:9px 11px;border-radius:12px;background:#15110F;border:1px solid #251F1B;font-size:13px}
+    /* la carte « meilleur move » est la conclusion : elle doit briller */
+    .coach-move{
+      background-image:linear-gradient(180deg,rgba(255,90,31,.14),rgba(255,90,31,.04));
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 16px 34px -22px rgba(255,90,31,.85);
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       BIO — trois propositions à comparer d'un coup d'œil.
+       ══════════════════════════════════════════════════════════════ */
+    .bio-card{border-radius:20px;padding:17px;position:relative}
+    .bio-card:hover{border-color:rgba(255,90,31,.5);transform:translateY(-1px)}
+    .bio-card:active{transform:scale(.995)}
+    .bio-text{font-size:15.5px;line-height:1.6}
+
+    /* ══════════════════════════════════════════════════════════════
+       ENTRAÎNEMENT — c'est un jeu : la conv doit ressembler à une
+       vraie messagerie, et la jauge de cœur à un score.
+       ══════════════════════════════════════════════════════════════ */
+    .persona-card{border-radius:20px;padding:15px 16px;
+      background-image:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0) 60%);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.045)}
+    .persona-card:hover{border-color:rgba(255,90,31,.45);transform:translateY(-1px)}
+    .p-avatar{box-shadow:0 0 0 1px rgba(255,255,255,.08),0 8px 18px -10px rgba(0,0,0,.9)}
+    .lvl-pill{letter-spacing:.06em;text-transform:uppercase}
+
+    /* Messagerie : bulles plus généreuses, la tienne en dégradé de marque */
+    .chat-head,.chat-inputbar{backdrop-filter:blur(10px)}
+    .msg{padding:11px 15px;font-size:15px;line-height:1.48;border-radius:20px}
+    .msg.her{border-bottom-left-radius:7px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+    .msg.me{border-bottom-right-radius:7px;
+      background-image:linear-gradient(180deg,#FF7A45,#FF5A1F);
+      box-shadow:0 8px 20px -12px rgba(216,67,14,.9),inset 0 1px 0 rgba(255,255,255,.25)}
+    .chat-input{border-radius:24px;padding:12px 17px}
+    .chat-input:focus{box-shadow:0 0 0 4px rgba(255,90,31,.12)}
+    .chat-send{background-image:linear-gradient(180deg,#FF7A45,#FF5A1F);
+      box-shadow:0 8px 20px -10px rgba(216,67,14,.85),inset 0 1px 0 rgba(255,255,255,.28);
+      transition:opacity .2s,transform .15s}
+    .chat-send:active:not(:disabled){transform:scale(.94)}
+    /* la jauge de cœur se lit comme un score de jeu */
+    .heart-meter{font-family:'Clash Display',sans-serif;font-weight:600;letter-spacing:.02em;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+
     /* ── Révélation : fiche de personnage ── */
     #quizFoxWrap{position:relative;box-shadow:0 0 0 1px rgba(255,90,31,.18),0 22px 50px -22px rgba(255,90,31,.55)}
     #quizFoxWrap::after{
@@ -441,16 +531,16 @@
     .p-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
     .lvl-pill{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.3px;white-space:nowrap}
     #screen-8{padding:env(safe-area-inset-top) 0 0}
-    .chat-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #221D19;background:#101010;flex-shrink:0}
+    .chat-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #221D19;background:#100D0B;flex-shrink:0}
     .chat-scroll{flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:7px}
     .chat-scroll::-webkit-scrollbar{width:0}
     .msg{max-width:78%;padding:10px 14px;border-radius:18px;font-size:14.5px;line-height:1.45;word-break:break-word;animation:tt-up .22s ease both}
-    .msg.her{align-self:flex-start;background:#1e1e20;color:#ECEAE6;border-bottom-left-radius:6px}
+    .msg.her{align-self:flex-start;background:#221D19;color:#F4EEE2;border-bottom-left-radius:6px}
     .msg.me{align-self:flex-end;background:#FF5A1F;color:#fff;border-bottom-right-radius:6px}
     .sys-note{align-self:center;color:#5C5348;font-size:11.5px;text-align:center;padding:6px 0}
-    .typing-bubble{align-self:flex-start;background:#1e1e20;border-radius:18px;border-bottom-left-radius:6px;padding:14px 16px;display:flex;gap:5px;animation:tt-up .22s ease both}
+    .typing-bubble{align-self:flex-start;background:#221D19;border-radius:18px;border-bottom-left-radius:6px;padding:14px 16px;display:flex;gap:5px;animation:tt-up .22s ease both}
     .typing-bubble .dot{width:6px;height:6px}
-    .chat-inputbar{display:flex;gap:8px;align-items:center;padding:10px 14px calc(12px + env(safe-area-inset-bottom));border-top:1px solid #221D19;background:#101010;flex-shrink:0}
+    .chat-inputbar{display:flex;gap:8px;align-items:center;padding:10px 14px calc(12px + env(safe-area-inset-bottom));border-top:1px solid #221D19;background:#100D0B;flex-shrink:0}
     .chat-input{flex:1;background:#1F1A16;border:1.5px solid #322A25;border-radius:22px;color:#fff;padding:11px 16px;font:500 16px 'General Sans',sans-serif;outline:none;min-width:0}
     .chat-input:focus{border-color:rgba(255,90,31,.5)}
     .chat-input:disabled{opacity:.45}
@@ -488,17 +578,17 @@
     /* ── Menu latéral (navigation outils + entraînement) ── */
     .drawer-overlay{position:absolute;inset:0;z-index:60;background:rgba(6,6,6,.6);backdrop-filter:blur(3px);opacity:0;visibility:hidden;transition:opacity .28s,visibility .28s}
     .drawer-overlay.show{opacity:1;visibility:visible}
-    .drawer{position:absolute;top:0;left:0;bottom:0;width:min(80%,300px);z-index:61;background:linear-gradient(165deg,#131313 0%,#100D0B 100%);border-right:1px solid #241F1A;box-shadow:20px 0 60px -20px rgba(0,0,0,.8);transform:translateX(-103%);visibility:hidden;transition:transform .36s cubic-bezier(.22,.68,0,1),visibility .36s;display:flex;flex-direction:column;overflow-y:auto;padding:calc(20px + env(safe-area-inset-top)) 14px calc(18px + env(safe-area-inset-bottom))}
+    .drawer{position:absolute;top:0;left:0;bottom:0;width:min(80%,300px);z-index:61;background:linear-gradient(165deg,#16120F 0%,#100D0B 100%);border-right:1px solid #241F1A;box-shadow:20px 0 60px -20px rgba(0,0,0,.8);transform:translateX(-103%);visibility:hidden;transition:transform .36s cubic-bezier(.22,.68,0,1),visibility .36s;display:flex;flex-direction:column;overflow-y:auto;padding:calc(20px + env(safe-area-inset-top)) 14px calc(18px + env(safe-area-inset-bottom))}
     .drawer.show{transform:translateX(0);visibility:visible}
     .drawer::-webkit-scrollbar{width:0}
     .dr-sec{color:#5C5348;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;font-weight:700;margin:20px 8px 8px}
     .dr-item{display:flex;align-items:center;gap:11px;width:100%;background:none;border:none;border-radius:13px;padding:10px;cursor:pointer;font-family:inherit;text-align:left;transition:background .15s}
-    .dr-item:hover,.dr-item:active{background:#191919}
+    .dr-item:hover,.dr-item:active{background:#1B1714}
     .dr-item.on{background:rgba(255,90,31,.1)}
     .dr-item.on .dr-name{color:#FF7A45}
-    .dr-ic{width:38px;height:38px;border-radius:12px;background:#191919;border:1px solid #272727;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+    .dr-ic{width:38px;height:38px;border-radius:12px;background:#1B1714;border:1px solid #2E2722;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
     .dr-item.on .dr-ic{background:rgba(255,90,31,.14);border-color:rgba(255,90,31,.5)}
-    .dr-name{display:block;color:#ECEAE6;font-size:14px;font-weight:700;letter-spacing:-.2px}
+    .dr-name{display:block;color:#F4EEE2;font-size:14px;font-weight:700;letter-spacing:-.2px}
     .dr-desc{display:block;color:#6B6153;font-size:11px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .dr-pro{margin-left:auto;flex-shrink:0;font-size:9px;font-weight:700;letter-spacing:.7px;color:#FF9A70;background:rgba(255,90,31,.12);border:1px solid rgba(255,90,31,.35);border-radius:20px;padding:3px 8px}
     .dr-foot{margin-top:auto;padding-top:18px}
@@ -620,15 +710,15 @@
              résultat qualitatif en diagnostic, et ça rend le manque mesurable. -->
         <div id="quizStats" style="width:100%;max-width:320px;margin:22px auto 0;text-align:left;">
           <div style="display:flex;justify-content:space-between;align-items:baseline;">
-            <span style="color:#d8d8de;font-size:13px;font-weight:700;">😂 Humour</span><span id="qstatHumourVal" style="color:#FF9A70;font-size:13px;font-weight:700;">0%</span>
+            <span style="color:#CFC7BC;font-size:13px;font-weight:700;">😂 Humour</span><span id="qstatHumourVal" style="color:#FF9A70;font-size:13px;font-weight:700;">0%</span>
           </div>
           <div class="qstat-bar"><i id="qstatHumour"></i></div>
           <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;">
-            <span style="color:#d8d8de;font-size:13px;font-weight:700;">🎩 Style</span><span id="qstatStyleVal" style="color:#FF9A70;font-size:13px;font-weight:700;">0%</span>
+            <span style="color:#CFC7BC;font-size:13px;font-weight:700;">🎩 Style</span><span id="qstatStyleVal" style="color:#FF9A70;font-size:13px;font-weight:700;">0%</span>
           </div>
           <div class="qstat-bar"><i id="qstatStyle"></i></div>
           <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;">
-            <span style="color:#d8d8de;font-size:13px;font-weight:700;">🌶️ Tension</span><span id="qstatTensionVal" style="color:#FF9A70;font-size:13px;font-weight:700;">0%</span>
+            <span style="color:#CFC7BC;font-size:13px;font-weight:700;">🌶️ Tension</span><span id="qstatTensionVal" style="color:#FF9A70;font-size:13px;font-weight:700;">0%</span>
           </div>
           <div class="qstat-bar"><i id="qstatTension"></i></div>
         </div>
@@ -673,9 +763,16 @@
 
       <input type="file" id="fileInput" accept="image/*" hidden>
       <div class="dropzone" id="dropzone" style="margin-top:20px;position:relative;z-index:2;">
-        <div id="dzEmpty" style="display:flex;flex-direction:column;align-items:center;gap:18px;">
-          <div class="arrow" style="width:66px;height:66px;border-radius:20px;background:rgba(255,90,31,.14);display:flex;align-items:center;justify-content:center;">
-            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FF5A1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"></path><path d="m6 10 6-6 6 6"></path><path d="M4 20h16"></path></svg>
+        <div id="dzEmpty" style="display:flex;flex-direction:column;align-items:center;gap:14px;">
+          <!-- Aperçu de ce qu'on attend : une conv qui coince. L'ancienne zone
+               était un grand vide avec une flèche — elle n'expliquait rien. -->
+          <div class="dz-mock">
+            <div class="dz-mock-row"><span class="dz-mock-av"></span><span class="dz-mock-b her">Haha t'es vraiment trop 😭</span></div>
+            <div class="dz-mock-row"><span class="dz-mock-av"></span><span class="dz-mock-b her">Tu fais quoi ce week-end ?</span></div>
+            <div class="dz-mock-row me"><span class="dz-mock-b none">…</span></div>
+            <div class="dz-mock-badge">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"></path><path d="m6 10 6-6 6 6"></path><path d="M4 20h16"></path></svg>
+            </div>
           </div>
           <div>
             <div style="color:#fff;font-size:16px;font-weight:600;">Dépose ta capture ici</div>
@@ -830,7 +927,12 @@
       </div>
 
       <button class="copy-cta" id="copyBtn"><span id="copyIcon" style="font-size:16px;">📋</span> <span id="copyText">Copier la réplique</span></button>
-      <button class="btn-secondary" id="shareBtn" style="margin-top:10px;"><span id="shareIcon">🦊</span> <span id="shareText">Partager en story</span></button>
+      <!-- Les actions secondaires sur une seule ligne : trois boutons pleine
+           largeur empilés donnaient trois barres plates sans hiérarchie. -->
+      <div class="act-row">
+        <button class="btn-secondary" id="shareBtn"><span id="shareIcon">🦊</span> <span id="shareText">Partager</span></button>
+        <button class="btn-secondary" id="resetBtn">↻ Nouvelle analyse</button>
+      </div>
       <!-- Upsell au moment chaud : juste après une victoire (copie d'une réplique) -->
       <button id="copyUpsell" style="display:none;width:100%;margin-top:10px;background:rgba(255,90,31,.08);border:1px solid rgba(255,90,31,.3);color:#B5ABA0;font-family:inherit;font-size:12.5px;border-radius:14px;padding:11px 14px;cursor:pointer;line-height:1.45;">
         🦊 Elle t'a plu ? Les Premium en ont <span style="color:#FF7A45;font-weight:700;">en illimité</span> + les tons secrets 😈 — <span style="color:#FF7A45;font-weight:700;text-decoration:underline;">essaie 3 jours gratuits</span>
@@ -848,7 +950,6 @@
         </div>
       </div>
 
-      <button class="btn-secondary" id="resetBtn" style="margin-top:12px;">🔄 Nouvelle analyse</button>
     </section>
 
     <!-- ═══════════════ ÉCRAN 5 — COACH (diagnostic de conv) ═══════════════ -->
@@ -889,7 +990,7 @@
           <p id="coachVerdict" style="color:#F4EEE2;font-size:14.5px;line-height:1.55;margin:9px 0 0;"></p>
         </div>
 
-        <div class="coach-card" style="border-color:rgba(255,90,31,.5);background:rgba(255,90,31,.06);">
+        <div class="coach-card coach-move" style="border-color:rgba(255,90,31,.5);background:rgba(255,90,31,.06);">
           <div class="coach-lbl" style="color:#FF7A45;">🎯 Ton meilleur move</div>
           <p id="coachMove" style="color:#fff;font-size:14.5px;line-height:1.55;margin:9px 0 0;font-weight:500;"></p>
         </div>
@@ -905,7 +1006,9 @@
       </div>
 
       <button class="copy-cta" id="coachCopy"><span id="coachCopyIcon" style="font-size:16px;">📋</span> <span id="coachCopyText">Copier la réplique</span></button>
-      <button class="btn-secondary" id="coachReset" style="margin-top:12px;">🔄 Nouvelle analyse</button>
+      <div class="act-row">
+        <button class="btn-secondary" id="coachReset">↻ Nouvelle analyse</button>
+      </div>
     </section>
 
     <!-- ═══════════════ ÉCRAN 6 — BIO (3 versions réécrites) ═══════════════ -->
@@ -1124,7 +1227,7 @@
           <!-- Volontairement discret et logé ICI seulement (pas dans le menu principal) :
                visible pour qui vient le chercher dans "Mon compte", pas mis en avant
                pour ne pas donner l'idée de résilier à quelqu'un qui n'y pensait pas. -->
-          <button id="authBilling" style="display:none;width:100%;padding:13px 14px;background:#1A1613;border:1px solid #2B2420;color:#e8e6e3;font-family:inherit;font-weight:600;font-size:13.5px;border-radius:14px;cursor:pointer;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+          <button id="authBilling" style="display:none;width:100%;padding:13px 14px;background:#1A1613;border:1px solid #2B2420;color:#F4EEE2;font-family:inherit;font-weight:600;font-size:13.5px;border-radius:14px;cursor:pointer;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:10px;">
             <span>Gérer mon abonnement</span>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;"><path d="M9 6l6 6-6 6" stroke="#9C9082" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
@@ -1205,7 +1308,7 @@
              tard" était tout en bas de la carte : sur un panneau qui scrolle, beaucoup
              ne le trouvaient jamais et se sentaient piégés. -->
         <div style="position:sticky;top:0;z-index:3;height:0;display:flex;justify-content:flex-end;">
-          <button id="gateCloseTop" aria-label="Fermer" style="width:36px;height:36px;border-radius:999px;background:rgba(22,22,24,.92);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.16);color:#e6e6ec;font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;">×</button>
+          <button id="gateCloseTop" aria-label="Fermer" style="width:36px;height:36px;border-radius:999px;background:rgba(22,22,24,.92);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.16);color:#CFC7BC;font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;">×</button>
         </div>
         <!-- Header -->
         <div class="pw-icon">
@@ -1291,7 +1394,7 @@
 
         <!-- Footer -->
         <div style="display:flex;align-items:center;justify-content:center;gap:9px;margin-top:16px;flex-wrap:wrap;">
-          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#a2a2ab;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6l7-3z" stroke="#5aa9ff" stroke-width="2" stroke-linejoin="round"/></svg>Remboursé 7 jours</span>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#9C9082;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6l7-3z" stroke="#5aa9ff" stroke-width="2" stroke-linejoin="round"/></svg>Remboursé 7 jours</span>
           <span style="width:3px;height:3px;border-radius:999px;background:#41372F;"></span>
           <button id="gateLogin" style="background:none;border:none;font-family:inherit;font-size:12.5px;font-weight:700;color:#FF9A70;cursor:pointer;text-decoration:none;">Se connecter</button>
         </div>
