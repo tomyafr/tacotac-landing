@@ -316,19 +316,7 @@
                   <span id="f-status" class="app-badge">🌶️ Mode Spicy</span>
                 </div>
 
-                <!-- le screenshot qu'on vient de prendre, en cours de lecture -->
-                <div class="app-thumb" style="margin-top:11px;">
-                  <div id="f-scan" class="app-scan"></div>
-                  <div style="padding:8px 9px;display:flex;flex-direction:column;gap:5px;">
-                    <div style="display:flex;align-items:center;gap:5px;">
-                      <div style="width:13px;height:13px;border-radius:50%;background:linear-gradient(135deg,#f472b6,#e11d48);"></div>
-                      <span style="color:#fff;font-size:7.5px;font-weight:600;">sophie.m</span>
-                    </div>
-                    <div style="align-self:flex-start;background:#2B2E33;color:#d8d8d8;border-radius:8px;padding:4px 7px;font-size:7.5px;max-width:84%;">Tu fais quoi ce week-end ?</div>
-                  </div>
-                </div>
-
-                <p id="f-tonelabel" class="app-lbl stg" style="margin:12px 0 7px;text-align:left;flex-shrink:0;">Choisis ton ton</p>
+                <p id="f-tonelabel" class="app-lbl stg" style="margin:16px 0 8px;text-align:left;flex-shrink:0;">Choisis ton ton</p>
                 <div id="f-pills" class="stg" style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;flex-shrink:0;">
                   <span class="app-pill"><span class="pe">🎩</span><span class="pl">Classe</span></span>
                   <span class="app-pill"><span class="pe">😂</span><span class="pl">Drôle</span></span>
@@ -893,7 +881,7 @@
       reset() {
         ['f-m1','f-typing','f-m2','f-sent','f-typing2','f-m3',
          'f-tonelabel','f-pills','f-res','f-copied',
-         'f-app','f-freeze','f-flash','f-scan','f-bubble','f-shot',
+         'f-app','f-freeze','f-flash','f-bubble','f-shot',
          'f-ch1','f-ch2','f-ch3'].forEach(id => this.off(id));
         ['f-btn-volup','f-btn-power'].forEach(id => { const e = $(id); if (e) e.classList.remove('pressed'); });
         const pd = $('f-pill-spicy'); if (pd) pd.classList.remove('sel');
@@ -979,9 +967,9 @@
 
         /* la réflexion s'efface sur l'écran des répliques */
         this.at(9300, () => { const t = $('f-think'); if (t) t.classList.add('gone'); });
-        this.at(9600, () => { this.on('f-scan'); this.on('f-tonelabel'); this.on('f-pills'); });
+        this.at(9600, () => { this.on('f-tonelabel'); this.on('f-pills'); });
         this.at(10200, () => { const pd = $('f-pill-spicy'); if (pd) pd.classList.add('sel'); });
-        this.at(10700, () => { this.off('f-scan'); this.on('f-res'); });
+        this.at(10700, () => this.on('f-res'));
         this.at(12000, () => this.on('f-copied'));
 
         /* ─── ACTE 4 : la réponse part, Sophie mord ─── */
