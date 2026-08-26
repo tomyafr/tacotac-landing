@@ -342,7 +342,6 @@ const INTRO_CAPTIONS_DROLES = [
   "je dm la meuf à mon frère",
   "je drague la fille de ma belle mère",
 ];
-const INTRO_CAPTIONS = [...INTRO_CAPTIONS_CLASSIQUES, ...INTRO_CAPTIONS_DROLES];
 // Laissé au modèle, le choix ENTRE les deux pools convergeait vers zéro titre
 // "second degré" (aucun en plusieurs dizaines de vidéos) — probablement le
 // modèle qui évite de lui-même des titres évoquant des liens familiaux, même
@@ -351,9 +350,29 @@ const INTRO_CAPTIONS = [...INTRO_CAPTIONS_CLASSIQUES, ...INTRO_CAPTIONS_DROLES];
 // seulement LEQUEL dans le pool imposé colle le mieux au scénario.
 type IntroPool = "classique" | "drole";
 
+// Profil "rôles inversés" (solene/Amelia) : c'est ELLE qui drague UN MEC. Les
+// titres normaux ciblaient une fille ("la plus belle", "une meuf") — publiés tels
+// quels sur ses vidéos, ils contredisaient l'histoire à l'écran. Cibles masculinisées.
+// Volontairement SANS les titres second degré : Tom ne les veut que pour lui/anomy.
+const INTRO_CAPTIONS_CLASSIQUES_REVERSED = [
+  "je teste mon football sur insta",
+  "je drague le plus beau du lycée *prenez des notes*",
+  "comment dm sur insta (prenez des notes les meufs)",
+  "comment gérer un mec sur insta",
+  "regarde comment je gère mon football",
+  "je gère ce 10/10 par message",
+  "je dm ma crush",
+  "regarde comment je gère ce pain",
+  "je gère mon football par message",
+  "regarde comment je dm ce 10/10",
+];
+
 // Pools actifs pour ce profil (droits pour "solene"/Amelia, par défaut sinon).
 const ACTIVE_STORY_ANGLES = REVERSED ? STORY_REPLY_ANGLES_REVERSED : STORY_REPLY_ANGLES;
 const ACTIVE_ARCHETYPES = REVERSED ? CONVERSATION_ARCHETYPES_REVERSED : CONVERSATION_ARCHETYPES;
+// Côté "classique" seulement — le pool "drole" n'a pas de variante REVERSED,
+// il est simplement jamais tiré pour ce profil (voir nextIntroPool).
+const ACTIVE_INTRO_CAPTIONS_CLASSIQUES = REVERSED ? INTRO_CAPTIONS_CLASSIQUES_REVERSED : INTRO_CAPTIONS_CLASSIQUES;
 
 // ── Rotation générique : jamais de doublon avant d'avoir épuisé tout le pool ──
 // (corrige le bug "2 fois la même fille" observé sur un batch de 5 vidéos —
@@ -390,7 +409,7 @@ function loadState(): State {
     storyAngleOrder: shuffle(ACTIVE_STORY_ANGLES), storyAngleIndex: 0,
     outroAngleOrder: shuffle(OUTRO_ANGLES), outroAngleIndex: 0,
     archetypeOrder: shuffle(ACTIVE_ARCHETYPES), archetypeIndex: 0,
-    captionClassiqueOrder: shuffle(INTRO_CAPTIONS_CLASSIQUES), captionClassiqueIndex: 0,
+    captionClassiqueOrder: shuffle(ACTIVE_INTRO_CAPTIONS_CLASSIQUES), captionClassiqueIndex: 0,
     captionDroleOrder: shuffle(INTRO_CAPTIONS_DROLES), captionDroleIndex: 0,
     introPoolOrder: shuffle(introPoolTags()), introPoolIndex: 0,
     musicOrder: shuffle(MUSIC_KEYS), musicIndex: 0,
@@ -411,7 +430,7 @@ function loadState(): State {
       sameSet(s.storyAngleOrder, ACTIVE_STORY_ANGLES) &&
       sameSet(s.outroAngleOrder, OUTRO_ANGLES) &&
       sameSet(s.archetypeOrder, ACTIVE_ARCHETYPES) &&
-      sameSet(s.captionClassiqueOrder, INTRO_CAPTIONS_CLASSIQUES) &&
+      sameSet(s.captionClassiqueOrder, ACTIVE_INTRO_CAPTIONS_CLASSIQUES) &&
       sameSet(s.captionDroleOrder, INTRO_CAPTIONS_DROLES) &&
       Array.isArray(s.introPoolOrder) && s.introPoolOrder.length === introPoolTags().length &&
       sameSet(s.musicOrder, MUSIC_KEYS) &&
@@ -464,7 +483,10 @@ function nextTone(state: State): Tone {
   return t;
 }
 // Quel POOL pour cette vidéo — voir le commentaire sur IntroPool plus haut.
+// Profil REVERSED (solene) : jamais de pool "drole", Tom ne les veut que pour
+// lui/anomy — la rotation ne tire donc que dans "classique" pour elle.
 function nextIntroPool(state: State): IntroPool {
+  if (REVERSED) return "classique";
   if (state.introPoolIndex >= state.introPoolOrder.length) {
     state.introPoolOrder = shuffle(introPoolTags());
     state.introPoolIndex = 0;
@@ -489,7 +511,7 @@ function nextIntroCaption(state: State, pool: IntroPool): string {
     return caption;
   }
   if (state.captionClassiqueIndex >= state.captionClassiqueOrder.length) {
-    state.captionClassiqueOrder = shuffle(INTRO_CAPTIONS_CLASSIQUES);
+    state.captionClassiqueOrder = shuffle(ACTIVE_INTRO_CAPTIONS_CLASSIQUES);
     state.captionClassiqueIndex = 0;
   }
   const caption = state.captionClassiqueOrder[state.captionClassiqueIndex];
@@ -711,7 +733,7 @@ ${structureRules}
 
 ⚠️ LE TITRE (champ "introCaption") — c'est la 1re seconde de la vidéo, c'est lui qui fait s'arrêter le pouce.
 Choisis EXACTEMENT une phrase dans cette liste, recopiée au caractère près (aucune invention, aucune variante) :
-${(introPool === "drole" ? INTRO_CAPTIONS_DROLES : INTRO_CAPTIONS_CLASSIQUES).map((c) => `  · ${c}`).join("\n")}
+${(introPool === "drole" ? INTRO_CAPTIONS_DROLES : ACTIVE_INTRO_CAPTIONS_CLASSIQUES).map((c) => `  · ${c}`).join("\n")}
 ${introPool === "drole" ? `
 Ces titres sont volontairement "second degré" / provocateurs — c'est un APPÂT pour faire réagir en commentaire ("attends QUOI ?"). Prends celui qui colle le mieux au scénario que tu vas écrire ; ne le rejette pas parce qu'il te semble limite, c'est fait exprès et déjà validé.
 
@@ -750,7 +772,7 @@ const buildOutputSchema = (introPool: IntroPool) => ({
   properties: {
     girlName: { type: "string" },
     status: { type: "string" },
-    introCaption: { enum: introPool === "drole" ? INTRO_CAPTIONS_DROLES : INTRO_CAPTIONS_CLASSIQUES },
+    introCaption: { enum: introPool === "drole" ? INTRO_CAPTIONS_DROLES : ACTIVE_INTRO_CAPTIONS_CLASSIQUES },
     storyReply: { type: "string" },
     outroText: { type: "string" },
     beats: {
@@ -869,7 +891,7 @@ function assemble(g: GenOutput, state: State, structure: Structure, forcedTone: 
   // = pas de schéma contraignant), on retombe sur la rotation code À L'INTÉRIEUR
   // du même pool imposé : jamais de titre inventé à l'écran, et le pool forcé
   // n'est jamais contourné même en cas de fallback.
-  const allowedCaptions = introPool === "drole" ? INTRO_CAPTIONS_DROLES : INTRO_CAPTIONS_CLASSIQUES;
+  const allowedCaptions = introPool === "drole" ? INTRO_CAPTIONS_DROLES : ACTIVE_INTRO_CAPTIONS_CLASSIQUES;
   const introCaption = allowedCaptions.includes(g.introCaption) ? g.introCaption : nextIntroCaption(state, introPool);
   const music = nextMusic(state);
   // Quel écran de l'app montrer : en format B le PREMIER moment Tacotac est le DM
@@ -895,7 +917,7 @@ function assemble(g: GenOutput, state: State, structure: Structure, forcedTone: 
     // Format B : la vidéo ouvre sur SA photo (la même que l'avatar de la conv),
     // puis le meme de réaction, puis l'écran DM de l'app.
     openPhoto: structure === "B" ? girl : undefined,
-    // Titre incrusté sur l'intro, tiré en rotation par le code (voir INTRO_CAPTIONS).
+    // Titre incrusté sur l'intro, choisi par le modèle dans le pool imposé (voir IntroPool).
     introCaption,
     // Musique en rotation : le rendu en déduit aussi la coupe d'intro (music.ts).
     music,
