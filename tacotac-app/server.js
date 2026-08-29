@@ -2238,6 +2238,14 @@ app.post('/api/checkout', async (req, res) => {
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
+      // Amazon Pay et Satispay retirés : sur les échecs de paiement observés fin
+      // août, les 2 seuls motifs "Refus général" (le plus opaque, aucun détail
+      // exploitable) venaient de ces 2 moyens de paiement — jamais d'une carte
+      // classique. Ils gèrent mal l'engagement récurrent d'un abonnement.
+      // 'card' inclut automatiquement Apple Pay / Google Pay (boutons wallet
+      // affichés par Stripe quand l'appareil du client les supporte) : aucune
+      // perte de méthode de paiement usuelle pour le client, juste ces 2 rails.
+      payment_method_types: ['card'],
       line_items: [{ price, quantity: 1 }],
       client_reference_id: deviceId,             // relie le paiement à l'appareil
       ...(req.account ? { customer_email: req.account.email } : {}),
