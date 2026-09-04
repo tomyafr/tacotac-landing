@@ -55,6 +55,10 @@
     "victoire": {
       "desc": "victoire / hype / gros flex / célébration foot",
       "memes": ["memes/chat-rigole.png", "memes/hype-tire-langue.png", "memes/curry-panier-lune.jpg", "memes/curry-tir-galaxie.jpg", "memes/dunk-noir-blanc.jpg", "memes/neymar-piscine-hype.jpg", "memes/bellingham-celebration.mp4", "memes/neymar-bresil-celebration.mp4", "memes/ronaldo-court-content.mp4", "memes/ronaldo-siu.mp4", "memes/mbappe-celebration.mp4", "memes/mec-hype-torse.mp4", "memes/dembele-celebration.mp4", "memes/lebron-dunk.mp4", "memes/vince-carter-dunk.mp4", "memes/jordan-shoot.mp4", "memes/lebron-block.mp4", "memes/jordan-free-throw-dunk.mp4", "memes/dunk-poster.jpg", "memes/curry-lebron-espace.jpg", "memes/curry-kuroko.jpg"]
+    },
+    "avant_dm": {
+      "desc": "juste avant qu'il DM : il prépare son coup, il a un plan (validé par Tom le 05/09)",
+      "memes": ["memes/mourinho-notes.jpg", "memes/observe-frotte-mains.jpg", "memes/chat-tape-clavier.mp4", "memes/malin-tempe.mp4"]
     }
   }
 }

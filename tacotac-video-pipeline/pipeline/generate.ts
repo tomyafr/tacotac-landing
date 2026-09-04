@@ -85,6 +85,12 @@ for (const [beat, { memes }] of Object.entries(library.beats)) {
 const memeBasenames = memeCatalog.map((m) => m.basename);
 const memeByBasename = new Map(memeCatalog.map((m) => [m.basename, m]));
 
+// Meme "il prépare son coup", inséré par le CODE juste avant l'écran DM, pas
+// choisi par le modèle — même principe que tool/tone/musique : un placement
+// structurel fixe, en rotation, ne doit jamais dépendre de ce que le modèle
+// pense à faire. Validé par Tom le 05/09 (4 memes, pour que ça tourne).
+const AVANT_DM_MEMES = library.beats.avant_dm?.memes ?? [];
+
 const OUTRO_BGS = [
   "memes/neymar-rose.jpg",
   "memes/eminem-rose.jpg",
@@ -394,6 +400,7 @@ type State = {
   musicOrder: string[]; musicIndex: number;
   structureOrder: Structure[]; structureIndex: number;
   toneOrder: Tone[]; toneIndex: number;
+  avantDmOrder: string[]; avantDmIndex: number;
 };
 // 10 "classique" + 7 "drole" (taille réelle des pools) : sur un cycle complet,
 // chaque titre drôle sort exactement une fois, ni plus ni moins souvent que prévu.
@@ -421,6 +428,7 @@ function loadState(): State {
     musicOrder: shuffle(MUSIC_KEYS), musicIndex: 0,
     structureOrder: shuffle(STRUCTURES), structureIndex: 0,
     toneOrder: shuffle([...tones]), toneIndex: 0,
+    avantDmOrder: shuffle(AVANT_DM_MEMES), avantDmIndex: 0,
   });
   try {
     const s = JSON.parse(fs.readFileSync(STATE_PATH, "utf8")) as State;
@@ -441,7 +449,8 @@ function loadState(): State {
       Array.isArray(s.introPoolOrder) && s.introPoolOrder.length === introPoolTags().length &&
       sameSet(s.musicOrder, MUSIC_KEYS) &&
       sameSet(s.structureOrder, STRUCTURES) &&
-      sameSet(s.toneOrder, tones);
+      sameSet(s.toneOrder, tones) &&
+      sameSet(s.avantDmOrder, AVANT_DM_MEMES);
     return ok ? s : fresh();
   } catch {
     return fresh(); // pas de state ou invalide → on en crée un
@@ -459,6 +468,17 @@ function nextGirl(state: State): string {
   state.girlIndex++;
   saveState(state);
   return girl;
+}
+function nextAvantDmMeme(state: State): string | undefined {
+  if (AVANT_DM_MEMES.length === 0) return undefined;
+  if (state.avantDmIndex >= state.avantDmOrder.length) {
+    state.avantDmOrder = shuffle(AVANT_DM_MEMES);
+    state.avantDmIndex = 0;
+  }
+  const m = state.avantDmOrder[state.avantDmIndex];
+  state.avantDmIndex++;
+  saveState(state);
+  return m;
 }
 // TACOTAC_STRUCTURE=A|B force le format pour ce run (utile pour tester un seul
 // des deux sans consommer plusieurs générations). Vide = rotation normale.
@@ -914,6 +934,18 @@ function assemble(g: GenOutput, state: State, structure: Structure, forcedTone: 
     const { full, beat } = resolveMemeAsset(b.asset);
     return { type: "meme", asset: full, beat };
   });
+  // Meme "il prépare son coup" inséré par le CODE juste avant l'écran DM (voir
+  // AVANT_DM_MEMES / nextAvantDmMeme) : ni choisi ni placé par le modèle, pour
+  // que ça tourne vraiment entre les 4 memes validés plutôt que de dépendre de
+  // ce que le modèle pense à faire.
+  if (structure === "B") {
+    const dmIndex = beats.findIndex((b) => b.type === "tacotac" && b.tool === "dm");
+    const avantDm = nextAvantDmMeme(state);
+    if (dmIndex >= 0 && avantDm) {
+      const { full, beat } = resolveMemeAsset(avantDm);
+      beats.splice(dmIndex, 0, { type: "meme", asset: full, beat });
+    }
+  }
   return {
     id: `vid_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
     girl: { name: g.girlName, avatar: girl, status: g.status, storyThumbnail: girl },
