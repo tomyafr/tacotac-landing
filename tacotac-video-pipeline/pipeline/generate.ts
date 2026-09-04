@@ -291,11 +291,17 @@ const CONVERSATION_ARCHETYPES_REVERSED = [
 const MUSIC_BY_PROFILE: Record<string, string[]> = { anomy: ["pistolet"] };
 const MUSIC_KEYS = MUSIC_BY_PROFILE[PROFILE] ?? Object.keys(MUSIC_TRACKS);
 
-// Deux formats de vidéo en alternance stricte (une sur deux) :
-//  A — il répond à la story lui-même, Tacotac ne souffle QUE la réplique
-//  B — Tacotac écrit le 1er DM, puis la réplique (les 2 outils sont montrés)
+// Un seul format actif : B — Tacotac écrit le 1er DM (outil "DM") PUIS la
+// réplique (outil "Réplique"), les 2 outils sont montrés à l'écran.
+// Format A retiré le 05/09/26 sur demande de Tom : son amorce était écrite
+// directement comme un message normal, JAMAIS via l'outil DM — donc la moitié
+// de la vidéo ne montrait pas le produit, et cette amorce "libre" (pas tenue
+// à la même barre de qualité qu'un vrai beat tacotac) sortait souvent faible
+// ("souvent des phrases bidons"). Le type garde "A" pour ne pas casser les
+// scripts déjà en file/rendus qui le référencent encore, mais plus aucune
+// nouvelle vidéo ne peut le tirer.
 type Structure = "A" | "B";
-const STRUCTURES: Structure[] = ["A", "B"];
+const STRUCTURES: Structure[] = ["B"];
 
 // Légende incrustée sur l'intro (le clip est "vierge", sans texte brûlé — voir
 // Intro.tsx). Elle était tirée au sort par le code dans un pool figé de 4 phrases :
