@@ -90,6 +90,19 @@ const memeByBasename = new Map(memeCatalog.map((m) => [m.basename, m]));
 // structurel fixe, en rotation, ne doit jamais dépendre de ce que le modèle
 // pense à faire. Validé par Tom le 05/09 (4 memes, pour que ça tourne).
 const AVANT_DM_MEMES = library.beats.avant_dm?.memes ?? [];
+// Texte incrusté sur ce meme, en rotation INDÉPENDANTE de l'image (voir
+// nextAvantDmMeme / nextAvantDmCaption) : plus de combinaisons possibles que si
+// chaque image avait son texte figé. Proposé à Tom pour validation le 05/09.
+const AVANT_DM_CAPTIONS = [
+  "laisse moi cook",
+  "je prends des notes",
+  "j'ai un plan",
+  "chut je réfléchis",
+  "regarde et apprends",
+  "phase de préparation",
+  "attends je calcule",
+  "3... 2... 1...",
+];
 
 const OUTRO_BGS = [
   "memes/neymar-rose.jpg",
@@ -401,6 +414,7 @@ type State = {
   structureOrder: Structure[]; structureIndex: number;
   toneOrder: Tone[]; toneIndex: number;
   avantDmOrder: string[]; avantDmIndex: number;
+  avantCaptionOrder: string[]; avantCaptionIndex: number;
 };
 // 10 "classique" + 7 "drole" (taille réelle des pools) : sur un cycle complet,
 // chaque titre drôle sort exactement une fois, ni plus ni moins souvent que prévu.
@@ -429,6 +443,7 @@ function loadState(): State {
     structureOrder: shuffle(STRUCTURES), structureIndex: 0,
     toneOrder: shuffle([...tones]), toneIndex: 0,
     avantDmOrder: shuffle(AVANT_DM_MEMES), avantDmIndex: 0,
+    avantCaptionOrder: shuffle(AVANT_DM_CAPTIONS), avantCaptionIndex: 0,
   });
   try {
     const s = JSON.parse(fs.readFileSync(STATE_PATH, "utf8")) as State;
@@ -450,7 +465,8 @@ function loadState(): State {
       sameSet(s.musicOrder, MUSIC_KEYS) &&
       sameSet(s.structureOrder, STRUCTURES) &&
       sameSet(s.toneOrder, tones) &&
-      sameSet(s.avantDmOrder, AVANT_DM_MEMES);
+      sameSet(s.avantDmOrder, AVANT_DM_MEMES) &&
+      sameSet(s.avantCaptionOrder, AVANT_DM_CAPTIONS);
     return ok ? s : fresh();
   } catch {
     return fresh(); // pas de state ou invalide → on en crée un
@@ -479,6 +495,17 @@ function nextAvantDmMeme(state: State): string | undefined {
   state.avantDmIndex++;
   saveState(state);
   return m;
+}
+function nextAvantDmCaption(state: State): string | undefined {
+  if (AVANT_DM_CAPTIONS.length === 0) return undefined;
+  if (state.avantCaptionIndex >= state.avantCaptionOrder.length) {
+    state.avantCaptionOrder = shuffle(AVANT_DM_CAPTIONS);
+    state.avantCaptionIndex = 0;
+  }
+  const c = state.avantCaptionOrder[state.avantCaptionIndex];
+  state.avantCaptionIndex++;
+  saveState(state);
+  return c;
 }
 // TACOTAC_STRUCTURE=A|B force le format pour ce run (utile pour tester un seul
 // des deux sans consommer plusieurs générations). Vide = rotation normale.
@@ -943,7 +970,7 @@ function assemble(g: GenOutput, state: State, structure: Structure, forcedTone: 
     const avantDm = nextAvantDmMeme(state);
     if (dmIndex >= 0 && avantDm) {
       const { full, beat } = resolveMemeAsset(avantDm);
-      beats.splice(dmIndex, 0, { type: "meme", asset: full, beat });
+      beats.splice(dmIndex, 0, { type: "meme", asset: full, beat, caption: nextAvantDmCaption(state) });
     }
   }
   return {

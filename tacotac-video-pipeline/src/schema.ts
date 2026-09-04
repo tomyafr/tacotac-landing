@@ -38,6 +38,10 @@ export const memeBeat = z.object({
   type: z.literal("meme"),
   asset: z.string(), // chemin dans public/ (ex: "memes/thinking.png")
   beat: z.string(), // tag émotionnel (il_reflechit, victoire, …)
+  // Texte incrusté par-dessus le meme (ex: "laisse moi cook"). Optionnel — la
+  // plupart des memes n'en ont pas. Choisi par le CODE en rotation, comme le
+  // meme lui-même (voir AVANT_DM_CAPTIONS dans generate.ts).
+  caption: z.string().optional(),
 });
 
 export const endingBeat = z.object({

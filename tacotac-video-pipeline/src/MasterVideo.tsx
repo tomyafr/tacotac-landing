@@ -29,7 +29,7 @@ const renderScene = (script: Script, s: Scene) => {
     case "tacotac":
       return <TacotacScreenshot beat={s.beat} />;
     case "meme":
-      return <MemeOverlay asset={s.asset} />;
+      return <MemeOverlay asset={s.asset} caption={s.caption} />;
   }
 };
 

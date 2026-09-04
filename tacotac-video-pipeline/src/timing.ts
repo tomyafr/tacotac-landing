@@ -43,7 +43,7 @@ export type Scene =
   | { kind: "caption"; text: string; background: string; variant: "outro"; dur: number }
   | { kind: "dm"; base: DMItem[]; reveals: DMItem[]; starts: number[]; dur: number }
   | { kind: "tacotac"; beat: TacotacBeat; dur: number }
-  | { kind: "meme"; asset: string; dur: number };
+  | { kind: "meme"; asset: string; caption?: string; dur: number };
 
 // Parcourt les beats → scènes. Les messages consécutifs sont regroupés dans UNE
 // scène DM continue (aucun fondu entre eux) ; les cutaways (tacotac/meme) coupent
@@ -103,7 +103,7 @@ export function buildScenes(script: Script): Scene[] {
       scenes.push({ kind: "tacotac", beat, dur: tacotacTime(beat.text) });
     } else if (beat.type === "meme") {
       flushDm();
-      scenes.push({ kind: "meme", asset: beat.asset, dur: D.meme });
+      scenes.push({ kind: "meme", asset: beat.asset, caption: beat.caption, dur: D.meme });
     }
   }
   flushDm();
