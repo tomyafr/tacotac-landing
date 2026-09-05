@@ -92,16 +92,13 @@ const memeByBasename = new Map(memeCatalog.map((m) => [m.basename, m]));
 const AVANT_DM_MEMES = library.beats.avant_dm?.memes ?? [];
 // Texte incrusté sur ce meme, en rotation INDÉPENDANTE de l'image (voir
 // nextAvantDmMeme / nextAvantDmCaption) : plus de combinaisons possibles que si
-// chaque image avait son texte figé. Proposé à Tom pour validation le 05/09.
+// chaque image avait son texte figé. Liste validée par Tom le 05/09.
 const AVANT_DM_CAPTIONS = [
   "laisse moi cook",
-  "je prends des notes",
+  "prends des notes",
   "j'ai un plan",
-  "chut je réfléchis",
   "regarde et apprends",
-  "phase de préparation",
-  "attends je calcule",
-  "3... 2... 1...",
+  "hop la technique secrète",
 ];
 
 const OUTRO_BGS = [
@@ -322,6 +319,14 @@ const MUSIC_KEYS = MUSIC_BY_PROFILE[PROFILE] ?? Object.keys(MUSIC_TRACKS);
 type Structure = "A" | "B";
 const STRUCTURES: Structure[] = ["B"];
 
+// Deux "formats" au sens de Tom (pas à confondre avec Structure ci-dessus, qui
+// est un détail interne) : "ancien" = conv classique, "nouveau" = avec le meme
+// "il prépare son coup" avant le DM (voir AVANT_DM_MEMES). Tom voulait au début
+// le nouveau pour tout le monde, puis a demandé le mix des deux — en rotation,
+// comme tout le reste, pour que ça reste équilibré. Décision du 05/09.
+type FormatVariant = "ancien" | "nouveau";
+const FORMAT_VARIANTS: FormatVariant[] = ["ancien", "nouveau"];
+
 // Légende incrustée sur l'intro (le clip est "vierge", sans texte brûlé — voir
 // Intro.tsx). Elle était tirée au sort par le code dans un pool figé de 4 phrases :
 // résultat, le titre n'avait aucun rapport avec la conv en dessous ("tuto dm son
@@ -415,6 +420,7 @@ type State = {
   toneOrder: Tone[]; toneIndex: number;
   avantDmOrder: string[]; avantDmIndex: number;
   avantCaptionOrder: string[]; avantCaptionIndex: number;
+  formatOrder: FormatVariant[]; formatIndex: number;
 };
 // 10 "classique" + 7 "drole" (taille réelle des pools) : sur un cycle complet,
 // chaque titre drôle sort exactement une fois, ni plus ni moins souvent que prévu.
@@ -444,6 +450,7 @@ function loadState(): State {
     toneOrder: shuffle([...tones]), toneIndex: 0,
     avantDmOrder: shuffle(AVANT_DM_MEMES), avantDmIndex: 0,
     avantCaptionOrder: shuffle(AVANT_DM_CAPTIONS), avantCaptionIndex: 0,
+    formatOrder: shuffle(FORMAT_VARIANTS), formatIndex: 0,
   });
   try {
     const s = JSON.parse(fs.readFileSync(STATE_PATH, "utf8")) as State;
@@ -466,7 +473,8 @@ function loadState(): State {
       sameSet(s.structureOrder, STRUCTURES) &&
       sameSet(s.toneOrder, tones) &&
       sameSet(s.avantDmOrder, AVANT_DM_MEMES) &&
-      sameSet(s.avantCaptionOrder, AVANT_DM_CAPTIONS);
+      sameSet(s.avantCaptionOrder, AVANT_DM_CAPTIONS) &&
+      sameSet(s.formatOrder, FORMAT_VARIANTS);
     return ok ? s : fresh();
   } catch {
     return fresh(); // pas de state ou invalide → on en crée un
@@ -506,6 +514,20 @@ function nextAvantDmCaption(state: State): string | undefined {
   state.avantCaptionIndex++;
   saveState(state);
   return c;
+}
+// TACOTAC_FORMAT=ancien|nouveau force le format pour ce run (même principe que
+// TACOTAC_STRUCTURE ci-dessous). Vide = rotation normale (mix des deux).
+const FORCED_FORMAT = (process.env.TACOTAC_FORMAT || "").toLowerCase();
+function nextFormatVariant(state: State): FormatVariant {
+  if (FORCED_FORMAT === "ancien" || FORCED_FORMAT === "nouveau") return FORCED_FORMAT;
+  if (state.formatIndex >= state.formatOrder.length) {
+    state.formatOrder = shuffle(FORMAT_VARIANTS);
+    state.formatIndex = 0;
+  }
+  const f = state.formatOrder[state.formatIndex];
+  state.formatIndex++;
+  saveState(state);
+  return f;
 }
 // TACOTAC_STRUCTURE=A|B force le format pour ce run (utile pour tester un seul
 // des deux sans consommer plusieurs générations). Vide = rotation normale.
@@ -964,8 +986,10 @@ function assemble(g: GenOutput, state: State, structure: Structure, forcedTone: 
   // Meme "il prépare son coup" inséré par le CODE juste avant l'écran DM (voir
   // AVANT_DM_MEMES / nextAvantDmMeme) : ni choisi ni placé par le modèle, pour
   // que ça tourne vraiment entre les 4 memes validés plutôt que de dépendre de
-  // ce que le modèle pense à faire.
-  if (structure === "B") {
+  // ce que le modèle pense à faire. Seul le format "nouveau" l'a — Tom voulait
+  // un mix avec l'"ancien" (sans ce meme), pas ce format à 100% (05/09).
+  const format = nextFormatVariant(state);
+  if (structure === "B" && format === "nouveau") {
     const dmIndex = beats.findIndex((b) => b.type === "tacotac" && b.tool === "dm");
     const avantDm = nextAvantDmMeme(state);
     if (dmIndex >= 0 && avantDm) {
