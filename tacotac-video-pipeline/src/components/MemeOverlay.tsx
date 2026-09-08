@@ -10,9 +10,13 @@ const isVideo = (p: string) => videoExts.some((e) => p.toLowerCase().endsWith(e)
 // Affiché en `contain` (letterbox centré) comme dans les vraies vidéos — le meme
 // n'est jamais croppé. Un clip plus court que le beat se fige sur sa dernière frame.
 //
-// `caption` : texte optionnel incrusté en bas (ex: "laisse moi cook"), choisi par
-// le CODE en rotation — voir memeBeat.caption dans schema.ts. La plupart des
-// memes n'en ont pas ; utilisé pour l'instant sur le meme "avant DM".
+// `caption` : texte optionnel incrusté au centre (ex: "laisse moi cook 🔥"),
+// choisi par le CODE en rotation — voir memeBeat.caption dans schema.ts. La
+// plupart des memes n'en ont pas ; utilisé pour l'instant sur le meme "avant DM".
+// Gros et centré (demande Tom du 08/09 : trop discret en bas). Le voile plein
+// écran (au lieu du dégradé du bas) garde le texte lisible même au milieu de
+// l'image. `titleEmoji` = même police que le reste + fallback couleur pour
+// l'emoji (voir theme.ts / fonts.ts) — sinon carré vide sur le VPS de rendu.
 export const MemeOverlay: React.FC<{ asset: string; caption?: string }> = ({ asset, caption }) => {
   const src = staticFile(asset);
   const fill: React.CSSProperties = {
@@ -29,21 +33,18 @@ export const MemeOverlay: React.FC<{ asset: string; caption?: string }> = ({ ass
       )}
       {caption && (
         <>
-          {/* voile pour la lisibilité, même logique que Intro.tsx mais en bas */}
-          <AbsoluteFill
-            style={{ background: "linear-gradient(0deg, rgba(0,0,0,.75), rgba(0,0,0,0) 45%)" }}
-          />
-          <AbsoluteFill style={{ alignItems: "center", justifyContent: "flex-end", padding: "0 60px 9%" }}>
+          <AbsoluteFill style={{ background: "rgba(0,0,0,.45)" }} />
+          <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", padding: "0 56px" }}>
             <div
               style={{
-                fontFamily: fonts.title,
+                fontFamily: fonts.titleEmoji,
                 fontWeight: 800,
-                fontSize: 58,
-                lineHeight: 1.12,
+                fontSize: 86,
+                lineHeight: 1.08,
                 color: "#fff",
                 textAlign: "center",
-                letterSpacing: -0.6,
-                textShadow: "0 3px 22px rgba(0,0,0,.8)",
+                letterSpacing: -0.8,
+                textShadow: "0 4px 26px rgba(0,0,0,.85)",
               }}
             >
               {caption}

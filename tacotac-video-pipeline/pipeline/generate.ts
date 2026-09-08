@@ -92,13 +92,16 @@ const memeByBasename = new Map(memeCatalog.map((m) => [m.basename, m]));
 const AVANT_DM_MEMES = library.beats.avant_dm?.memes ?? [];
 // Texte incrusté sur ce meme, en rotation INDÉPENDANTE de l'image (voir
 // nextAvantDmMeme / nextAvantDmCaption) : plus de combinaisons possibles que si
-// chaque image avait son texte figé. Liste validée par Tom le 05/09.
+// chaque image avait son texte figé. Liste validée par Tom le 05/09, emojis
+// ajoutés le 08/09 (police color emoji dédiée, voir src/fonts.ts — SEUL endroit
+// du pipeline avec emoji : le reste (messages, story, outro) reste ZÉRO EMOJI,
+// ce texte-ci n'est pas généré par le modèle donc pas concerné par cette règle).
 const AVANT_DM_CAPTIONS = [
-  "laisse moi cook",
-  "prends des notes",
-  "j'ai un plan",
-  "regarde et apprends",
-  "hop la technique secrète",
+  "laisse moi cook 🔥",
+  "prends des notes 📝",
+  "j'ai un plan 🧠",
+  "regarde et apprends 👀",
+  "hop la technique secrète 🤫",
 ];
 
 const OUTRO_BGS = [

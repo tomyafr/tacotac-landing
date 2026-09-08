@@ -54,6 +54,9 @@ export const toneMeta = {
 export const fonts = {
   title: "'Bricolage Grotesque', system-ui, sans-serif",
   body: "'Space Grotesk', system-ui, sans-serif",
+  // Même famille que `title`, + fallback emoji couleur (voir src/fonts.ts) pour
+  // le texte codé en dur qui peut contenir un emoji (ex: MemeOverlay caption).
+  titleEmoji: "'Bricolage Grotesque', 'Noto Color Emoji', system-ui, sans-serif",
 } as const;
 
 // Format vidéo cible
