@@ -656,7 +656,7 @@ function buildGenInstruction(angles: { story: string; outro: string; archetype: 
   const him = REVERSED ? "la cliente" : "le client";
   const commonBeats = `  • {"kind":"message","from":"girl"|"client","text":"..."}${REVERSED ? ' — ici "girl" = le mec dragué (bulle gauche), "client" = la cliente Tacotac (bulle droite).' : ""}
   • {"kind":"tacotac","tone":"<ton>","text":"..."} — ${him} ouvre l'app. DOIT être suivi IMMÉDIATEMENT d'un {"kind":"message","from":"client","text":"..."} avec EXACTEMENT le même texte.
-  • {"kind":"meme","asset":"<nom-de-fichier-exact>"} — vise environ UN MEME POUR DEUX MESSAGES (2 à 3 sur la vidéo). Pas entre chaque message, mais assez pour rythmer. Choisis le fichier qui colle LE MIEUX à ce qui vient d'être dit.
+  • {"kind":"meme","asset":"<nom-de-fichier-exact>"} — placé aux emplacements fixes indiqués dans la séquence ci-dessous. Choisis le fichier qui colle LE MIEUX à ce qui vient d'être dit à cet instant précis — jamais deux fois le même dans la même vidéo.
 - ⚠️ RAPPEL : amorce 45 caractères max, relance 4 mots max, chute 65 caractères max. Compte-les avant de valider.
 - ⚠️ RAPPEL : la relance de ${her} ("non pourquoi ?") n'est PAS un message creux interdit — c'est le pivot de la mécanique. C'est la SEULE exception à la règle "pas de message creux".
 - ⚠️ Le storyReply fait 60 CARACTÈRES MAXIMUM, une seule idée lui aussi. "tu postes ça un dimanche soir en sachant très bien ce que ça fait aux gens, assume au moins" = beaucoup trop long, coupe.
@@ -688,24 +688,29 @@ function buildGenInstruction(angles: { story: string; outro: string; archetype: 
 Le tout premier message de la conv est donc SON DM à lui. ${her} ne peut PAS parler avant : elle répondrait à un message qui n'existe pas.
 ⚠️ L'archétype imposé plus haut décrit une situation qui vient d'ELLE ("elle est occupée", "elle mentionne un autre mec"...) : en format DM, elle ne peut l'exprimer QUE dans sa RÉPONSE, jamais dans le premier message. C'est l'erreur qui a été commise 4 fois sur 15 — la vidéo s'ouvrait sur "n'importe quoi jsuis juste hyper occupée" alors que personne ne lui avait rien dit.
 
-- beats : 7 à 9 éléments, dans CET ordre — c'est la MÉCANIQUE EN 3 TEMPS, respecte-la à la lettre :
+- beats : 9 à 11 éléments, dans CET ordre — c'est la MÉCANIQUE EN 3 TEMPS, respecte-la à la lettre. Les memes sont à des emplacements FIXES (pas de discrétion sur leur nombre ou leur position, seulement sur le fichier choisi) :
   1. {"kind":"meme","asset":"..."} — la RÉACTION en voyant sa photo : choisis un meme qui bave / affamé / coquin / sous le charme. C'est le premier beat, obligatoire.
   2. {"kind":"tacotac",...} — l'outil DM écrit **L'AMORCE** (45 car. max, incompréhensible seule). ⚠️ C'EST LE PREMIER TEXTE DE LA CONV : aucun message de ${her} avant lui.
   3. {"kind":"message","from":"client"} — le même texte, envoyé
   4. {"kind":"message","from":"girl"} — **LA RELANCE** : 4 MOTS MAX, aucune vanne ("non pourquoi ?", "de quoi")
-  5. {"kind":"tacotac",...} — l'outil Réplique écrit **LA CHUTE** (65 car. max, image archi-connue)
-  6. {"kind":"message","from":"client"} — le même texte, envoyé
-  7. {"kind":"message","from":"girl"} — son COMPLIMENT, et la vidéo s'arrête là
+  5. {"kind":"meme","asset":"..."} — un meme de SUSPENSE/impatience (catégorie espoir ou il_reflechit) : elle attend sa réponse, on sent que ${him} va lâcher la chute.
+  6. {"kind":"tacotac",...} — l'outil Réplique écrit **LA CHUTE** (65 car. max, image archi-connue)
+  7. {"kind":"message","from":"client"} — le même texte, envoyé
+  8. {"kind":"message","from":"girl"} — son COMPLIMENT, et la vidéo s'arrête là
+  9. {"kind":"meme","asset":"..."} — meme de VICTOIRE/hype qui referme la vidéo sur la réaction du compliment.
 ${commonBeats}`
       : `RÈGLES DE STRUCTURE — FORMAT "STORY" :
 - storyReply : le TOUT PREMIER message de ${him}, en réponse à la story de ${her}. Écrit par ${him} lui-même, PAS par Tacotac.
-- beats : 6 à 8 éléments, dans CET ordre — c'est la MÉCANIQUE EN 3 TEMPS, respecte-la à la lettre :
-  1. {"kind":"message","from":"girl"} — sa réponse au storyReply
-  2. {"kind":"message","from":"client"} — **L'AMORCE** : 45 car. max, elle ne veut rien dire toute seule
-  3. {"kind":"message","from":"girl"} — **LA RELANCE** : 4 MOTS MAX, aucune vanne ("non pourquoi ?", "à quoi", "de quoi")
-  4. {"kind":"tacotac",...} — Tacotac écrit **LA CHUTE**, le message qui referme (65 car. max, image archi-connue)
-  5. {"kind":"message","from":"client"} — le même texte, envoyé
-  6. {"kind":"message","from":"girl"} — son COMPLIMENT, et la vidéo s'arrête là
+- beats : 8 à 10 éléments, dans CET ordre — c'est la MÉCANIQUE EN 3 TEMPS, respecte-la à la lettre. Les memes sont à des emplacements FIXES (pas de discrétion sur leur nombre ou leur position, seulement sur le fichier choisi) :
+  1. {"kind":"meme","asset":"..."} — la RÉACTION à sa story/son message : un meme qui colle à l'ambiance de départ.
+  2. {"kind":"message","from":"girl"} — sa réponse au storyReply
+  3. {"kind":"message","from":"client"} — **L'AMORCE** : 45 car. max, elle ne veut rien dire toute seule
+  4. {"kind":"message","from":"girl"} — **LA RELANCE** : 4 MOTS MAX, aucune vanne ("non pourquoi ?", "à quoi", "de quoi")
+  5. {"kind":"meme","asset":"..."} — un meme de SUSPENSE/impatience (catégorie espoir ou il_reflechit) : elle attend sa réponse, on sent que ${him} va lâcher la chute.
+  6. {"kind":"tacotac",...} — Tacotac écrit **LA CHUTE**, le message qui referme (65 car. max, image archi-connue)
+  7. {"kind":"message","from":"client"} — le même texte, envoyé
+  8. {"kind":"message","from":"girl"} — son COMPLIMENT, et la vidéo s'arrête là
+  9. {"kind":"meme","asset":"..."} — meme de VICTOIRE/hype qui referme la vidéo sur la réaction du compliment.
 ${commonBeats}`;
   return `Tu génères le SCÉNARIO d'une vidéo TikTok "fausse conversation de dating" qui fait la promo de Tacotac (l'app qui souffle les disquettes).
 
@@ -810,13 +815,13 @@ ${structureRules}
 - outroText : ${angles.outro}
 
 ⚠️ LE TITRE (champ "introCaption") — c'est la 1re seconde de la vidéo, c'est lui qui fait s'arrêter le pouce.
-Choisis EXACTEMENT une phrase dans cette liste, recopiée au caractère près (aucune invention, aucune variante) :
+Choisis UN SEUL exemple dans cette liste (celui qui colle le mieux à CE scénario) et reste PRESQUE IDENTIQUE à lui — quasiment mot pour mot, tu peux tout au plus changer 1 ou 2 mots pour l'ajuster au scénario. INTERDIT de fusionner deux exemples différents entre eux, et INTERDIT d'inventer une phrase nouvelle qui ne ressemble à aucun exemple précis : le résultat doit rester immédiatement reconnaissable comme CET exemple-là. ⛔ N'invente AUCUN mot ni tournure qui ne soit pas déjà dans l'exemple choisi — pas de synonyme "plus original", pas de mot rare ou soutenu pour faire varié : le titre doit se lire aussi simplement et naturellement que l'exemple lui-même, jamais bizarre à l'oral.
 ${(introPool === "drole" ? INTRO_CAPTIONS_DROLES : ACTIVE_INTRO_CAPTIONS_CLASSIQUES).map((c) => `  · ${c}`).join("\n")}
 ${introPool === "drole" ? `
-Ces titres sont volontairement "second degré" / provocateurs — c'est un APPÂT pour faire réagir en commentaire ("attends QUOI ?"). Prends celui qui colle le mieux au scénario que tu vas écrire ; ne le rejette pas parce qu'il te semble limite, c'est fait exprès et déjà validé.
+Ces titres sont volontairement "second degré" / provocateurs — c'est un APPÂT pour faire réagir en commentaire ("attends QUOI ?"). Écris LE TIEN dans cet esprit précis (lien familial/proche détourné en situation de drague) ; ne l'édulcore pas et ne dévie pas vers un titre "classique" parce que ça te semble limite, c'est fait exprès et déjà validé.
 
-⛔⛔ RÈGLE ABSOLUE : la conversation, elle, est une conv de drague NORMALE et ne fait JAMAIS référence au titre. Si tu choisis "je dm la sœur de mon pote", il est INTERDIT d'écrire "t'es la sœur de mon pote mais..." ou "si ton frère savait" dans les messages. Zéro mention. Le spectateur fait le lien tout seul, c'est ça qui marche — l'expliquer tue la vanne et rend la vidéo bizarre au premier degré.` : `
-Prends celui qui colle le mieux à CE scénario. Format DM à froid → un titre qui parle de dm. Réponse à une story → un titre qui parle de gérer / de répondre. Si la conv est chaude, prends un titre qui promet du lourd.`}
+⛔⛔ RÈGLE ABSOLUE : la conversation, elle, est une conv de drague NORMALE et ne fait JAMAIS référence au titre. Si ton titre est "je dm la sœur de mon pote", il est INTERDIT d'écrire "t'es la sœur de mon pote mais..." ou "si ton frère savait" dans les messages. Zéro mention. Le spectateur fait le lien tout seul, c'est ça qui marche — l'expliquer tue la vanne et rend la vidéo bizarre au premier degré.` : `
+Écris ton titre pour qu'il colle le mieux à CE scénario. Format DM à froid → un titre qui parle de dm. Réponse à une story → un titre qui parle de gérer / de répondre. Si la conv est chaude, prends un angle qui promet du lourd.`}
 
 ⚠️ CONTRAINTE CRITIQUE — STORY REPLY : tu ne vois PAS la photo réelle qui sera utilisée (elle est choisie séparément, au hasard, parmi des selfies miroir). N'INVENTE JAMAIS un détail visuel précis dans storyReply : pas d'objet (verre, lunettes, téléphone...), pas de lieu (café, plage, restau...), pas d'activité (${REVERSED ? "il boit, il mange" : "elle boit, elle mange"}...), pas d'animal, pas de vêtement précis. Toute affirmation sur le contenu de la photo a de grandes chances d'être fausse et de casser l'immersion. Reste sur des remarques qui marchent avec N'IMPORTE QUEL selfie miroir en tenue.
 
@@ -841,16 +846,17 @@ const jsonShape = `Réponds UNIQUEMENT avec un objet JSON valide, sans aucun tex
 {"girlName":"...","status":"...","introCaption":"...","storyReply":"...","outroText":"...","beats":[{"kind":"message","from":"girl","text":"..."}, {"kind":"tacotac","tone":"spicy","text":"..."}, {"kind":"meme","asset":"carton-rouge.jpg"}]}`;
 
 // JSON schema (backend API uniquement — sortie structurée garantie).
-// Fonction (pas une constante figée) : l'enum introCaption doit refléter le
-// pool imposé pour CETTE vidéo (voir IntroPool), sinon le schéma autoriserait
-// le modèle à reprendre un titre classique alors qu'un titre drôle est dû.
-const buildOutputSchema = (introPool: IntroPool) => ({
+// Fonction (pas une constante figée) : même si introCaption est maintenant du
+// texte libre (le modèle s'inspire du pool imposé sans recopier mot pour mot,
+// voir la consigne "LE TITRE"), le paramètre introPool reste nécessaire pour
+// construire dynamiquement d'autres parties du schéma le cas échéant.
+const buildOutputSchema = (_introPool: IntroPool) => ({
   type: "object",
   additionalProperties: false,
   properties: {
     girlName: { type: "string" },
     status: { type: "string" },
-    introCaption: { enum: introPool === "drole" ? INTRO_CAPTIONS_DROLES : ACTIVE_INTRO_CAPTIONS_CLASSIQUES },
+    introCaption: { type: "string" },
     storyReply: { type: "string" },
     outroText: { type: "string" },
     beats: {
@@ -963,14 +969,15 @@ function resolveMemeAsset(asset: string): { full: string; beat: string } {
 
 function assemble(g: GenOutput, state: State, structure: Structure, forcedTone: Tone, introPool: IntroPool) {
   const girl = nextGirl(state);
-  // Titre choisi par le MODÈLE, mais SEULEMENT dans le pool imposé pour cette
-  // vidéo (voir IntroPool) — en cohérence avec le scénario qu'il vient d'écrire.
-  // S'il invente une phrase hors liste, ou pioche dans l'AUTRE pool (backend CLI
-  // = pas de schéma contraignant), on retombe sur la rotation code À L'INTÉRIEUR
-  // du même pool imposé : jamais de titre inventé à l'écran, et le pool forcé
-  // n'est jamais contourné même en cas de fallback.
-  const allowedCaptions = introPool === "drole" ? INTRO_CAPTIONS_DROLES : ACTIVE_INTRO_CAPTIONS_CLASSIQUES;
-  const introCaption = allowedCaptions.includes(g.introCaption) ? g.introCaption : nextIntroCaption(state, introPool);
+  // Titre ÉCRIT par le MODÈLE, inspiré du pool imposé pour cette vidéo (voir
+  // IntroPool) — plus une recopie exacte d'une liste fermée : ça donnait des
+  // titres qui se répétaient mot pour mot d'une vidéo à l'autre. Le pool (donc
+  // le REGISTRE classique/drôle) reste imposé par le code ; seule la formulation
+  // exacte est libre. Filet de sécurité si le modèle rend un texte vide/absurde
+  // ou beaucoup trop long pour tenir à l'écran (backend CLI = pas de schéma
+  // contraignant) : on retombe sur la rotation code À L'INTÉRIEUR du même pool.
+  const caption = clean(g.introCaption);
+  const introCaption = caption && caption.length <= 70 ? caption : nextIntroCaption(state, introPool);
   const music = nextMusic(state);
   // Quel écran de l'app montrer : en format B le PREMIER moment Tacotac est le DM
   // d'ouverture, tous les suivants sont des réponses. En format A, tout est réponse.
@@ -1032,10 +1039,17 @@ const MAX_AMORCE_CHARS = 45; // une amorce Tacotac (format B) : encore plus cour
 const MAX_RELANCE_WORDS = 4; // "non pourquoi ?" — au-delà, elle vole la vedette à la chute
 const MAX_FIN_CHARS = 40; // le compliment de fin : une seule idée, il referme, c'est tout
 const MAX_STORY_CHARS = 60; // l'ouverture a droit à un peu plus, mais pas au pavé
+// Les emplacements de memes indiqués dans le prompt (structureRules) ne sont pas
+// fiables seuls : sur les premiers tests, 1 vidéo sur 2 retombait à 1 seul meme
+// malgré la consigne "emplacements FIXES". Même remède que pour l'amorce/la chute
+// plus bas : une vraie vérification par le CODE qui déclenche une régénération.
+const MIN_MEMES = 3;
 type Candidate = ReturnType<typeof assemble>;
 function punchlineProblems(script: Candidate): string[] {
   const problems: string[] = [];
   const beats = script.beats;
+  const memeCount = beats.filter((b) => b.type === "meme").length;
+  if (memeCount < MIN_MEMES) problems.push(`seulement ${memeCount} meme(s), il en faut au moins ${MIN_MEMES}`);
   // Le DERNIER écran Tacotac porte la chute ; les précédents (format B) l'amorce.
   const lastTacotac = beats.map((b) => b.type).lastIndexOf("tacotac");
 
