@@ -6,7 +6,14 @@
 //  La clé API reste SECRÈTE côté serveur (jamais dans le HTML).
 // ══════════════════════════════════════════════════════════════
 
-import 'dotenv/config';
+// override:true est VOLONTAIRE et important. Sans lui, dotenv laisse
+// intacte toute variable déjà présente dans process.env — et PM2 réinjecte
+// son instantané (~/.pm2/dump.pm2) à chaque `--update-env` et à chaque
+// reboot. Un instantané daté du 07/07/2026 a ainsi fait resurgir l'ancien
+// prix hebdo (4,99 €) alors que .env pointait bien sur 3,99 € : l'app a
+// facturé 4,99 € en affichant 3,99 €. Le fichier .env doit faire foi.
+import dotenv from 'dotenv';
+dotenv.config({ override: true });
 import express from 'express';
 import path from 'node:path';
 import { statSync, readFileSync, writeFileSync, existsSync, readdirSync, openSync, closeSync } from 'node:fs';
