@@ -13,6 +13,7 @@ export const D = {
   openPhoto: 48, // 1,6 s sur la photo : le temps de la voir sans casser le rythme
   storyOpen: 40, // temps où l'on voit la réponse à la story avant qu'elle réponde
   dmLead: 12, // délai avant le 1er message quand on revient sur le DM (après le fondu)
+  comment: 120, // 4s : le temps de lire le titre ET le commentaire avant de couper au DM
 };
 export const FADE = 7; // fondu très léger entre scènes
 
@@ -20,6 +21,11 @@ export const FADE = 7; // fondu très léger entre scènes
 // sur la musique. On vise 59 s pour garder une marge de sécurité.
 export const MAX_DURATION_SECONDS = 59;
 export const MAX_DURATION_FRAMES = MAX_DURATION_SECONDS * video.fps;
+
+// Format "commentaire" (voir generate-comment.ts) : visé 60-75s exprès (>1min,
+// condition TikTok pour la monétisation) — le plafond ci-dessus ne s'applique
+// donc pas à ce format, qui a le sien, plus permissif.
+export const MAX_DURATION_SECONDS_COMMENT = 78;
 
 // Intro : clip de 203 frames, coupé du début selon la musique (voir music.ts).
 export const INTRO_DURATION_FRAMES = 203; // 6.7667s à 30fps
@@ -39,6 +45,7 @@ const revealDur = (it: DMItem): number => {
 
 export type Scene =
   | { kind: "intro"; dur: number; trim: number; speed: number }
+  | { kind: "comment"; image: string; caption?: string; dur: number }
   | { kind: "photo"; asset: string; dur: number }
   | { kind: "caption"; text: string; background: string; variant: "outro"; dur: number }
   | { kind: "dm"; base: DMItem[]; reveals: DMItem[]; starts: number[]; dur: number }
@@ -82,10 +89,17 @@ export function buildScenes(script: Script): Scene[] {
   // rendu). Le clip est vierge ; la légende (script.introCaption) est un calque
   // Remotion posé par-dessus, voir Intro.tsx. La coupe du début dépend de la
   // musique choisie (chaque drop tombe à un instant différent), voir music.ts.
-  const track = resolveMusic(script.music);
-  const trim = track.introTrim;
-  const speed = track.introSpeed ?? 1;
-  scenes.push({ kind: "intro", dur: introDurationFrames(trim, speed), trim, speed });
+  // Format "commentaire" : PAS d'intro marque de fabrique (Tom : "il n'y a pas
+  // d'intro spiderman" sur ce format) — la vidéo s'ouvre directement sur le vrai
+  // commentaire, qui remplace l'intro comme point de départ.
+  if (script.comment) {
+    scenes.push({ kind: "comment", image: script.comment.image, caption: script.introCaption, dur: D.comment });
+  } else {
+    const track = resolveMusic(script.music);
+    const trim = track.introTrim;
+    const speed = track.introSpeed ?? 1;
+    scenes.push({ kind: "intro", dur: introDurationFrames(trim, speed), trim, speed });
+  }
 
   // Format "DM" : on la voit AVANT d'ouvrir l'app. Le meme de réaction qui suit
   // est un beat normal placé par le modèle, il arrive donc juste après.

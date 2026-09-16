@@ -6,6 +6,7 @@ import { DMScene } from "./components/DMScene";
 import { TacotacScreenshot } from "./components/TacotacScreenshot";
 import { MemeOverlay } from "./components/MemeOverlay";
 import { CaptionCard } from "./components/CaptionCard";
+import { CommentCard } from "./components/CommentCard";
 import { Intro } from "./components/Intro";
 import { resolveMusic } from "./music";
 import { buildScenes, FADE, type Scene } from "./timing";
@@ -15,6 +16,8 @@ const renderScene = (script: Script, s: Scene) => {
   switch (s.kind) {
     case "intro":
       return <Intro caption={script.introCaption} trimFrames={s.trim} speed={s.speed} />;
+    case "comment":
+      return <CommentCard image={s.image} caption={s.caption} />;
     case "photo":
       // Plein écran, comme si on regardait sa story juste avant de lui écrire.
       return (

@@ -64,9 +64,22 @@ export const captionCardSchema = z.object({
   background: z.string(), // chemin dans public/ — image ou clip vidéo
 });
 
+// Écran "commentaire" (2e format, ~60-75s, voir generate-comment.ts) : un vrai
+// commentaire TikTok, ajouté à la main (jamais généré) par le collaborateur via
+// /partner, sert de point de départ à la conv. Absent = comportement inchangé.
+// `image` = la VRAIE capture d'écran uploadée (jamais un commentaire reconstitué
+// en HTML) ; `username`/`text` sont conservés à côté pour le prompt de génération
+// et la description de la vidéo, mais ne sont plus ce qui s'affiche à l'écran.
+export const commentSchema = z.object({
+  username: z.string(),
+  text: z.string(),
+  image: z.string(), // chemin dans public/ (ex: "comments/lucas-jetlag.png")
+});
+
 export const scriptSchema = z.object({
   id: z.string(),
   girl: girlSchema,
+  comment: commentSchema.optional(),
   // Réponse du client à la story de la fille (le message d'ouverture, à droite,
   // sous la vignette "Vous avez répondu à sa story"). Contexte affiché en haut du DM.
   storyReply: z.string().optional(),
@@ -96,6 +109,7 @@ export const povScriptSchema = z.object({
   memes: z.array(z.string()), // chemins dans public/ (ex: "memes/olise-chut.mp4")
 });
 
+export type Comment = z.infer<typeof commentSchema>;
 export type Girl = z.infer<typeof girlSchema>;
 export type PovScript = z.infer<typeof povScriptSchema>;
 export type Beat = z.infer<typeof beatSchema>;
