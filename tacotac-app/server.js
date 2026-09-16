@@ -16,7 +16,7 @@ import dotenv from 'dotenv';
 dotenv.config({ override: true });
 import express from 'express';
 import path from 'node:path';
-import { statSync, readFileSync, writeFileSync, existsSync, readdirSync, openSync, closeSync } from 'node:fs';
+import { statSync, readFileSync, writeFileSync, existsSync, readdirSync, openSync, closeSync, mkdirSync, unlinkSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { randomUUID, randomBytes, scryptSync, timingSafeEqual, createHmac } from 'node:crypto';
@@ -454,6 +454,115 @@ app.post('/admin/generate/start', requireAdmin, (req, res) => {
   child.unref();
 
   res.json({ ok: true, profile, count });
+});
+
+// ── Vidéo "commentaire" (3e format, voir generate-comment.ts) — pour Toi ──
+// Un vrai commentaire TikTok (capture + pseudo + texte) devient le début de
+// la conversation. Stocké en attente ici, un clic lance run-comment.sh
+// (même logique fire-and-forget que /admin/generate/start juste au-dessus).
+// Anomy a le même écran, mais dans SON espace (/partner, voir partner.js) —
+// les deux lisent/écrivent des fichiers séparés par profil (suffixe -anomy).
+const COMMENT_STOCK_FILE = path.join(PIPELINE_DIR, 'pipeline', 'comment-stock.json');
+const COMMENT_GEN_LOCK = path.join(PIPELINE_DIR, 'pipeline', '.generate-comment-lock');
+const COMMENT_GEN_LOG = path.join(PIPELINE_DIR, 'pipeline', 'run-comment-manual.log');
+const COMMENT_IMAGES_DIR = path.join(PIPELINE_DIR, 'public', 'comments');
+const COMMENT_DATA_URL_RE = /^data:image\/(png|jpe?g|webp);base64,([a-z0-9+/=]+)$/i;
+const COMMENT_EXT_BY_MIME = { png: 'png', jpg: 'jpg', jpeg: 'jpg', webp: 'webp' };
+const MAX_COMMENT_IMAGE_BYTES = 8 * 1024 * 1024;
+
+function commentGenIsRunning() {
+  try {
+    const pid = Number(readFileSync(COMMENT_GEN_LOCK, 'utf8').trim());
+    if (!pid) return false;
+    process.kill(pid, 0);
+    return true;
+  } catch { return false; }
+}
+function readCommentStock() {
+  try { return JSON.parse(readFileSync(COMMENT_STOCK_FILE, 'utf8')); } catch { return []; }
+}
+function writeCommentStock(items) {
+  mkdirSync(path.dirname(COMMENT_STOCK_FILE), { recursive: true });
+  writeFileSync(COMMENT_STOCK_FILE, JSON.stringify(items, null, 2));
+}
+
+app.get('/admin/generate/comment-image/:file', requireAdmin, (req, res) => {
+  const full = path.join(COMMENT_IMAGES_DIR, path.basename(req.params.file));
+  if (!existsSync(full)) return res.status(404).end();
+  res.sendFile(full);
+});
+
+app.get('/admin/generate/comment-stock', requireAdmin, (req, res) => {
+  let tail = '';
+  try { tail = readFileSync(COMMENT_GEN_LOG, 'utf8').split('\n').slice(-100).join('\n'); } catch { /* pas encore de log */ }
+  res.json({ ok: true, items: readCommentStock(), running: commentGenIsRunning(), tail });
+});
+
+app.post('/admin/generate/comment-stock', requireAdmin, (req, res) => {
+  const username = String(req.body?.username || '').trim().replace(/[\r\n]+/g, ' ').slice(0, 40);
+  const text = String(req.body?.text || '').trim().replace(/[\r\n]+/g, ' ').slice(0, 300);
+  if (!username || !text) return res.status(400).json({ ok: false, error: 'Pseudo et texte du commentaire requis.' });
+
+  const m = COMMENT_DATA_URL_RE.exec(String(req.body?.imageDataUrl || ''));
+  if (!m) return res.status(400).json({ ok: false, error: "Capture d'écran invalide (PNG/JPG/WEBP)." });
+  const buf = Buffer.from(m[2], 'base64');
+  if (buf.length > MAX_COMMENT_IMAGE_BYTES) return res.status(400).json({ ok: false, error: 'Image trop lourde (8 Mo max).' });
+
+  const id = `cs_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  const ext = COMMENT_EXT_BY_MIME[m[1].toLowerCase()] || 'png';
+  const filename = `${id}.${ext}`;
+  mkdirSync(COMMENT_IMAGES_DIR, { recursive: true });
+  writeFileSync(path.join(COMMENT_IMAGES_DIR, filename), buf);
+
+  const item = { id, username, text, image: `comments/${filename}`, addedAt: new Date().toISOString() };
+  const items = readCommentStock();
+  items.unshift(item);
+  writeCommentStock(items);
+  res.json({ ok: true, item });
+});
+
+app.delete('/admin/generate/comment-stock/:id', requireAdmin, (req, res) => {
+  const items = readCommentStock();
+  const item = items.find((it) => it.id === req.params.id);
+  if (!item) return res.status(404).json({ ok: false, error: 'Introuvable.' });
+  writeCommentStock(items.filter((it) => it.id !== req.params.id));
+  try { unlinkSync(path.join(PIPELINE_DIR, 'public', item.image)); } catch { /* déjà absent, tant pis */ }
+  res.json({ ok: true });
+});
+
+app.post('/admin/generate/comment-stock/:id/start', requireAdmin, (req, res) => {
+  if (!PIPELINE_DIR || !existsSync(PIPELINE_DIR)) {
+    return res.status(500).json({ ok: false, error: 'Dossier du pipeline introuvable sur ce serveur.' });
+  }
+  if (commentGenIsRunning()) return res.status(409).json({ ok: false, error: 'Une génération est déjà en cours — attends qu\'elle finisse.' });
+
+  const items = readCommentStock();
+  const item = items.find((it) => it.id === req.params.id);
+  if (!item) return res.status(404).json({ ok: false, error: 'Introuvable — déjà généré ?' });
+
+  // Retiré du stock dès le lancement — même logique fire-and-forget que le
+  // reste du pipeline (pas de rollback si le rendu échoue en route).
+  writeCommentStock(items.filter((it) => it.id !== req.params.id));
+
+  writeFileSync(COMMENT_GEN_LOG, `=== lancé depuis /admin/generate — @${item.username} — ${new Date().toISOString()} ===\n`);
+  const fd = openSync(COMMENT_GEN_LOG, 'a');
+  const child = spawn('bash', ['pipeline/run-comment.sh'], {
+    cwd: PIPELINE_DIR,
+    env: {
+      ...process.env,
+      ...GENERATE_PROFILES.tom.env,
+      COMMENT_USERNAME: item.username,
+      COMMENT_TEXT: item.text,
+      COMMENT_IMAGE: item.image,
+    },
+    detached: true,
+    stdio: ['ignore', fd, fd],
+  });
+  closeSync(fd);
+  writeFileSync(COMMENT_GEN_LOCK, String(child.pid));
+  child.unref();
+
+  res.json({ ok: true });
 });
 
 app.get('/admin/cancellations', requireAdmin, (req, res) => {

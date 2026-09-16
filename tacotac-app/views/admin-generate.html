@@ -29,6 +29,26 @@
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
   .log { background:#0a0a0a; border:1px solid #222; border-radius:12px; padding:12px 14px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px; line-height:1.55; color:#a8a29a; white-space:pre-wrap; word-break:break-word; max-height:340px; overflow-y:auto; display:none; }
   .hint { color:#6e6a66; font-size:12px; margin-top:10px; line-height:1.5; }
+  .field2 { margin-bottom:12px; }
+  .field2 label { display:block; font-size:12px; color:#8d8781; margin-bottom:6px; }
+  .input2 { width:100%; background:#0d0d0d; border:1.5px solid #2a2a2a; border-radius:12px; padding:12px 14px; color:#F4EEE2; font-family:inherit; font-size:14px; }
+  textarea.input2 { resize:vertical; min-height:60px; }
+  .upfile2 { border:1.5px dashed #2a2a2a; border-radius:12px; padding:14px; text-align:center; cursor:pointer; }
+  .upfile2 img { max-width:100%; max-height:200px; border-radius:10px; display:block; margin:0 auto; }
+  .upfile2 .ph { color:#8d8781; font-size:13px; }
+  .msg2 { border-radius:10px; padding:9px 11px; font-size:12.5px; margin-bottom:10px; display:none; }
+  .msg2.err { background:rgba(255,84,112,.12); color:#FF9AAC; display:block; }
+  .stock-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; }
+  .stock-card { background:#0d0d0d; border:1px solid #262626; border-radius:12px; overflow:hidden; }
+  .stock-card .thumb { width:100%; aspect-ratio:9/16; background:#000; }
+  .stock-card .thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+  .stock-card .body { padding:9px 10px; display:flex; flex-direction:column; gap:6px; }
+  .stock-card .txt { font-size:11.5px; color:#c9c4bc; line-height:1.4; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  .stock-card .actions { display:flex; gap:6px; }
+  .stock-card button { flex:1; border:0; border-radius:9px; padding:7px; font-size:11.5px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .stock-card .go { background:#FF5C00; color:#fff; }
+  .stock-card .del { background:#222; color:#c9c4bc; }
+  .empty2 { text-align:center; color:#6e6a66; font-size:12.5px; padding:18px 8px; }
 </style>
 </head>
 <body>
@@ -55,6 +75,35 @@
   <div class="card">
     <div class="status-row"><span class="dot idle" id="statusDot"></span><span id="statusText">Rien en cours</span></div>
     <div class="log" id="log"></div>
+  </div>
+
+  <div class="card">
+    <h1 style="font-size:16px;margin:0 0 4px">Vidéo à partir d'un commentaire</h1>
+    <p class="sub" style="margin:0 0 16px">Un vrai commentaire TikTok reçu (capture + pseudo + texte) devient le début de la conversation. ~60-75s.</p>
+    <div class="field2">
+      <label>Capture du commentaire</label>
+      <label class="upfile2" id="cDrop" for="cFile">
+        <img id="cPreview" style="display:none">
+        <div class="ph" id="cPh">📸 Choisir une capture d'écran</div>
+      </label>
+      <input type="file" id="cFile" accept="image/png,image/jpeg,image/webp" hidden>
+    </div>
+    <div class="field2"><label>Pseudo TikTok de l'auteur</label><input class="input2" id="cUsername" maxlength="40" placeholder="lucas.xyz"></div>
+    <div class="field2"><label>Texte exact du commentaire</label><textarea class="input2" id="cText" maxlength="300" placeholder="Copie-colle le commentaire tel quel"></textarea></div>
+    <div id="cMsg" class="msg2"></div>
+    <button class="generate" id="cAddBtn" type="button">Ajouter au stock</button>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <b style="font-size:14px">Stock en attente</b><span id="cCount" style="color:#8d8781;font-size:12.5px"></span>
+    </div>
+    <div class="stock-grid" id="cStock"></div>
+  </div>
+
+  <div class="card">
+    <div class="status-row"><span class="dot idle" id="cDot"></span><span id="cStatusText">Rien en cours</span></div>
+    <div class="log" id="cLog"></div>
   </div>
 </div>
 
@@ -130,6 +179,102 @@ genBtn.onclick = async () => {
 
 render();
 refreshStatus();
+
+/* ── Vidéo à partir d'un commentaire ── */
+let cImageDataUrl = null;
+let cPoll = null;
+const escC = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+
+document.getElementById('cFile').addEventListener('change', (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    cImageDataUrl = reader.result;
+    const img = document.getElementById('cPreview');
+    img.src = cImageDataUrl; img.style.display = 'block';
+    document.getElementById('cPh').style.display = 'none';
+  };
+  reader.readAsDataURL(f);
+});
+
+document.getElementById('cAddBtn').onclick = async () => {
+  const msg = document.getElementById('cMsg'); msg.style.display = 'none';
+  const username = document.getElementById('cUsername').value.trim();
+  const text = document.getElementById('cText').value.trim();
+  if (!username || !text) { msg.className = 'msg2 err'; msg.textContent = 'Pseudo et texte requis.'; return; }
+  if (!cImageDataUrl) { msg.className = 'msg2 err'; msg.textContent = "Ajoute la capture d'écran."; return; }
+  const btn = document.getElementById('cAddBtn'); btn.disabled = true; btn.textContent = 'Ajout…';
+  try {
+    const r = await fetch('/admin/generate/comment-stock', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, text, imageDataUrl: cImageDataUrl }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'échec');
+    document.getElementById('cUsername').value = '';
+    document.getElementById('cText').value = '';
+    cImageDataUrl = null;
+    document.getElementById('cPreview').style.display = 'none';
+    document.getElementById('cPh').style.display = '';
+    loadCommentStock();
+  } catch (e) {
+    msg.className = 'msg2 err'; msg.textContent = e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Ajouter au stock';
+  }
+};
+
+function renderCommentStock(items) {
+  document.getElementById('cCount').textContent = items.length ? `(${items.length})` : '';
+  const el = document.getElementById('cStock');
+  el.innerHTML = items.length ? items.map((it) => `
+    <div class="stock-card">
+      <div class="thumb"><img src="/admin/generate/comment-image/${encodeURIComponent(it.image.split('/').pop())}" loading="lazy"></div>
+      <div class="body">
+        <div style="font-size:12px;font-weight:700">@${escC(it.username)}</div>
+        <div class="txt">${escC(it.text)}</div>
+        <div class="actions">
+          <button class="go" onclick="cGenerate('${escC(it.id)}')">🎬 Générer</button>
+          <button class="del" onclick="cDelete('${escC(it.id)}')">🗑️</button>
+        </div>
+      </div>
+    </div>`).join('') : `<div class="empty2" style="grid-column:1/-1">Aucun commentaire en attente.</div>`;
+}
+
+function applyCommentStatus(data) {
+  const dot = document.getElementById('cDot'), txt = document.getElementById('cStatusText'), log = document.getElementById('cLog');
+  if (data.running) {
+    dot.className = 'dot running'; txt.textContent = 'Génération en cours…';
+    if (!cPoll) cPoll = setInterval(loadCommentStock, 3000);
+  } else {
+    dot.className = data.tail ? 'dot done' : 'dot idle';
+    txt.textContent = data.tail ? 'Dernier run terminé' : 'Rien en cours';
+    if (cPoll) { clearInterval(cPoll); cPoll = null; }
+  }
+  if (data.tail) { log.style.display = 'block'; log.textContent = data.tail; log.scrollTop = log.scrollHeight; }
+}
+
+async function loadCommentStock() {
+  const r = await fetch('/admin/generate/comment-stock');
+  const data = await r.json();
+  if (!r.ok) return;
+  renderCommentStock(data.items || []);
+  applyCommentStatus(data);
+}
+
+window.cGenerate = async (id) => {
+  const r = await fetch('/admin/generate/comment-stock/' + encodeURIComponent(id) + '/start', { method: 'POST' });
+  const data = await r.json();
+  if (!r.ok) return alert(data.error || 'Erreur');
+  loadCommentStock();
+};
+window.cDelete = async (id) => {
+  if (!confirm('Retirer ce commentaire du stock ?')) return;
+  await fetch('/admin/generate/comment-stock/' + encodeURIComponent(id), { method: 'DELETE' });
+  loadCommentStock();
+};
+
+loadCommentStock();
 </script>
 </body>
 </html>

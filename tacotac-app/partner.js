@@ -44,18 +44,17 @@ const norm = (e) => String(e || '').trim().toLowerCase();
 const nowTs = () => Math.floor(Date.now() / 1000);
 
 // ── Génération vidéo "commentaire" (3e format, voir generate-comment.ts) ──
-// Écran "Vidéos" : Tom et Anomy y ajoutent de vrais commentaires TikTok (photo
-// + pseudo + texte), les stockent en attente, puis lancent le rendu d'un clic.
-// Seuls ces 2-là créent du contenu vidéo — les autres lignes de la table
+// Écran "Vidéos" : Anomy y ajoute de vrais commentaires TikTok (photo + pseudo
+// + texte), les stocke en attente, puis lance le rendu d'un clic. Réservé à
+// elle ici — Tom a le SIEN dans sa propre console admin (/admin/generate,
+// voir server.js), pas dans l'espace collaborateur (Tom, 16/09 : "je me suis
+// trompé d'endroit, c'est pas le tacotac collaborateur qu'il faut... pour moi
+// met ça dans le dashboard admin"). Les autres lignes de la table
 // `collaborators` sont des affiliés (programme de commission), sans rapport.
 // D'où une liste à part, jamais dérivée de la table SQL. Mêmes valeurs que le
 // cron existant (crontab VPS) pour rester cohérent avec les vidéos automatiques.
 const PIPELINE_DIR = process.env.VIDEO_PIPELINE_DIR || '/root/tacotac-video';
 const VIDEO_PROFILES = {
-  'tomathieuia@gmail.com': {
-    suffix: '', label: 'Tom',
-    env: { RCLONE_REMOTE: 'gdrive:tacotac-videos' },
-  },
   'ethan.marcel1@icloud.com': {
     suffix: 'anomy', label: 'Anomy',
     env: {
