@@ -159,6 +159,26 @@ svg{display:block;overflow:visible}
 .legend i{width:9px;height:9px;border-radius:3px;display:inline-block;margin-right:6px}
 .hint{font-size:12.5px;color:var(--muted2);line-height:1.6}
 .trust{display:flex;gap:10px;align-items:flex-start;background:rgba(91,141,239,.07);border:1px solid rgba(91,141,239,.2);border-radius:14px;padding:13px 15px;font-size:13px;color:#A9C2F5;line-height:1.6}
+
+/* ══════════════ Vidéos (format "commentaire") ══════════════ */
+textarea.input{resize:vertical;min-height:64px;line-height:1.5}
+.upfile{border:1.5px dashed var(--line2);border-radius:14px;padding:16px;text-align:center;cursor:pointer;transition:border-color .16s,background .16s}
+.upfile:hover{border-color:rgba(255,92,0,.5);background:rgba(255,92,0,.04)}
+.upfile img{max-width:100%;max-height:220px;border-radius:10px;display:block;margin:0 auto}
+.upfile .ph{color:var(--muted);font-size:13.5px}
+.stock-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.stock-card{background:#0D0D10;border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.stock-card .thumb{width:100%;aspect-ratio:9/16;background:#000;overflow:hidden}
+.stock-card .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.stock-card .body{padding:12px 13px;display:flex;flex-direction:column;gap:8px;flex:1}
+.stock-card .txt{font-size:13px;color:var(--txt);line-height:1.45;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+.stock-card .actions{display:flex;gap:7px;margin-top:auto}
+.stock-card .actions .btn{flex:1}
+.logbox{background:#0a0a0c;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;line-height:1.55;color:#9a958c;max-height:260px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px}
+.dot.running{background:#FFB183;box-shadow:0 0 0 4px rgba(255,92,0,.18);animation:pulse 1.4s ease-in-out infinite}
+.dot.idle{background:#605C57}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 </style>
 </head>
 <body>
@@ -203,6 +223,7 @@ svg{display:block;overflow:visible}
         <button class="tab on" data-view="dash">Tableau de bord</button>
         <button class="tab" data-view="sales">Mes ventes</button>
         <button class="tab" data-view="profile">Mon profil</button>
+        <button class="tab" data-view="videos" id="tabVideos" style="display:none">Vidéos</button>
         <button class="tab" data-view="admin" id="tabAdmin" style="display:none">Console admin</button>
       </div>
       <div class="who" id="who"></div>
@@ -304,6 +325,43 @@ svg{display:block;overflow:visible}
             <div id="contract"></div>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- ── Vidéos (format "commentaire") ── -->
+    <section class="view" id="v-videos">
+      <div class="grid g-2">
+        <div class="card">
+          <h3>Ajouter un commentaire</h3>
+          <p class="sub">Un vrai commentaire TikTok reçu sur une de tes vidéos : capture d'écran + pseudo + texte exact. C'est lui qui ouvre la conversation.</p>
+          <form id="vForm">
+            <div class="field">
+              <label>Capture du commentaire</label>
+              <label class="upfile" id="vDrop" for="vFile">
+                <img id="vPreview" style="display:none">
+                <div class="ph" id="vPh">📸 Choisir une capture d'écran</div>
+              </label>
+              <input type="file" id="vFile" accept="image/png,image/jpeg,image/webp" hidden>
+            </div>
+            <div class="field"><label>Pseudo TikTok de l'auteur</label><input class="input" id="vUsername" placeholder="lucas.xyz" maxlength="40" required></div>
+            <div class="field"><label>Texte exact du commentaire</label><textarea class="input" id="vText" maxlength="300" required placeholder="Copie-colle le commentaire tel quel"></textarea></div>
+            <div id="vMsg" class="msg"></div>
+            <button class="btn" id="vAddBtn" type="submit">Ajouter au stock</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h3><span class="dot idle" id="vDot"></span>État de la génération</h3>
+          <p class="sub" id="vStatusSub">Aucune génération en cours.</p>
+          <div class="logbox" id="vLog" style="display:none"></div>
+          <p class="hint" style="margin-top:12px">La vidéo dure ~60-75s (plusieurs minutes de rendu). Elle arrive ensuite par email/Drive, comme les vidéos automatiques.</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <h3>Stock en attente <span id="vCount" style="color:var(--muted);font-weight:500"></span></h3>
+        <p class="sub">Clique sur « Générer » pour lancer la vidéo à partir de ce commentaire — il sera retiré du stock au lancement.</p>
+        <div class="stock-grid" id="vStock"></div>
       </div>
     </section>
 
@@ -836,12 +894,106 @@ $('#addCollabBtn').addEventListener('click', () => {
   });
 });
 
+/* ══════════════ VIDÉOS (format "commentaire") ══════════════ */
+
+let vPollTimer = null;
+let vImageDataUrl = null;
+
+function stopVideoPoll() { clearInterval(vPollTimer); vPollTimer = null; }
+
+function renderVideoStatus(r) {
+  $('#vDot').className = 'dot ' + (r.running ? 'running' : 'idle');
+  $('#vStatusSub').textContent = r.running ? 'Génération en cours — ça peut prendre plusieurs minutes.' : 'Aucune génération en cours.';
+  const log = $('#vLog');
+  if (r.tail) { log.style.display = ''; log.textContent = r.tail; log.scrollTop = log.scrollHeight; }
+  else log.style.display = 'none';
+}
+
+function renderStock(items) {
+  $('#vCount').textContent = items.length ? `(${items.length})` : '';
+  $('#vStock').innerHTML = items.length ? items.map((it) => `
+    <div class="stock-card">
+      <div class="thumb"><img src="/videos/${esc(it.image)}" loading="lazy"></div>
+      <div class="body">
+        <div><b>@${esc(it.username)}</b></div>
+        <div class="txt">${esc(it.text)}</div>
+        <div class="actions">
+          <button class="btn btn-sm" onclick="generateVideo('${esc(it.id)}')">🎬 Générer</button>
+          <button class="btn btn-ghost btn-sm" onclick="deleteStock('${esc(it.id)}')" title="Supprimer">🗑️</button>
+        </div>
+      </div>
+    </div>`).join('') : `<div class="empty" style="grid-column:1/-1"><div class="big">💬</div>Aucun commentaire en attente.<br><span style="font-size:12.5px">Ajoute-en un avec le formulaire ci-dessus.</span></div>`;
+}
+
+async function loadVideos() {
+  const r = await api('/api/partner/videos/stock');
+  if (!r.ok) return;
+  STATE.videoStock = r.items;
+  renderStock(r.items);
+  renderVideoStatus(r);
+  stopVideoPoll();
+  if (r.running) {
+    vPollTimer = setInterval(async () => {
+      const s = await api('/api/partner/videos/stock');
+      if (!s.ok) return;
+      renderVideoStatus(s);
+      if (!s.running) { stopVideoPoll(); loadVideos(); }
+    }, 3000);
+  }
+}
+
+window.generateVideo = async (id) => {
+  const r = await api('/api/partner/videos/generate/' + encodeURIComponent(id), { method: 'POST' });
+  if (!r.ok) return toast(r.error || 'Erreur');
+  toast('Génération lancée 🎬');
+  loadVideos();
+};
+window.deleteStock = async (id) => {
+  if (!confirm('Retirer ce commentaire du stock ?')) return;
+  const r = await api('/api/partner/videos/stock/' + encodeURIComponent(id), { method: 'DELETE' });
+  if (!r.ok) return toast(r.error || 'Erreur');
+  loadVideos();
+};
+
+$('#vFile').addEventListener('change', () => {
+  const f = $('#vFile').files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    vImageDataUrl = reader.result;
+    $('#vPreview').src = vImageDataUrl;
+    $('#vPreview').style.display = 'block';
+    $('#vPh').style.display = 'none';
+  };
+  reader.readAsDataURL(f);
+});
+
+$('#vForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = $('#vMsg'); msg.className = 'msg';
+  const username = $('#vUsername').value.trim();
+  const text = $('#vText').value.trim();
+  if (!username || !text) { msg.className = 'msg err'; msg.textContent = 'Pseudo et texte requis.'; return; }
+  if (!vImageDataUrl) { msg.className = 'msg err'; msg.textContent = "Ajoute la capture d'écran du commentaire."; return; }
+  const btn = $('#vAddBtn'); btn.disabled = true; btn.textContent = 'Ajout…';
+  const r = await api('/api/partner/videos/stock', { method: 'POST', body: JSON.stringify({ username, text, imageDataUrl: vImageDataUrl }) });
+  btn.disabled = false; btn.textContent = 'Ajouter au stock';
+  if (!r.ok) { msg.className = 'msg err'; msg.textContent = r.error || 'Erreur'; return; }
+  $('#vForm').reset();
+  vImageDataUrl = null;
+  $('#vPreview').style.display = 'none';
+  $('#vPh').style.display = '';
+  toast('Commentaire ajouté au stock ✅');
+  loadVideos();
+});
+
 /* ══════════════ NAVIGATION / CHARGEMENT ══════════════ */
 
 function switchView(v) {
   $$('.tab').forEach((t) => t.classList.toggle('on', t.dataset.view === v));
   $$('.view').forEach((s) => s.classList.toggle('on', s.id === 'v-' + v));
   if (v === 'admin' && !STATE.admin) loadAdmin();
+  if (v === 'videos') loadVideos(); else stopVideoPoll();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 $('#tabs').addEventListener('click', (e) => { const b = e.target.closest('.tab'); if (b) switchView(b.dataset.view); });
@@ -896,6 +1048,7 @@ async function boot() {
     <div style="line-height:1.25"><div style="color:var(--txt);font-weight:600;font-size:13px">${esc(s.name || s.email.split('@')[0])}</div>
     <button class="link" style="font-size:11.5px" onclick="logout()">Se déconnecter</button></div>`;
   if (s.isAdmin) $('#tabAdmin').style.display = '';
+  if (s.video) $('#tabVideos').style.display = '';
   await loadDashboard();
 }
 window.logout = async () => { await api('/api/partner/logout', { method: 'POST' }); location.href = '/partner'; };

@@ -17,6 +17,8 @@
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync, openSync, closeSync } from 'node:fs';
+import { spawn } from 'node:child_process';
 import rateLimit from 'express-rate-limit';
 import {
   getCollaborator, listCollaborators, upsertCollaborator, setCollaboratorPlan,
@@ -40,6 +42,62 @@ const ADMIN_EMAILS = new Set(
 
 const norm = (e) => String(e || '').trim().toLowerCase();
 const nowTs = () => Math.floor(Date.now() / 1000);
+
+// ── Génération vidéo "commentaire" (3e format, voir generate-comment.ts) ──
+// Écran "Vidéos" : Tom et Anomy y ajoutent de vrais commentaires TikTok (photo
+// + pseudo + texte), les stockent en attente, puis lancent le rendu d'un clic.
+// Seuls ces 2-là créent du contenu vidéo — les autres lignes de la table
+// `collaborators` sont des affiliés (programme de commission), sans rapport.
+// D'où une liste à part, jamais dérivée de la table SQL. Mêmes valeurs que le
+// cron existant (crontab VPS) pour rester cohérent avec les vidéos automatiques.
+const PIPELINE_DIR = process.env.VIDEO_PIPELINE_DIR || '/root/tacotac-video';
+const VIDEO_PROFILES = {
+  'tomathieuia@gmail.com': {
+    suffix: '', label: 'Tom',
+    env: { RCLONE_REMOTE: 'gdrive:tacotac-videos' },
+  },
+  'ethan.marcel1@icloud.com': {
+    suffix: 'anomy', label: 'Anomy',
+    env: {
+      TACOTAC_PROFILE: 'anomy',
+      RCLONE_REMOTE: 'gdrive:tacotac-videos-anomy',
+      NOTIFY_ATTACH: '1',
+      NOTIFY_EMAIL: 'ethan.marcel1@icloud.com',
+      DRIVE_FOLDER_URL: 'https://drive.google.com/open?id=11OrQjGQAE9TF1VqeXw_w762ocmTo_mpE',
+    },
+  },
+};
+const videoProfileFor = (email) => VIDEO_PROFILES[norm(email)] || null;
+
+const commentStockFile = (suffix) => path.join(PIPELINE_DIR, 'pipeline', `comment-stock${suffix ? `-${suffix}` : ''}.json`);
+const commentGenLockFile = (suffix) => path.join(PIPELINE_DIR, 'pipeline', `.generate-comment-lock${suffix ? `-${suffix}` : ''}`);
+const commentGenLogFile = (suffix) => path.join(PIPELINE_DIR, 'pipeline', `run-comment-manual${suffix ? `-${suffix}` : ''}.log`);
+const commentImagesDir = path.join(PIPELINE_DIR, 'public', 'comments');
+
+function commentGenIsRunning(suffix) {
+  try {
+    const pid = Number(readFileSync(commentGenLockFile(suffix), 'utf8').trim());
+    if (!pid) return false;
+    process.kill(pid, 0); // ne tue pas, jette juste si le process n'existe plus
+    return true;
+  } catch { return false; }
+}
+function tailLog(file, lines = 100) {
+  try { return readFileSync(file, 'utf8').split('\n').slice(-lines).join('\n'); } catch { return ''; }
+}
+function readStock(suffix) {
+  try { return JSON.parse(readFileSync(commentStockFile(suffix), 'utf8')); } catch { return []; }
+}
+function writeStock(suffix, items) {
+  mkdirSync(path.dirname(commentStockFile(suffix)), { recursive: true });
+  writeFileSync(commentStockFile(suffix), JSON.stringify(items, null, 2));
+}
+
+// La capture est TOUJOURS la vraie image envoyée par le collaborateur — jamais
+// reconstituée (voir CommentCard.tsx). Même whitelist de formats que app.html.
+const DATA_URL_RE = /^data:image\/(png|jpe?g|webp);base64,([a-z0-9+/=]+)$/i;
+const EXT_BY_MIME = { png: 'png', jpg: 'jpg', jpeg: 'jpg', webp: 'webp' };
+const MAX_COMMENT_IMAGE_BYTES = 8 * 1024 * 1024;
 
 /**
  * Crée le routeur de l'espace collaborateur.
@@ -96,12 +154,14 @@ export function createPartnerRouter(deps) {
     const me = whoami(req);
     if (!me) return res.json({ ok: false });
     touchCollaborator(me.email);
+    const vp = videoProfileFor(me.email);
     res.json({
       ok: true,
       email: me.email,
       isAdmin: me.isAdmin,
       isCollaborator: Boolean(me.collab),
       name: me.collab?.name || null,
+      video: vp ? { label: vp.label } : null,
     });
   });
 
@@ -183,6 +243,105 @@ export function createPartnerRouter(deps) {
     res.set('Content-Type', 'text/csv; charset=utf-8');
     res.set('Content-Disposition', `attachment; filename="tacotac-ventes-${email.split('@')[0]}.csv"`);
     res.send('﻿' + lines.join('\n'));
+  });
+
+  // ════════════════════ VIDÉOS (format "commentaire") ════════════════════
+  // Accès réservé à Tom/Anomy (VIDEO_PROFILES ci-dessus) — pas aux affiliés.
+
+  function requireVideoProfile(req, res, next) {
+    const vp = videoProfileFor(req.partner.email);
+    if (!vp) return res.status(403).json({ ok: false, error: 'forbidden' });
+    req.videoProfile = vp;
+    next();
+  }
+
+  // Sert la capture d'écran elle-même (vit dans public/ du pipeline, un dossier
+  // en dehors de tacotac-app — jamais exposée publiquement, gardée par la session).
+  router.get('/videos/comments/:file', requirePartner, requireVideoProfile, (req, res) => {
+    const full = path.join(commentImagesDir, path.basename(req.params.file));
+    if (!existsSync(full)) return res.status(404).end();
+    res.sendFile(full);
+  });
+
+  router.get('/api/partner/videos/stock', requirePartner, requireVideoProfile, (req, res) => {
+    const { suffix, label } = req.videoProfile;
+    res.json({
+      ok: true,
+      label,
+      items: readStock(suffix),
+      running: commentGenIsRunning(suffix),
+      tail: tailLog(commentGenLogFile(suffix)),
+    });
+  });
+
+  router.post('/api/partner/videos/stock', requirePartner, requireVideoProfile, (req, res) => {
+    const username = String(req.body?.username || '').trim().replace(/[\r\n]+/g, ' ').slice(0, 40);
+    const text = String(req.body?.text || '').trim().replace(/[\r\n]+/g, ' ').slice(0, 300);
+    if (!username || !text) return res.status(400).json({ ok: false, error: 'Pseudo et texte du commentaire requis.' });
+
+    const m = DATA_URL_RE.exec(String(req.body?.imageDataUrl || ''));
+    if (!m) return res.status(400).json({ ok: false, error: "Capture d'écran invalide (PNG/JPG/WEBP)." });
+    const buf = Buffer.from(m[2], 'base64');
+    if (buf.length > MAX_COMMENT_IMAGE_BYTES) return res.status(400).json({ ok: false, error: 'Image trop lourde (8 Mo max).' });
+
+    const id = `cs_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const ext = EXT_BY_MIME[m[1].toLowerCase()] || 'png';
+    const filename = `${id}.${ext}`;
+    mkdirSync(commentImagesDir, { recursive: true });
+    writeFileSync(path.join(commentImagesDir, filename), buf);
+
+    const item = { id, username, text, image: `comments/${filename}`, addedAt: new Date().toISOString() };
+    const { suffix } = req.videoProfile;
+    const items = readStock(suffix);
+    items.unshift(item);
+    writeStock(suffix, items);
+    res.json({ ok: true, item });
+  });
+
+  router.delete('/api/partner/videos/stock/:id', requirePartner, requireVideoProfile, (req, res) => {
+    const { suffix } = req.videoProfile;
+    const items = readStock(suffix);
+    const item = items.find((it) => it.id === req.params.id);
+    if (!item) return res.status(404).json({ ok: false, error: 'Introuvable.' });
+    writeStock(suffix, items.filter((it) => it.id !== req.params.id));
+    try { unlinkSync(path.join(PIPELINE_DIR, 'public', item.image)); } catch { /* déjà absent, tant pis */ }
+    res.json({ ok: true });
+  });
+
+  router.post('/api/partner/videos/generate/:id', requirePartner, requireVideoProfile, (req, res) => {
+    const { suffix, env, label } = req.videoProfile;
+    if (!existsSync(PIPELINE_DIR)) return res.status(500).json({ ok: false, error: 'Pipeline vidéo introuvable sur ce serveur.' });
+    if (commentGenIsRunning(suffix)) return res.status(409).json({ ok: false, error: 'Une génération est déjà en cours — attends qu\'elle finisse.' });
+
+    const items = readStock(suffix);
+    const item = items.find((it) => it.id === req.params.id);
+    if (!item) return res.status(404).json({ ok: false, error: 'Introuvable — déjà généré ?' });
+
+    // Retiré du stock dès le lancement : même logique "fire-and-forget" que le
+    // reste du pipeline (pas de rollback si le rendu échoue en route — le log
+    // reste consultable, et il suffit de réajouter le commentaire pour retenter).
+    writeStock(suffix, items.filter((it) => it.id !== req.params.id));
+
+    const log = commentGenLogFile(suffix);
+    writeFileSync(log, `=== lancé depuis /partner par ${label} — @${item.username} — ${new Date().toISOString()} ===\n`);
+    const fd = openSync(log, 'a');
+    const child = spawn('bash', ['pipeline/run-comment.sh'], {
+      cwd: PIPELINE_DIR,
+      env: {
+        ...process.env,
+        ...env,
+        COMMENT_USERNAME: item.username,
+        COMMENT_TEXT: item.text,
+        COMMENT_IMAGE: item.image,
+      },
+      detached: true, // survit à la réponse HTTP : un rendu dure plusieurs minutes
+      stdio: ['ignore', fd, fd],
+    });
+    closeSync(fd);
+    writeFileSync(commentGenLockFile(suffix), String(child.pid));
+    child.unref();
+
+    res.json({ ok: true });
   });
 
   // ════════════════════ CONSOLE ADMIN ════════════════════
