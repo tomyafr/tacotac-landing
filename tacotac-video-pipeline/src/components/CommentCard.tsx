@@ -18,8 +18,8 @@ export const CommentCard: React.FC<{ image: string; caption?: string }> = ({ ima
     <Img src={staticFile(image)} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
     {caption && (
       <>
-        <AbsoluteFill style={{ background: "linear-gradient(180deg, rgba(0,0,0,.75), rgba(0,0,0,0) 32%)" }} />
-        <AbsoluteFill style={{ alignItems: "center", justifyContent: "flex-start", padding: "9% 60px 0" }}>
+        <AbsoluteFill style={{ background: "linear-gradient(180deg, rgba(0,0,0,.75), rgba(0,0,0,0) 40%)" }} />
+        <AbsoluteFill style={{ alignItems: "center", justifyContent: "flex-start", padding: "22% 60px 0" }}>
           <div
             style={{
               fontFamily: fonts.title,

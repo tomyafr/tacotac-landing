@@ -20,9 +20,17 @@ const renderScene = (script: Script, s: Scene) => {
       return <CommentCard image={s.image} caption={s.caption} />;
     case "photo":
       // Plein écran, comme si on regardait sa story juste avant de lui écrire.
+      // Le bandeau du bas ("Envoyer un message...", ♡ 💬 ➤) est une VRAIE capture
+      // Instagram figée (public/ui/insta-bottom-bar.png, voir reference/"pied
+      // insta.png") — jamais reconstitué en HTML, ce bloc ne change jamais d'une
+      // vidéo à l'autre quelle que soit la fille. Le haut (pdp/pseudo), lui, N'EST
+      // PAS repris de la capture (spécifique au compte source) — Tom, 16/09.
       return (
         <AbsoluteFill style={{ background: "#000" }}>
           <Img src={staticFile(s.asset)} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <AbsoluteFill style={{ justifyContent: "flex-end" }}>
+            <Img src={staticFile("ui/insta-bottom-bar.png")} style={{ width: "100%", display: "block" }} />
+          </AbsoluteFill>
         </AbsoluteFill>
       );
     case "caption":
