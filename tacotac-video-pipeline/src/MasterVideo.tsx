@@ -67,7 +67,13 @@ export const MasterVideo: React.FC<{ script: Script }> = ({ script }) => {
   const scenes = buildScenes(script);
   return (
     <AbsoluteFill style={{ background: "#000" }}>
-      <BackgroundMusic src={resolveMusic(script.music).file} />
+      {/* Format "commentaire" (script.comment) : PAS de musique dans le rendu.
+          TikTok bannit/mute le son d'une vidéo qui dépasse 1 min avec une
+          musique protégée détectée — et ce format vise volontairement 60-75s.
+          Tom/Anomy ajoutent le son directement dans l'éditeur TikTok au
+          moment de poster (Tom, 17/09). Les formats courts (<1min) gardent
+          la musique intégrée, sans risque à cette durée. */}
+      {!script.comment && <BackgroundMusic src={resolveMusic(script.music).file} />}
       <TransitionSeries>
         {scenes.map((s, i) => (
           <Fragment key={i}>
