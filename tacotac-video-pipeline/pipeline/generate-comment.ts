@@ -183,10 +183,11 @@ FORMAT : ${him} drague ${her} en DM Instagram, réponse à sa story. Pas d'app d
   • 1er passage : ton "${tonePair[0]}" — ${TONE_BRIEFS[tonePair[0]]}
   • 2e passage : ton "${tonePair[1]}" — ${TONE_BRIEFS[tonePair[1]]}
 Rappel de la mécanique (obligatoire à chaque passage) :
-  1. L'AMORCE — ${him} lâche une affirmation courte qui ne veut RIEN dire toute seule (un mot planté : un métier, un objet, une situation).
-  2. LA RELANCE — ${her} est OBLIGÉE de demander ("pourquoi", "de quoi", 1 à 4 mots, jamais de vanne).
-  3. LA CHUTE — ${him} referme, le mot planté explose en compliment/vanne. C'est LÀ que ça paie, nulle part ailleurs.
-⛔ Chaque beat "tacotac" est IMMÉDIATEMENT suivi d'un beat "message" du client avec EXACTEMENT le même texte (le message envoyé).
+  1. L'AMORCE — ${him} lâche une affirmation courte qui ne veut RIEN dire toute seule (un mot planté : un métier, un objet, une situation). C'est un beat {"kind":"message","from":"client"} NORMAL, PAS un beat tacotac.
+  2. LA RELANCE — ${her} est OBLIGÉE de demander ("pourquoi", "de quoi", 1 à 4 mots, jamais de vanne). Beat {"kind":"message","from":"girl"} normal aussi.
+  3. LA CHUTE — ${him} referme, le mot planté explose en compliment/vanne. C'est LÀ que ça paie, nulle part ailleurs. C'EST LE SEUL DES 3 QUI EST UN BEAT {"kind":"tacotac"} — c'est la ligne que l'app a soufflée.
+⛔⛔ EXACTEMENT 2 BEATS "tacotac" DANS TOUTE LA VIDÉO, PAS UN DE PLUS : uniquement les 2 CHUTES (une par passage). L'amorce et la relance ne sont JAMAIS des beats "tacotac", même si elles font partie de la mécanique — les taguer "tacotac" fait apparaître l'écran de l'app 2 fois par passage au lieu d'1, ça casse tout le format (déjà vu : 4 beats tacotac dans une vidéo au lieu de 2).
+⛔ Chaque beat "tacotac" (la chute, donc) est IMMÉDIATEMENT suivi d'un beat "message" du client avec EXACTEMENT le même texte (le message envoyé).
 ⛔⛔ L'AMORCE INTERDITE (erreur classique) : "faut que je t'avoue un truc" / "j'ai un aveu à te faire" / "j'ai un souci avec toi" / "va falloir que tu te méfies" — ces phrases n'ANNONCENT rien de concret, elles ne plantent AUCUN mot, donc la chute n'a rien à payer. Une bonne amorce plante un mot précis (un métier, un objet, une situation) que la chute va détourner — jamais une simple annonce qu'on va parler.
 ⛔⛔ LA CHUTE DOIT ENVOYER FORT, JAMAIS UN COMPLIMENT PLAT (Tom, 17/09, sur "les gens qui écrivent bien, tu viens d'y entrer" : "faut pas dire des compliments de merde comme ça... faut balancer des disquettes de fou pas des trucs nuls"). Un compliment générique accroché à un détail anodin de la conv (elle a mentionné un truc en passant → "les gens qui X, tu viens d'y entrer") sonne creux et hors sujet, surtout tôt dans l'échange. La chute doit draguer vraiment : une image forte, un jeu de mots qui claque, un compliment qui SURPREND — le genre de ligne qu'on a envie de screenshot. Pense à des mécaniques éprouvées (elle rejoint une "collection" d'œuvres d'art, elle devient une exception à une règle qu'il pose, etc.), jamais une simple observation polie sur un détail de la conv.
 
@@ -316,7 +317,10 @@ function validationProblems(script: Candidate): string[] {
   const memeCount = beats.filter((b) => b.type === "meme").length;
   if (memeCount < MIN_MEMES) problems.push(`seulement ${memeCount} meme(s), il en faut au moins ${MIN_MEMES}`);
   const tacotacCount = beats.filter((b) => b.type === "tacotac").length;
-  if (tacotacCount < 2) problems.push(`seulement ${tacotacCount} passage(s) Tacotac, il en faut 2`);
+  // EXACTEMENT 2, pas juste "au moins 2" : vu en test réel (17/09) un script avec 4
+  // beats tacotac — le modèle avait tagué l'amorce ET la chute des 2 passages en
+  // "tacotac" au lieu de la chute seule, doublant les écrans d'app affichés.
+  if (tacotacCount !== 2) problems.push(`${tacotacCount} passage(s) Tacotac au lieu de 2 pile (seule la CHUTE de chaque passage est un beat tacotac, jamais l'amorce)`);
   const first = beats.find((b) => b.type !== "meme");
   if (first?.type !== "message" || first.from !== "girl") {
     problems.push(`le 1er beat doit être la réaction de la fille au commentaire, pas autre chose`);
