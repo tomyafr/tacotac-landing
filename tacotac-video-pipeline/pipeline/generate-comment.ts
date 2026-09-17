@@ -173,8 +173,9 @@ Ce commentaire EST le tout premier message envoyé à ${her} (en réponse à sa 
 
 FORMAT : ${him} drague ${her} en DM Instagram, réponse à sa story. Pas d'app de rencontre, pas de mot "match".
 
-⚠️⚠️ DURÉE VISÉE — LIS ATTENTIVEMENT, C'EST CE QUI PART LE PLUS SOUVENT EN VRILLE : cette vidéo vise 60 à 75 secondes, DEUX FOIS PLUS LONGUE que les vidéos Tacotac habituelles. MAIS cette durée vient du RYTHME (les memes et les 2 passages Tacotac), PAS d'un nombre illimité d'échanges de conversation. Une conv à rallonge avec 15-20 messages de dialogue produit une vidéo BEAUCOUP TROP LONGUE (déjà vu : 90s, 120s) — c'est un ÉCHEC aussi grave qu'une vidéo trop courte.
-⚠️ CIBLE CHIFFRÉE OBLIGATOIRE : 22 à 28 beats au total (messages + tacotac + memes confondus), JAMAIS plus de 30. Avec 7-9 memes et 2 passages Tacotac (qui comptent chacun pour 1 beat tacotac + 1 beat message dupliqué), il ne reste qu'environ 10 à 14 messages de pure conversation pour tenir dans ce total — répartis-les sur 2-3 sujets courts, pas plus. Compte tes beats avant de répondre : si tu dépasses 28, coupe des messages de conv, JAMAIS des memes.
+⚠️⚠️ DURÉE VISÉE — LIS ATTENTIVEMENT, C'EST CE QUI PART LE PLUS SOUVENT EN VRILLE : cette vidéo vise 60 à 75 secondes, DEUX FOIS PLUS LONGUE que les vidéos Tacotac habituelles. MAIS cette durée vient du RYTHME (les memes et les 2 passages Tacotac), PAS d'un nombre illimité d'échanges de conversation NI de messages longs. Une conv à rallonge avec 15-20 messages, ou des messages longs comme de vraies phrases, produit une vidéo BEAUCOUP TROP LONGUE (déjà vu : 79s, 81s, 83s, 90s, 120s) — c'est un ÉCHEC aussi grave qu'une vidéo trop courte.
+⚠️ CIBLE CHIFFRÉE OBLIGATOIRE : 20 à 25 beats au total (messages + tacotac + memes confondus), JAMAIS plus de 27. Avec 7-9 memes et 2 passages Tacotac (qui comptent chacun pour 1 beat tacotac + 1 beat message dupliqué), il ne reste qu'environ 8 à 11 messages de pure conversation pour tenir dans ce total — répartis-les sur 2 sujets courts, pas plus. Compte tes beats avant de répondre : si tu dépasses 25, coupe des messages de conv, JAMAIS des memes.
+⚠️ CHAQUE MESSAGE DE CONV (hors tacotac) : UNE SEULE LIGNE COURTE, 3 à 8 mots, comme un vrai DM tapé vite — jamais une phrase complète ou deux idées dans le même message. C'est la longueur du TEXTE qui fait déraper la durée bien plus que le nombre de beats : un message de 15 mots dure 2 à 3 fois plus longtemps à l'écran qu'un message de 5 mots.
 
 ⚠️ TACOTAC UTILISÉ 2 FOIS — DEUX MÉCANIQUES COMPLÈTES EN 3 TEMPS (amorce → relance → chute), séparées par au moins 2-3 messages normaux de conv entre les deux (jamais collées) :
   • 1er passage : ton "${tonePair[0]}" — ${TONE_BRIEFS[tonePair[0]]}
@@ -298,8 +299,11 @@ const MIN_MEMES = 7; // Tom, 16/09 : "pas assez de meme... la conv on s'en fiche
 // Vu en test réel : sans plafond, le modèle écrit une conv à rallonge (15-20
 // messages) qui produit une vidéo de 90-120s au lieu de 60-75s visées — la durée
 // doit venir des memes/tacotac (rythme), pas d'un nombre illimité d'échanges.
-const MAX_BEATS = 30;
-const MAX_LENGTH_RETRIES = 3;
+// Plafond resserré le 17/09 (30→27) : même à 30 beats, 3 générations réelles de
+// suite sont sorties à 79-83s (juste hors cible) — les messages de conv étaient
+// trop longs individuellement, pas seulement trop nombreux.
+const MAX_BEATS = 27;
+const MAX_LENGTH_RETRIES = 5;
 type Candidate = ReturnType<typeof assemble>;
 
 function validationProblems(script: Candidate): string[] {
