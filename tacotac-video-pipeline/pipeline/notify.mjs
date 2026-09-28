@@ -33,6 +33,10 @@ const ATTACH = process.env.NOTIFY_ATTACH === "1";
 // Dossier où run.sh a laissé les mp4 (il les archive juste après l'upload, donc
 // on accepte les deux emplacements).
 const OUT_DIR = process.env.NOTIFY_OUT_DIR || "";
+// Message perso optionnel, pour un envoi manuel hors run.sh (ex: "essaye de
+// poster ça et d'avoir des commentaires dessus"). Absent en usage cron normal.
+const NOTE = process.env.NOTIFY_NOTE || "";
+const escapeHtml = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 if (!RESEND_API_KEY || RESEND_API_KEY.includes("a_remplir") || !TO) {
   console.warn("notify.mjs : RESEND_API_KEY ou NOTIFY_EMAIL manquant dans .env — email non envoyé (vidéos bien uploadées quand même)");
@@ -62,6 +66,7 @@ const html = (names, part, total) => `<div style="background:#0b0b0b;padding:32p
           ? `${names.length > 1 ? "Elles sont" : "Elle est"} en pièce jointe : appuie dessus pour ${names.length > 1 ? "les" : "la"} télécharger.${total > 1 ? ` (mail ${part}/${total})` : ""}`
           : "Confirmé : l'upload vers le Drive est terminé. Tu peux les poster."}
       </p>
+      ${NOTE ? `<p style="color:#F4EEE2;font-size:15px;line-height:1.6;margin:0 0 18px;padding:14px 16px;background:#0d0d0d;border-radius:12px;">${escapeHtml(NOTE)}</p>` : ""}
       <table style="width:100%;border-collapse:collapse;background:#0d0d0d;border-radius:12px;padding:14px;">
         <tbody>${names.map((f) => `<tr><td style="padding:6px 0;color:#F4EEE2;font-size:14px;">🎬 ${f}</td></tr>`).join("")}</tbody>
       </table>
