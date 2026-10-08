@@ -483,16 +483,18 @@
        et une réplique très longue défile DANS sa bulle plutôt que de
        faire bouger toute la page.
        ══════════════════════════════════════════════════════════════ */
-    #screen-4{overflow:hidden}
-    #screen-4 .result-card{flex:1;min-height:0;overflow:hidden}
-    /* Le défilement va sur le TEXTE, pas sur la bulle : la bulle porte sa
-       petite queue en position absolue (.tail, bottom:-8px), et un
-       overflow:auto sur elle la coupait tout en créant un faux débordement
-       de 12px constant. */
-    #screen-4 .bubble{min-height:0;display:flex;flex-direction:column}
-    #screen-4 .bubble .reply{flex:1;min-height:0;overflow-y:auto}
-    #screen-4 .bubble .reply::-webkit-scrollbar{width:0}
-    #screen-4 .result-fox-wrap{flex:1;min-height:0;align-items:center!important}
+    /* RÈGLE : la réplique s'affiche TOUJOURS en entier, jamais coupée ni
+       à faire défiler du doigt. La bulle ne rétrécit donc jamais ; seul le
+       renard (décoratif) absorbe le manque de place, et si même sans lui
+       ça ne tient pas, c'est l'écran qui défile (filet de sécurité) plutôt
+       que le texte qui est tronqué. */
+    #screen-4{overflow-y:auto}
+    #screen-4 .result-card{flex:1 0 auto;overflow:visible}
+    #screen-4 .bubble{flex:none;display:flex;flex-direction:column}
+    #screen-4 .bubble .reply{flex:none;overflow:visible}
+    /* flex-basis 0 : le renard ne compte pas dans la hauteur de la carte,
+       il ne prend que la place qui reste. */
+    #screen-4 .result-fox-wrap{flex:1 1 0;min-height:0;overflow:hidden;align-items:center!important}
     #screen-4 .result-fox{height:100%;max-height:112px;min-height:0}
 
     /* flex-shrink:0 est l'essentiel : .screen est une colonne flex, et les
@@ -666,7 +668,9 @@
       #screen-4 .pill .pl{font-size:8px}
       #screen-4 .pill .plock{font-size:8px}
       #screen-4 .tone-hint{display:none}
-      #screen-4 .result-card{padding:14px}
+      #screen-4 .result-card{padding:14px;margin-top:12px!important}
+      #screen-4 .result-card .bubble{margin-top:12px!important;padding:13px 15px}
+      #screen-4 .bubble .reply{font-size:15.5px;line-height:1.5;min-height:0}
       #screen-4 .result-fox{max-height:96px}
       #screen-4 .copy-cta{height:52px;margin-top:12px;font-size:15.5px}
       #screen-4 .btn-lg{height:48px;margin-top:8px;font-size:14px}
