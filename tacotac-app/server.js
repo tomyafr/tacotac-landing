@@ -30,7 +30,8 @@ import { consumeQuota, getStatus, activatePremium, syncSubscription, deactivateP
          accountsForLifecycle, markAccountEmail, consumeTrainQuota, trainUsedToday, claimGiftTone, refundGiftTone,
          getCollaboratorByPromoId, recordSale, completeQuiz,
          recordCancellationFeedback, listCancellationFeedback, cancellationStats, getEmailByCustomerId,
-         recordRevenueEvent, recordAttribution, getAttribution, recordFunnelStep, getDeviceIdByCustomerId } from './db.js';
+         recordRevenueEvent, recordAttribution, getAttribution, recordFunnelStep, getDeviceIdByCustomerId,
+         aiSpendToday, addAiSpend, claimAiAlert } from './db.js';
 import { createPartnerRouter } from './partner.js';
 import { createRevenueRouter, computeSnapshot } from './revenue.js';
 import { createAcquisitionRouter } from './acquisition.js';
@@ -863,6 +864,62 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY, timeout: 25_000,
 // meilleur (punchlines, contexte) qui reste bon marché (~$0.40/$1.60 par 1M tokens).
 const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';                    // tier gratuit
 const MODEL_PREMIUM = process.env.OPENAI_MODEL_PREMIUM || 'gpt-4.1-mini';   // abonnés (+ outils premium)
+
+// ── Coupe-circuit IA ─────────────────────────────────────────────
+// Le 08/10/26 la clé OpenAI a brûlé 6,56 $ en un jour sans que l'app y soit pour
+// quelque chose (trafic réel : ~20 appels/jour, quelques centimes). Ce garde-fou
+// protège contre un détournement VIA l'app (bots, comptes jetables) et surtout
+// rend la dépense visible : chaque appel est compté en base (table ai_spend).
+//  - plafonds très au-dessus de l'usage normal : un vrai utilisateur ne les touche jamais
+//  - alerte email à 50 % du plafond, puis à l'ouverture du coupe-circuit
+//  - il se rouvre tout seul à minuit (heure de Paris)
+// ⚠️ Il ne peut PAS bloquer quelqu'un qui utiliserait la clé hors de l'app :
+// pour ça, il y a la clé restreinte + le plafond mensuel côté OpenAI.
+const AI_MAX_CALLS_DAY = Number(process.env.AI_MAX_CALLS_DAY) || 1000;
+const AI_MAX_USD_DAY = Number(process.env.AI_MAX_USD_DAY) || 5;
+const AI_PRICE_PER_M = { 'gpt-4o-mini': [0.15, 0.60], 'gpt-4.1-mini': [0.40, 1.60] }; // [entrée, sortie] $ / 1M tokens
+const AI_PRICE_UNKNOWN = [2.5, 10]; // modèle inconnu → on compte large, jamais en dessous
+
+function aiBreakerOpen() {
+  const s = aiSpendToday();
+  return s.calls >= AI_MAX_CALLS_DAY || s.cost_usd >= AI_MAX_USD_DAY;
+}
+
+// Le coupe-circuit s'est ouvert : on le dit une fois (email), et on répond « IA indisponible »
+// SANS consommer le quota de l'utilisateur. Le front retombe sur ses répliques de secours.
+function aiBreakerBlock(res, shape = { error: 'IA indisponible.', code: 'ia_indisponible' }) {
+  if (claimAiAlert(2)) {
+    const s = aiSpendToday();
+    console.error(`[ia] COUPE-CIRCUIT OUVERT : ${s.calls} appels, ${s.cost_usd.toFixed(2)} $ aujourd'hui`);
+    sendAiAlert('🛑 Tacotac : coupe-circuit IA ouvert',
+      `L’IA est coupée jusqu’à minuit : <b>${s.calls} appels</b> et <b>${s.cost_usd.toFixed(2)} $</b> aujourd’hui (plafonds : ${AI_MAX_CALLS_DAY} appels / ${AI_MAX_USD_DAY} $). Si ce n’est pas un vrai pic de visiteurs, change ta clé OpenAI.`, '#FF5470');
+  }
+  return res.status(503).json(shape);
+}
+
+function sendAiAlert(subject, title, accent) {
+  if (!ALERTS_ON || !OWNER_EMAILS.length) return;
+  sendEmail({ to: OWNER_EMAILS, subject, html: ownerEmailHtml({ title, accent, lines: [], cta: 'Ouvrir mon dashboard →' }) })
+    .catch((err) => console.error('[alerte ia]', err?.message));
+}
+
+// Tous les appels OpenAI passent ici : même résultat qu'avant, plus la comptabilité.
+async function aiCreate(params) {
+  const completion = await openai.chat.completions.create(params);
+  try {
+    const u = completion.usage || {};
+    const [pin, pout] = AI_PRICE_PER_M[params.model] || AI_PRICE_UNKNOWN;
+    const pt = u.prompt_tokens || 0, ct = u.completion_tokens || 0;
+    addAiSpend(pt, ct, (pt * pin + ct * pout) / 1e6);
+    const s = aiSpendToday();
+    if ((s.cost_usd >= AI_MAX_USD_DAY / 2 || s.calls >= AI_MAX_CALLS_DAY / 2) && claimAiAlert(1)) {
+      console.warn(`[ia] 50 % du plafond atteint : ${s.calls} appels, ${s.cost_usd.toFixed(2)} $`);
+      sendAiAlert('⚠️ Tacotac : l’IA consomme beaucoup aujourd’hui',
+        `<b>${s.calls} appels</b> et <b>${s.cost_usd.toFixed(2)} $</b> déjà dépensés aujourd’hui (la moitié du plafond). Vrai pic de visiteurs, ou abus ? L’IA se coupera à ${AI_MAX_CALLS_DAY} appels / ${AI_MAX_USD_DAY} $.`, '#FFC96B');
+    }
+  } catch (e) { console.error('[ia] compta échouée (sans impact sur la réponse):', e?.message); }
+  return completion;
+}
 
 // ── Function calling : force GPT à renvoyer exactement 3 répliques/ton ──
 // Le champ `analyse` force le modèle à d'abord identifier QUI parle avant de répondre
@@ -1765,13 +1822,14 @@ app.post('/api/train', trainLimiter, async (req, res) => {
 
     const interest = Math.max(0, Math.min(100, parseInt(req.body?.interest, 10) || persona.start));
 
+    if (process.env.OPENAI_API_KEY && aiBreakerOpen()) return aiBreakerBlock(res); // avant le quota : rien n'est débité
     const tq = consumeTrainQuota(deviceId);
     if (!tq.allowed) {
       return res.status(402).json({ error: "T'as assez dragué pour aujourd'hui 😅 Reviens demain.", code: 'train_quota' });
     }
     if (!process.env.OPENAI_API_KEY) return res.status(503).json({ error: 'IA indisponible.', code: 'ia_indisponible' });
 
-    const completion = await openai.chat.completions.create({
+    const completion = await aiCreate({
       model: MODEL_PREMIUM, // l'entraînement est quasi-premium (1 msg/j offert) : les personas méritent le bon modèle
       max_tokens: 600,
       messages: [
@@ -2478,6 +2536,9 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
     }
     if (!isPremiumUser && dataUrls.length > 1) dataUrls = dataUrls.slice(0, 1); // la 2e photo est un avantage premium
 
+    // Coupe-circuit IA, AVANT le quota : si l'IA est coupée, l'utilisateur ne perd aucun crédit.
+    if (process.env.OPENAI_API_KEY && aiBreakerOpen()) return aiBreakerBlock(res, { error: 'IA indisponible.', code: 'ia_indisponible', source: 'fallback' });
+
     // ── QUOTA (côté serveur, seule source de vérité) ──
     const quota = consumeQuota(deviceId, req.ip, req.account);
     if (!quota.allowed) {
@@ -2518,7 +2579,7 @@ app.post('/api/analyze', analyzeLimiter, async (req, res) => {
       userText = "IMPORTANT : tu reçois DEUX screenshots de la MÊME conversation, dans l'ordre. Screenshot 1 = le DÉBUT (contexte). Screenshot 2 = la SUITE, la plus récente : c'est là que se trouve le dernier message. Utilise le contexte du 1er pour mieux répondre au 2e.\n\n" + userText;
     }
 
-    const completion = await openai.chat.completions.create({
+    const completion = await aiCreate({
       model: isPremiumUser ? MODEL_PREMIUM : MODEL,
       max_tokens: maxTok,
       messages: [
@@ -2605,6 +2666,7 @@ app.post('/api/gift-tone', analyzeLimiter, async (req, res) => {
     if (!dataUrls.length) return res.status(400).json({ ok: false, error: 'Image manquante.' });
     if (getStatus(deviceId, req.account).isPremium) return res.status(400).json({ ok: false, error: "T'as déjà tout débloqué 😉" });
     if (!process.env.OPENAI_API_KEY) return res.status(503).json({ ok: false, error: 'IA indisponible.' });
+    if (aiBreakerOpen()) return aiBreakerBlock(res, { ok: false, error: 'IA indisponible.', code: 'ia_indisponible' }); // avant claimGiftTone : le cadeau n'est pas brûlé
     if (!claimGiftTone(deviceId)) {
       return res.status(403).json({ ok: false, error: 'Ton cadeau a déjà servi 😏', code: 'gift_used' });
     }
@@ -2627,7 +2689,7 @@ app.post('/api/gift-tone', analyzeLimiter, async (req, res) => {
           },
         },
       };
-      const completion = await openai.chat.completions.create({
+      const completion = await aiCreate({
         model: MODEL_PREMIUM, // le cadeau doit montrer la VRAIE qualité premium
         max_tokens: 700,
         messages: [
@@ -2675,13 +2737,14 @@ app.post('/api/bio', analyzeLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Colle ta bio (ou décris-toi en 2 phrases).' });
     }
 
+    if (process.env.OPENAI_API_KEY && aiBreakerOpen()) return aiBreakerBlock(res, { bio: null, source: 'fallback', warning: 'ia_indisponible' }); // avant le quota
     const quota = consumeQuota(deviceId, req.ip, req.account);
     if (!quota.allowed) {
       return res.status(402).json({ error: 'Limite quotidienne atteinte, reviens demain.', code: 'quota_exceeded', quota });
     }
     if (!process.env.OPENAI_API_KEY) return res.json({ bio: null, source: 'fallback', quota });
 
-    const completion = await openai.chat.completions.create({
+    const completion = await aiCreate({
       model: MODEL_PREMIUM, // outil réservé aux abonnés
       max_tokens: 1000,
       messages: [

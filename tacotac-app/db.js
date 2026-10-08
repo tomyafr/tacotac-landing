@@ -311,6 +311,42 @@ export function trainUsedToday(deviceId) {
   return row ? row.count : 0;
 }
 
+// ── Coupe-circuit IA : dépense OpenAI cumulée par jour (fuseau Paris) ──
+// Une ligne par jour. Sert à (1) bloquer les appels IA au-delà d'un plafond très
+// au-dessus du trafic réel, (2) alerter avant d'y arriver. Voir aiGuard dans server.js.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS ai_spend (
+    day               TEXT PRIMARY KEY,
+    calls             INTEGER NOT NULL DEFAULT 0,
+    prompt_tokens     INTEGER NOT NULL DEFAULT 0,
+    completion_tokens INTEGER NOT NULL DEFAULT 0,
+    cost_usd          REAL    NOT NULL DEFAULT 0,
+    alert_level       INTEGER NOT NULL DEFAULT 0   -- 0 rien, 1 alerte "50 %" envoyée, 2 alerte "bloqué" envoyée
+  );
+`);
+const qGetAiSpend = db.prepare('SELECT calls, prompt_tokens, completion_tokens, cost_usd, alert_level FROM ai_spend WHERE day = ?');
+const qAddAiSpend = db.prepare(`
+  INSERT INTO ai_spend (day, calls, prompt_tokens, completion_tokens, cost_usd) VALUES (?, 1, ?, ?, ?)
+  ON CONFLICT(day) DO UPDATE SET calls = calls + 1, prompt_tokens = prompt_tokens + excluded.prompt_tokens,
+    completion_tokens = completion_tokens + excluded.completion_tokens, cost_usd = cost_usd + excluded.cost_usd
+`);
+const qSetAiAlert = db.prepare(`
+  INSERT INTO ai_spend (day, alert_level) VALUES (?, ?)
+  ON CONFLICT(day) DO UPDATE SET alert_level = MAX(alert_level, excluded.alert_level)
+`);
+export function aiSpendToday() {
+  return qGetAiSpend.get(parisDay()) || { calls: 0, prompt_tokens: 0, completion_tokens: 0, cost_usd: 0, alert_level: 0 };
+}
+export function addAiSpend(promptTokens, completionTokens, costUsd) {
+  qAddAiSpend.run(parisDay(), promptTokens | 0, completionTokens | 0, costUsd || 0);
+}
+// Renvoie true UNE seule fois par jour et par niveau : l'email ne part pas en boucle.
+export function claimAiAlert(level) {
+  if (aiSpendToday().alert_level >= level) return false;
+  qSetAiAlert.run(parisDay(), level);
+  return true;
+}
+
 // ── Bonus email : +2 analyses si email jamais utilisé (1 fois par email ET par appareil) ──
 export const EMAIL_BONUS_CREDITS = 2;
 const qGetBonusEmail = db.prepare('SELECT email FROM bonus_emails WHERE email = ?');
